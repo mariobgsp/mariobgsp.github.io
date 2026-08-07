@@ -53,7 +53,7 @@ Sections (same as current page, rewritten content):
 5. **Projects** — top 4 repos (user-selected):
    - `netto-spendo` (TypeScript) — expense tracking, income/expense, net balance, dark-themed UI.
    - `physics-phenomena` (TypeScript) — PhysicsLab, 37 interactive physics simulations.
-   - `local-postman` (JavaScript) — local Postman-like HTTP client, no cloud, JSON-file storage, `pm.*` scripting API, Express + vanilla JS.
+   - `local-postman` (JavaScript) — local Postman-like HTTP client, no cloud, no telemetry, JSON-file storage in `data/`, `pm.*` scripting API (pre-request scripts + tests), Express + vanilla JS, atomic file persistence, `node --test` suite, MIT licensed. Recently refined UI + executor/server bug fixes.
    - `thermal-face-recognition` (Jupyter Notebook) — Thermal Emotion Recognition via CNN, final-year thesis project.
    - Cards link to GitHub; include language dot, blueprint tag labels.
 6. **Skills** — 5 spec clusters from resume:
