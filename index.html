@@ -41,7 +41,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -55,21 +55,21 @@
 
       /* ===== TOKENS ===== */
       :root {
-        --paper: #0a1c3c;
-        --paper-2: #0e2347;
-        --paper-3: #071430;
-        --ink: #dfe9ff;
-        --steel: #7e9cc9;
-        --steel-dim: #55729f;
-        --hairline: #2a4a7f;
-        --hairline-soft: rgba(42, 74, 127, 0.55);
-        --accent: #ff7a3d;
-        --accent-soft: rgba(255, 122, 61, 0.08);
-        --ok: #34d399;
-        --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-        --sans:
-          "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
+        --paper: #12101f;
+        --paper-2: #1b1830;
+        --paper-3: #0c0a18;
+        --ink: #f0e6d2;
+        --steel: #c9b896;
+        --steel-dim: #7d7466;
+        --hairline: #4a3f5c;
+        --hairline-soft: rgba(202, 138, 4, 0.3);
+        --accent: #ca8a04;
+        --accent-soft: rgba(202, 138, 4, 0.12);
+        --torch: #ff7a3d;
+        --ok: #7bc96f;
+        --px: "Press Start 2P", monospace;
+        --mono: "VT323", ui-monospace, monospace;
+        --sans: "VT323", ui-monospace, monospace;
 
         --ease: 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -163,6 +163,89 @@
           #000 30%,
           transparent 92%
         );
+      }
+
+      /* simplified: bubbles/scanband/cue off except scanlines CRT; grid + terminal motion stays */
+      .bubbles,
+      .scanband,
+      .scroll-cue {
+        display: none;
+      }
+
+      /* pixel embers: torch sparks rising through the dungeon */
+      @media (prefers-reduced-motion: no-preference) {
+        .bubbles {
+          display: block;
+        }
+        .bubbles .bubble {
+          border: 0;
+          border-radius: 0;
+          background: var(--accent);
+          box-shadow: 0 0 8px 2px rgba(202, 138, 4, 0.55);
+          opacity: 0;
+          animation: ember-rise 9s linear infinite;
+        }
+        .bubbles .b2,
+        .bubbles .b5 {
+          background: var(--torch);
+          box-shadow: 0 0 8px 2px rgba(255, 122, 61, 0.55);
+        }
+        .bubbles .bubble::after,
+        .bubbles .bubble-ping::before {
+          display: none;
+        }
+        .bubbles .b1 {
+          width: 8px;
+          height: 8px;
+        }
+        .bubbles .b2 {
+          width: 5px;
+          height: 5px;
+          animation-delay: -3s;
+        }
+        .bubbles .b3 {
+          width: 4px;
+          height: 4px;
+          animation-delay: -5s;
+        }
+        .bubbles .b4 {
+          width: 7px;
+          height: 7px;
+          animation-delay: -7s;
+        }
+        .bubbles .b5 {
+          width: 5px;
+          height: 5px;
+          animation-delay: -2s;
+        }
+        .bubbles .b6 {
+          width: 6px;
+          height: 6px;
+          animation-delay: -6s;
+        }
+        .bubbles .b7 {
+          width: 4px;
+          height: 4px;
+          animation-delay: -4s;
+        }
+        .bubbles .b8 {
+          width: 9px;
+          height: 9px;
+          animation-delay: -8s;
+        }
+        @keyframes ember-rise {
+          0% {
+            transform: translateY(15vh);
+            opacity: 0;
+          }
+          15% {
+            opacity: 0.9;
+          }
+          100% {
+            transform: translateY(-60vh);
+            opacity: 0;
+          }
+        }
       }
 
       /* ===== GLOSSY BUBBLES ===== */
@@ -389,13 +472,13 @@
       }
 
       section {
-        padding: clamp(88px, 10vw, 132px) 0 clamp(96px, 11vw, 144px);
+        padding: clamp(52px, 6vw, 76px) 0 clamp(60px, 7vw, 88px);
       }
 
-      /* flat sheets — solid translucent navy, no blur */
+      /* dungeon sheets — translucent so embers drift behind every section */
       .sheet {
         border-top: 1px solid var(--hairline-soft);
-        background: rgba(10, 28, 60, 0.92);
+        background: rgba(18, 16, 31, 0.82);
       }
 
       /* ===== SKIP LINK ===== */
@@ -461,7 +544,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: clamp(36px, 5vw, 56px);
+        margin-bottom: clamp(20px, 3vw, 30px);
       }
 
       .sheet-rule::before {
@@ -549,7 +632,7 @@
         left: 0;
         right: 0;
         z-index: var(--z-nav);
-        background: rgba(10, 28, 60, 0.94);
+        background: rgba(18, 16, 31, 0.94);
         border-bottom: 1px solid transparent;
         transition:
           border-color var(--ease),
@@ -719,6 +802,19 @@
       .hero-inner {
         width: 100%;
         padding-top: 56px;
+        display: grid;
+        grid-template-columns: minmax(0, 600px) minmax(0, 360px);
+        gap: 48px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      @media (max-width: 860px) {
+        .hero-inner {
+          grid-template-columns: 1fr;
+        }
+        .hero-card {
+          display: none;
+        }
       }
 
       .hero-frame {
@@ -767,14 +863,14 @@
       .hero-sub {
         color: var(--steel);
         max-width: 500px;
-        margin-bottom: 26px;
+        margin-bottom: 18px;
         text-wrap: pretty;
       }
 
       /* ===== TERMINAL ===== */
       .terminal {
         max-width: 520px;
-        margin-bottom: 26px;
+        margin-bottom: 18px;
         font-family: var(--mono);
       }
 
@@ -1271,6 +1367,333 @@
       .lang-py {
         background: #ffd343;
       }
+      .lang-fork {
+        background: #7e9cc9;
+      }
+
+      /* ===== GITHUB PANEL ===== */
+      .gh-panel {
+        padding: 18px 20px;
+        margin: 18px 0 0;
+        overflow: hidden;
+      }
+      .gh-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .gh-avatar {
+        width: 46px;
+        height: 46px;
+        border: 1px solid var(--hairline);
+      }
+      .gh-name {
+        font-weight: 700;
+      }
+      .gh-handle {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--steel);
+        text-decoration: none;
+      }
+      .gh-handle:hover {
+        color: var(--accent);
+      }
+      .gh-all {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--steel);
+        text-decoration: none;
+        border: 1px solid var(--hairline-soft);
+        padding: 8px 14px;
+        white-space: nowrap;
+      }
+      .gh-all:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .gh-chart {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--hairline-soft);
+        background: var(--paper-3);
+      }
+      .gh-act-title {
+        margin: 16px 0 8px;
+      }
+      .gh-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 28px;
+        margin-top: 16px;
+      }
+      .gh-cols .gh-act-title {
+        margin-top: 0;
+      }
+      @media (max-width: 760px) {
+        .gh-cols {
+          grid-template-columns: 1fr;
+        }
+      }
+      .gh-act-list {
+        list-style: none;
+        font-size: 0.86rem;
+      }
+      .gh-act-list li {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(42, 74, 127, 0.35);
+        color: var(--steel);
+      }
+      .gh-act-list li:last-child {
+        border-bottom: 0;
+      }
+      .gh-act-list a {
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .gh-act-list a:hover {
+        color: var(--accent);
+      }
+      .gh-act {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .gh-when {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        color: var(--steel-dim);
+        white-space: nowrap;
+      }
+      .prj-featured {
+        border-color: rgba(202, 138, 4, 0.6);
+      }
+
+      /* ===== PIXEL MEDIEVAL SKIN (council reskin: fonts, tokens, chunk) ===== */
+      body {
+        font-size: 20px;
+      }
+      .bg-grid {
+        background-image:
+          linear-gradient(rgba(202, 138, 4, 0.14) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(202, 138, 4, 0.14) 1px, transparent 1px);
+      }
+      .sheet-title,
+      .hero-name,
+      .prj-name,
+      .exp-role,
+      .tb-name,
+      .gh-name,
+      .edu-degree,
+      .cluster-title,
+      .fig-label,
+      .fig-tag,
+      .stamp {
+        font-family: var(--px);
+      }
+      .hero-name {
+        font-size: clamp(1.4rem, 4.5vw, 2.4rem);
+        line-height: 1.55;
+        letter-spacing: 0;
+      }
+      .sheet-title {
+        font-size: clamp(0.95rem, 2.6vw, 1.4rem);
+        line-height: 1.7;
+      }
+      .prj-name {
+        font-size: 0.9rem;
+        line-height: 1.7;
+      }
+      .exp-role {
+        font-size: 0.8rem;
+        line-height: 1.7;
+      }
+      .tb-name {
+        font-size: clamp(0.95rem, 2.4vw, 1.3rem);
+        line-height: 1.7;
+      }
+      .fig-label,
+      .fig-tag,
+      .stamp {
+        font-size: 0.58rem;
+        line-height: 1.9;
+      }
+      .cluster-title {
+        font-size: 0.6rem;
+        line-height: 1.9;
+      }
+      .mono-tag,
+      .prj-tag,
+      .hud-item,
+      .term-tag,
+      .spec-note,
+      .gh-act,
+      .gh-when,
+      .nav-links a {
+        font-size: 0.85rem;
+      }
+      .hero-sub,
+      .prj-desc {
+        font-size: 1.05rem;
+      }
+      .exp-list li,
+      .edu-thesis,
+      .cert-name,
+      .about-text p {
+        font-size: 1rem;
+      }
+      .term-line {
+        font-size: 1.1rem;
+      }
+      .plate::before,
+      .plate::after {
+        display: none;
+      }
+      .plate {
+        border: 3px solid #000;
+        box-shadow: inset 0 0 0 2px var(--hairline);
+        clip-path: polygon(
+          0 8px,
+          8px 8px,
+          8px 0,
+          calc(100% - 8px) 0,
+          calc(100% - 8px) 8px,
+          100% 8px,
+          100% calc(100% - 8px),
+          calc(100% - 8px) calc(100% - 8px),
+          calc(100% - 8px) 100%,
+          8px 100%,
+          8px calc(100% - 8px),
+          0 calc(100% - 8px)
+        );
+      }
+      .btn {
+        border: 3px solid #000;
+        box-shadow: 0 4px 0 #000;
+      }
+      .btn:active {
+        transform: translateY(4px);
+        box-shadow: 0 0 0 #000;
+      }
+
+      /* ===== HERO CHARACTER CARD ===== */
+      .hero-card {
+        padding: 20px;
+        text-align: center;
+      }
+      .hc-head {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--px);
+        font-size: 0.55rem;
+        color: var(--steel);
+        margin-bottom: 14px;
+      }
+      .hc-lv {
+        color: var(--accent);
+      }
+      .hc-avatar {
+        width: 132px;
+        height: 132px;
+        image-rendering: pixelated;
+        border: 3px solid #000;
+        background: var(--paper-3);
+      }
+      .hc-name {
+        font-family: var(--px);
+        font-size: 0.85rem;
+        margin: 12px 0 2px;
+      }
+      .hc-class {
+        font-size: 0.95rem;
+        color: var(--steel);
+        margin-bottom: 14px;
+      }
+      .hc-bar {
+        display: grid;
+        grid-template-columns: 34px 1fr 34px;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+        text-align: left;
+      }
+      .hc-tag {
+        color: var(--steel);
+      }
+      .hc-num {
+        color: var(--steel-dim);
+        text-align: right;
+      }
+      .hc-track {
+        height: 10px;
+        border: 2px solid #000;
+        background: var(--paper-3);
+      }
+      .hc-fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        transition: width 1.2s var(--ease);
+      }
+      .hero-card.visible .hp {
+        width: 94%;
+        background: var(--ok);
+      }
+      .hero-card.visible .mp {
+        width: 68%;
+        background: #4f9cf0;
+      }
+      .hero-card.visible .xp {
+        width: 45%;
+        background: var(--accent);
+      }
+      .hc-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 14px;
+        font-size: 0.85rem;
+        color: var(--steel);
+      }
+      .hc-flame {
+        width: 8px;
+        height: 8px;
+        background: var(--torch);
+        box-shadow: 0 0 10px 3px rgba(255, 122, 61, 0.6);
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .hc-flame {
+          animation: flick 1s steps(2) infinite;
+        }
+        @keyframes flick {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(0.75) translateY(1px);
+            opacity: 0.7;
+          }
+          100% {
+            transform: scale(1.1);
+            opacity: 1;
+          }
+        }
+      }
 
       .prj-tag {
         font-family: var(--mono);
@@ -1436,7 +1859,7 @@
         z-index: var(--z-content);
         border-top: 1px solid var(--hairline-soft);
         background: rgba(8, 20, 44, 0.96);
-        padding: clamp(72px, 9vw, 110px) 0 44px;
+        padding: clamp(44px, 6vw, 68px) 0 32px;
       }
 
       .title-block {
@@ -1641,7 +2064,7 @@
           padding: 0 20px;
         }
         section {
-          padding: 76px 0 84px;
+          padding: 44px 0 52px;
         }
 
         .nav-status-label,
@@ -1778,10 +2201,10 @@
         <div class="container hero-inner">
           <div class="hero-frame">
             <span class="stamp"
-              ><span class="led led-green" aria-hidden="true"></span> Rev 2026 ·
-              Active</span
+              ><span class="led led-green" aria-hidden="true"></span> New Game ·
+              2026</span
             >
-            <span class="fig-tag">FIG. 01 — Profile</span>
+            <span class="fig-tag">PLAYER ONE</span>
             <h1 class="hero-name">Muhammad Ario<br />Bagus Prakusa</h1>
             <p class="hero-title">
               Software Engineer — Backend &amp; Microservices
@@ -1795,7 +2218,7 @@
                 <span class="term-dots" aria-hidden="true"
                   ><span></span><span></span><span></span
                 ></span>
-                <span class="term-title">mario@backend: ~</span>
+                <span class="term-title">mario@castle: ~</span>
                 <span class="term-tag">zsh</span>
               </div>
               <div class="term-body">
@@ -1841,6 +2264,35 @@
               <span class="hud-item">BATCH <b>6h → 20m</b></span>
             </div>
           </div>
+          <div class="hero-card plate reveal" aria-hidden="true">
+            <div class="hc-head">
+              <span>PARTY</span><span class="hc-lv">LV 4</span>
+            </div>
+            <img
+              class="hc-avatar"
+              src="https://github.com/mariobgsp.png?s=48"
+              alt=""
+              loading="lazy"
+            />
+            <div class="hc-name">MARIO</div>
+            <div class="hc-class">Backend Knight</div>
+            <div class="hc-bar">
+              <span class="hc-tag">HP</span
+              ><span class="hc-track"><span class="hc-fill hp"></span></span
+              ><span class="hc-num">94</span>
+            </div>
+            <div class="hc-bar">
+              <span class="hc-tag">MP</span
+              ><span class="hc-track"><span class="hc-fill mp"></span></span
+              ><span class="hc-num">68</span>
+            </div>
+            <div class="hc-bar">
+              <span class="hc-tag">XP</span
+              ><span class="hc-track"><span class="hc-fill xp"></span></span
+              ><span class="hc-num">45</span>
+            </div>
+            <div class="hc-status"><span class="hc-flame"></span>TORCH LIT</div>
+          </div>
         </div>
         <div class="scroll-cue" aria-hidden="true">
           <span class="cue-label">[ scroll ]</span>
@@ -1852,7 +2304,7 @@
       <section id="about" class="sheet">
         <div class="container">
           <div class="fig-label reveal">
-            <span class="fig-num">FIG. 02</span> — Background
+            <span class="fig-num">LVL 02</span> · Character Sheet
           </div>
           <h2 class="sheet-title reveal">About</h2>
           <div class="sheet-rule reveal"></div>
@@ -1909,7 +2361,7 @@
       <section id="experience" class="sheet">
         <div class="container">
           <div class="fig-label reveal">
-            <span class="fig-num">FIG. 03</span> — Career Log
+            <span class="fig-num">LVL 03</span> · Guild History
           </div>
           <h2 class="sheet-title reveal">Experience</h2>
           <div class="sheet-rule reveal"></div>
@@ -2066,57 +2518,34 @@
       <section id="projects" class="sheet">
         <div class="container">
           <div class="fig-label reveal">
-            <span class="fig-num">FIG. 04</span> — Selected Work
+            <span class="fig-num">LVL 04</span> · Quest Log
           </div>
           <h2 class="sheet-title reveal">Projects</h2>
           <div class="sheet-rule reveal"></div>
           <div class="projects-grid stagger">
             <a
-              href="https://github.com/mariobgsp/netto-spendo"
+              href="https://github.com/mariobgsp/t-notes"
               target="_blank"
               rel="noopener"
               class="project-card plate"
             >
               <span class="prj-index">PRJ-01</span>
-              <h3 class="prj-name">Netto Spendo</h3>
+              <h3 class="prj-name">T-Notes</h3>
               <p class="prj-desc">
-                Minimalist expense tracking built for performance and UX —
-                income/expense tracking, net balance, and financial health
-                visualization in a dark interface.
+                Local-first notes + kanban board. Trello's core, none of its
+                cloud. Zero deps, tiny RAM, Windows installer via Tauri.
               </p>
               <div class="prj-meta">
                 <span class="prj-lang"
-                  ><span class="lang-dot lang-ts"></span>TypeScript</span
+                  ><span class="lang-dot lang-js"></span>JavaScript</span
                 >
-                <span class="prj-tag">Finance</span>
-                <span class="prj-tag">UX</span>
-                <span class="prj-go" aria-hidden="true">↗</span>
-              </div>
-            </a>
-            <a
-              href="https://github.com/mariobgsp/physics-phenomena"
-              target="_blank"
-              rel="noopener"
-              class="project-card plate"
-            >
-              <span class="prj-index">PRJ-02</span>
-              <h3 class="prj-name">PhysicsLab</h3>
-              <p class="prj-desc">
-                High-fidelity interactive suite of 37 physics simulations
-                visualizing fundamental phenomena with premium aesthetics and
-                pedagogical clarity.
-              </p>
-              <div class="prj-meta">
-                <span class="prj-lang"
-                  ><span class="lang-dot lang-ts"></span>TypeScript</span
-                >
-                <span class="prj-tag">Simulation</span>
-                <span class="prj-tag">37 Labs</span>
+                <span class="prj-tag">Notes</span>
+                <span class="prj-tag">Tauri</span>
                 <span class="prj-go" aria-hidden="true">↗</span>
               </div>
             </a>
             <a href="/routre/" class="project-card plate">
-              <span class="prj-index">PRJ-03</span>
+              <span class="prj-index">PRJ-02</span>
               <h3 class="prj-name">Routre</h3>
               <p class="prj-desc">
                 Low-RAM LLM gateway for coding agents — auto failover, RTK token
@@ -2132,49 +2561,71 @@
                 <span class="prj-go" aria-hidden="true">↗</span>
               </div>
             </a>
+          </div>
+          <div class="gh-panel plate reveal">
+            <div class="gh-head">
+              <img
+                class="gh-avatar"
+                src="https://github.com/mariobgsp.png"
+                alt="@mariobgsp avatar"
+                loading="lazy"
+              />
+              <div>
+                <div class="gh-name">mariobgsp</div>
+                <a
+                  class="gh-handle"
+                  href="https://github.com/mariobgsp"
+                  target="_blank"
+                  rel="noopener"
+                  >github.com/mariobgsp</a
+                >
+              </div>
+              <a
+                class="gh-all"
+                href="https://github.com/mariobgsp"
+                target="_blank"
+                rel="noopener"
+                >View profile ↗</a
+              >
+            </div>
             <a
-              href="https://github.com/mariobgsp/trading-suite"
+              href="https://github.com/mariobgsp"
               target="_blank"
               rel="noopener"
-              class="project-card plate"
+              aria-label="mariobgsp GitHub contributions"
             >
-              <span class="prj-index">PRJ-04</span>
-              <h3 class="prj-name">Trading Suite</h3>
-              <p class="prj-desc">
-                IDX trading platform — FastAPI + TanStack Start pilot: live
-                quotes, multi-pane charting, 900+ ticker screener, bandarmology,
-                FIFO portfolio, backtests &amp; AI entry plans.
-              </p>
-              <div class="prj-meta">
-                <span class="prj-lang"
-                  ><span class="lang-dot lang-py"></span>Python</span
-                >
-                <span class="prj-tag">Trading</span>
-                <span class="prj-tag">IDX</span>
-                <span class="prj-go" aria-hidden="true">↗</span>
-              </div>
+              <img
+                class="gh-chart"
+                src="https://ghchart.rshah.org/CA8A04/mariobgsp"
+                alt="GitHub contribution graph for mariobgsp"
+                loading="lazy"
+              />
             </a>
-            <a
-              href="https://github.com/mariobgsp/thermal-face-recognition"
-              target="_blank"
-              rel="noopener"
-              class="project-card plate"
-            >
-              <span class="prj-index">PRJ-05</span>
-              <h3 class="prj-name">Thermal Face Recognition</h3>
-              <p class="prj-desc">
-                Thermal emotion recognition using CNNs — final-year thesis
-                system for psychotherapy measurement instrumentation.
-              </p>
-              <div class="prj-meta">
-                <span class="prj-lang"
-                  ><span class="lang-dot lang-py"></span>Jupyter</span
-                >
-                <span class="prj-tag">AI / CNN</span>
-                <span class="prj-tag">Thesis</span>
-                <span class="prj-go" aria-hidden="true">↗</span>
+            <div class="gh-cols">
+              <div>
+                <div class="mono-tag gh-act-title">Recent activity</div>
+                <ul class="gh-act-list" id="ghActivity">
+                  <li>Loading live activity…</li>
+                </ul>
               </div>
-            </a>
+              <div>
+                <div class="mono-tag gh-act-title">Pull requests</div>
+                <ul class="gh-act-list" id="ghPrs">
+                  <li>
+                    <span class="gh-act">upstream PR · closed</span>
+                    <a
+                      href="https://github.com/NousResearch/hermes-agent/pull/83902"
+                      target="_blank"
+                      rel="noopener"
+                      >fix: coerce dict-valued model/default config back to
+                      string</a
+                    ><span class="gh-when"
+                      >NousResearch/hermes-agent#83902</span
+                    >
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -2183,7 +2634,7 @@
       <section id="skills" class="sheet">
         <div class="container">
           <div class="fig-label reveal">
-            <span class="fig-num">FIG. 05</span> — Spec Sheet
+            <span class="fig-num">LVL 05</span> · Skill Tree
           </div>
           <h2 class="sheet-title reveal">Skills &amp; Credentials</h2>
           <div class="sheet-rule reveal"></div>
@@ -2355,12 +2806,12 @@
     <footer id="contact">
       <div class="container">
         <div class="fig-label reveal">
-          <span class="fig-num">FIG. 06</span> — Transmission End
+          <span class="fig-num">LVL 06</span> · Tavern
         </div>
         <div class="title-block plate reveal">
           <div class="tb-title">
             <span class="tb-name">Muhammad Ario<br />Bagus Prakusa</span>
-            <span class="tb-rev">REV 2026 — Sheet 1 of 1</span>
+            <span class="tb-rev">Save File · 2026</span>
           </div>
           <div class="tb-grid">
             <div class="tb-cell">
@@ -2612,6 +3063,130 @@
         setTimeout(step, 400);
       }
 
+      /* ===== GitHub activity (public events, static fallback) ===== */
+      // ponytail: unauthenticated api.github.com capped at 60 req/hr; static fallback line covers limit/offline
+      function initGithub() {
+        const list = document.getElementById("ghActivity");
+        if (!list) return;
+        const label = {
+          PushEvent: "pushed to",
+          PullRequestEvent: "PR in",
+          IssuesEvent: "issue in",
+          ForkEvent: "forked",
+          WatchEvent: "starred",
+          CreateEvent: "created in",
+          ReleaseEvent: "released in",
+        };
+        fetch(
+          "https://api.github.com/users/mariobgsp/events/public?per_page=12",
+        )
+          .then((r) => {
+            if (!r.ok) throw 0;
+            return r.json();
+          })
+          .then((evts) => {
+            // pin hermes-agent activity to the top, rest stays chronological
+            const items = (evts || [])
+              .filter((e) => label[e.type])
+              .sort(
+                (a, b) =>
+                  (b.repo.name === "mariobgsp/hermes-agent") -
+                  (a.repo.name === "mariobgsp/hermes-agent"),
+              )
+              .slice(0, 5);
+            if (!items.length) throw 0;
+            list.replaceChildren();
+            for (const e of items) {
+              const li = document.createElement("li");
+              const act = document.createElement("span");
+              act.className = "gh-act";
+              act.textContent = label[e.type];
+              const a = document.createElement("a");
+              a.href = "https://github.com/" + e.repo.name;
+              a.target = "_blank";
+              a.rel = "noopener";
+              a.textContent = (e.repo.name || "").replace("mariobgsp/", "");
+              const when = document.createElement("span");
+              when.className = "gh-when";
+              const d = Math.max(
+                0,
+                Math.round((Date.now() - new Date(e.created_at)) / 864e5),
+              );
+              when.textContent =
+                d === 0 ? "today" : d === 1 ? "yesterday" : d + "d ago";
+              li.append(act, " ", a, when);
+              list.append(li);
+            }
+          })
+          .catch(() => {
+            list.replaceChildren();
+            const li = document.createElement("li");
+            li.textContent = "Live feed unavailable — ";
+            const a = document.createElement("a");
+            a.href = "https://github.com/mariobgsp";
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.textContent = "see activity on GitHub ↗";
+            li.append(a);
+            list.append(li);
+          });
+        fetchPrs();
+      }
+
+      /* Pinned upstream Hermes PR (static) + recent PRs (search API) */
+      // ponytail: search API capped at 10 req/min unauthenticated; static pin survives limit/offline
+      function fetchPrs() {
+        const HERMES_PR =
+          "https://github.com/NousResearch/hermes-agent/pull/83902";
+        const list = document.getElementById("ghPrs");
+        if (!list) return;
+        fetch(
+          "https://api.github.com/search/issues?q=author:mariobgsp+type:pr&per_page=8&sort=created&order=desc",
+        )
+          .then((r) => {
+            if (!r.ok) throw 0;
+            return r.json();
+          })
+          .then((res) => {
+            const prs = (res.items || [])
+              .filter((pr) => pr.html_url !== HERMES_PR)
+              .slice(0, 4);
+            for (const pr of prs) {
+              let state = "closed PR";
+              if (pr.pull_request.merged_at) state = "merged";
+              else if (pr.state === "open") state = "open PR";
+              const li = document.createElement("li");
+              const act = document.createElement("span");
+              act.className = "gh-act";
+              act.textContent = state;
+              const a = document.createElement("a");
+              a.href = pr.html_url;
+              a.target = "_blank";
+              a.rel = "noopener";
+              a.textContent = "#" + pr.number + " " + pr.title;
+              const repo = document.createElement("span");
+              repo.className = "gh-when";
+              repo.textContent = pr.repository_url.replace(
+                "https://api.github.com/repos/",
+                "",
+              );
+              li.append(act, " ", a, repo);
+              list.append(li);
+            }
+          })
+          .catch(() => {
+            const li = document.createElement("li");
+            li.textContent = "More PRs live on GitHub — ";
+            const a = document.createElement("a");
+            a.href = "https://github.com/mariobgsp";
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.textContent = "see profile ↗";
+            li.append(a);
+            list.append(li);
+          });
+      }
+
       /* ===== Copy email to clipboard ===== */
       function initCopy() {
         const copyBtn = document.getElementById("copyEmailBtn");
@@ -2648,6 +3223,7 @@
       initReveals();
       initTech();
       initCopy();
+      initGithub();
     </script>
   </body>
 </html>
