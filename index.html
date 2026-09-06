@@ -1120,15 +1120,15 @@
       /* ===== ABOUT ===== */
       .about-grid {
         display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: clamp(36px, 5vw, 60px);
-        align-items: start;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 44px;
+        align-items: center;
       }
 
       .about-text p {
         margin-bottom: 18px;
         text-wrap: pretty;
-        max-width: 62ch;
+        text-align: justify;
       }
 
       .about-text strong {
@@ -1138,11 +1138,14 @@
 
       .spec-stats {
         overflow: hidden;
+        align-self: center;
       }
 
       .spec-row {
         display: grid;
-        grid-template-columns: minmax(88px, max-content) 1fr;
+        grid-template-columns: 96px 1fr;
+        column-gap: 12px;
+        align-items: center;
         grid-template-areas:
           "value label"
           "value note";
@@ -1731,8 +1734,12 @@
       .skills-layout {
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
-        gap: clamp(36px, 5vw, 60px);
-        align-items: start;
+        gap: 44px;
+        align-items: stretch;
+      }
+
+      .skills-layout > .edu-block {
+        grid-column: 1 / -1;
       }
 
       .spec-cluster {
@@ -2707,17 +2714,6 @@
                   </li>
                 </ul>
               </div>
-              <div class="edu-block plate reveal">
-                <span class="mono-tag">Education</span>
-                <div class="edu-degree">B.Eng, Engineering Physics</div>
-                <div class="edu-school">Universitas Gadjah Mada</div>
-                <div class="edu-date">Aug 2017 — Jul 2021</div>
-                <p class="edu-thesis">
-                  Thesis: Design of Emotion Identification System based on
-                  Thermal Camera Image with CNN Classification for Psychotherapy
-                  Measurement Instrumentation.
-                </p>
-              </div>
             </div>
             <div class="reveal">
               <div class="spec-cluster">
@@ -2796,6 +2792,17 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <div class="edu-block plate reveal">
+              <span class="mono-tag">Education</span>
+              <div class="edu-degree">B.Eng, Engineering Physics</div>
+              <div class="edu-school">Universitas Gadjah Mada</div>
+              <div class="edu-date">Aug 2017 — Jul 2021</div>
+              <p class="edu-thesis">
+                Thesis: Design of Emotion Identification System based on Thermal
+                Camera Image with CNN Classification for Psychotherapy
+                Measurement Instrumentation.
+              </p>
             </div>
           </div>
         </div>
