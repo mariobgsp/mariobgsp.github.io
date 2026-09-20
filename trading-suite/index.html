@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Trading Suite — Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes.</title>
+    <meta name="description" content="Trading Suite: Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes." />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero hero-compact" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb" href="/work/">&larr; All work</a>
+            <p class="kicker"><b>[ Python ]</b> 4 of 6</p>
+            <h1 class="hero-name">Trading Suite</h1>
+            <p class="hero-title">Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes.</p>
+            <div class="cmd-wrap"><pre class="cmd">./trading-suite run</pre></div>
+            <div class="stat-row">
+            <div class="stat"><b>39 passed</b><span>Backend test suite</span></div>
+            <div class="stat"><b>900+ tickers</b><span>IDX universe in config</span></div>
+            <div class="stat"><b>22 apps to 5</b><span>UI routes after lean pass</span></div>
+            <div class="stat"><b>~963</b><span>Rows per IDX summary call</span></div>
+            </div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener">Repository on GitHub</a>
+              <a class="btn btn-ghost" href="#install">Install</a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">Python</li><li class="tag">FastAPI</li><li class="tag">Next.js</li><li class="tag">TypeScript</li><li class="tag">SQLite</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">A self-hosted desk for the Indonesian stock market (IDX). It pulls quotes, history, foreign flow and broker activity from public feeds, caches them, and turns them into five screens: an overview, a charting page with foreign-flow bars, a streaming screener, a per-ticker profiler, and calculators.</p>
+          <p class="prose">It is for one person or a small team who wants their own copy of the market data rather than a subscription, and who is happy to run a backend and a front end on their own machine.</p>
+          <p class="prose">Nothing is stored in a company cloud: quotes live in a local SQLite WAL cache under backend/data/cache.db, and the only outbound calls are to the public data sources.</p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it is put together</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>backend/app/main.py wires FastAPI routers from backend/app/routers/ (market, screener, validator, intel, analysis, regime, backtest, portfolio, summary, alerts, sentiment); services live one level up in backend/app/*.py. The front end is Next.js 16 app-router routes in src/app/{overview,markets,screener,profiler,calculators}, with the nav generated from one source in src/lib/apps.ts.</li>
+  <li>Screener: backend/app/screener.py with backend/app/routers/screener.py streams results over SSE at GET /api/screener/scan/stream, and the suspended-ticker filter runs in backend/app/idx.py before the ThreadPool fan-out so excluded names are never fetched.</li>
+  <li>Bandarmology (Indonesian broker-flow analysis) is the strongest single feature: backend/app/validator.py holds BandarmologyAnalyzer (phase, intent radar, flow metrics), served by backend/app/routers/validator.py at GET /api/validator/{ticker} and rendered inside the profiler page at src/app/profiler/page.tsx.</li>
+  <li>FIFO portfolio P/L is a real engine - backend/app/_fifo.py holds FIFOEngine and JSON load/save, called only by backend/app/portfolio.py - but it is API-only: next.config.ts redirects /portfolio to /profiler, so there is no standalone portfolio screen.</li>
+  <li>Backtesting is backend/app/backtest.py (pattern_backtests) behind GET /api/analysis/backtest/{ticker} in backend/app/routers/analysis.py - likewise API-only, since /backtest redirects to /profiler.</li>
+  <li>Caching is the seam that makes it cheap: backend/app/cache.py plus backend/app/db.py give per-feed TTLs in a SQLite WAL file with stale-while-revalidate and _spawn_refresh dedupe; the front end mirrors it in src/lib/cache.ts (memory + sessionStorage).</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-trading-suite.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">cd backend</pre>
+            <pre class="cmd">python -m venv .venv</pre>
+            <pre class="cmd">.venv/bin/pip install -r requirements.txt</pre>
+            <pre class="cmd">cp ../.env.example .env   # optional; runs empty</pre>
+            <pre class="cmd">cd .. &amp;&amp; npm install</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>Start both halves with the runner from the repo root: chmod +x ./trading-suite &amp;&amp; ./trading-suite run (backend on :8000, front end on :3000).</li>
+            <li>Open http://localhost:3000 - the launcher shows exactly five cards: Overview, Markets, Screener, Profiler, Calculators.</li>
+            <li>Go to /screener: the scan streams in over SSE rather than waiting for one big payload.</li>
+            <li>Open /profiler?ticker=BBCA - one screen showing quote, candles, beta, regime, the bandarmology phase, the intent radar, the broker panel and an entry plan.</li>
+            <li>Check the backend directly at http://127.0.0.1:8000/api/health, and browse the auto-generated API at http://127.0.0.1:8000/docs.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What the repo states</h2>
+          <div class="card-grid">
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Backend test suite</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">39 passed</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">IDX universe in config</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">900+ tickers</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">UI routes after lean pass</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">22 apps to 5</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Rows per IDX summary call</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">~963</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>AI-generated summaries are not a working feature any more: backend/app/ai.py is an explicit no-op stub (&#x27;AI section has been dismantled&#x27;), it returns None and nothing imports it, so every caller falls back to deterministic text - the README&#x27;s OPENCODE_GO_API_KEY row is stale and was left out of the claims above.</li>
+            <li>FIFO portfolio tracking and pattern backtesting are backend-only: next.config.ts hard-redirects /portfolio and /backtest to /profiler, so both show up as API endpoints rather than screens.</li>
+            <li>Broker data is best-effort and partly credentialed: the Stockbit panel needs STOCKBIT_JWT_TOKEN (or user/password) and shows a degraded message without it.</li>
+            <li>Accuracy is bounded by third-party sources - an IDX summary endpoint scraped with curl_cffi, yfinance .JK history, and TradingView - so the numbers are cached copies of someone else&#x27;s feed, not an exchange-grade tick store.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="http://localhost:3000" target="_blank" rel="noopener">Local front end</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="http://127.0.0.1:8000/docs" target="_blank" rel="noopener">Local API docs</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener">github.com/mariobgsp/trading-suite</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">All six projects</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

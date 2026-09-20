@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Trading CLI — Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</title>
+    <meta name="description" content="Trading CLI: Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates." />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero hero-compact" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb" href="/work/">&larr; All work</a>
+            <p class="kicker"><b>[ Python ]</b> 5 of 6</p>
+            <h1 class="hero-name">Trading CLI</h1>
+            <p class="hero-title">Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</p>
+            <div class="cmd-wrap"><pre class="cmd">trading-cli --period 1y --json &gt; /tmp/picks.json</pre></div>
+            <div class="stat-row">
+            <div class="stat"><b>~900 IDX tickers</b><span>Universe per scan</span></div>
+            <div class="stat"><b>~48% (n=110)</b><span>scalp_ema_5 pooled winrate</span></div>
+            <div class="stat"><b>50.8% to 12.5%</b><span>hr_pdl: pooled to OOS</span></div>
+            <div class="stat"><b>not proven</b><span>70% winrate sleeve (README finding)</span></div>
+            <div class="stat"><b>~0.5%</b><span>Round-trip cost model</span></div>
+            <div class="stat"><b>57.1% vs 55.6%</b><span>tune.py grid OOS best</span></div>
+            </div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener">Repository on GitHub</a>
+              <a class="btn btn-ghost" href="#install">Install</a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">Python 3.11+</li><li class="tag">pandas</li><li class="tag">yfinance</li><li class="tag">IDX/IHSG</li><li class="tag">Backtesting</li><li class="tag">Walk-forward</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">It screens roughly 900 IDX/IHSG tickers each morning against the Minervini Trend Template (8 checks) plus a VCP contraction score, then plans the entry zone, stop and targets for the ones that qualify.</p>
+          <p class="prose">Each pick is also backtested across 18 strategies with real IDX fees and slippage, tagged with the market regime at entry, and re-checked walk-forward out-of-sample so a threshold is only kept when it survives unseen data.</p>
+          <p class="prose">It is for a swing trader or a screening agent that wants machine-readable output and an explicit no-trade answer instead of a forced recommendation.</p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it is put together</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>trading_cli/cli.py is the whole surface (exposed as the trading-cli script in pyproject.toml): it parses the flags, runs the scan, ranks by expectancy, splits qualifiers from near_miss, and prints the JSON that carries picks, near_miss, leaderboard, regime_pooled and wf_regime.</li>
+  <li>trading_cli/scan.py:scan_universe() fetches ^JKSE plus the tickers and calls trading_cli/minervini.py:trend_template(), vcp_score() and rs_vs_ihsg() before applying the regime gates (ADTV, ATR14, IHSG stage, cmf).</li>
+  <li>trading_cli/backtest.py holds the 18-entry STRATS table (_sig_vcp_breakout, _sig_scalp_ema_5 and so on) and backtest.run(), which fills at the next open with fees plus slippage and tags each trade through trading_cli/regime.py:tag_ihsg_stage(), tag_atr_regime() and regime_of().</li>
+  <li>trading_cli/validate.py:walk_forward() replays the strategies on rolling train-252 / step-60 windows for out-of-sample confirmation, while trading_cli/tune.py:tune_vcp() grids the VCP thresholds under the same gate.</li>
+  <li>trading_cli/entry.py:plan() converts the 20-day-high pivot into the buy zone, the tightest stop (20-day low, close minus 2 ATR, or -8%) and T1/T2/T3 targets; trading_cli/ml_filter.py:gate_pooled_n() and check_leakage() guard any future ML work.</li>
+  <li>Data path: trading_cli/data.py (yfinance fetch, throttle, rate-limit backoff, 4-thread batch) over trading_cli/cache.py (SQLite in WAL mode under the XDG cache dir, 12h history TTL, stale-while-revalidate).</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-trading-cli.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">cd trading-cli</pre>
+            <pre class="cmd">python3 -m venv .venv &amp;&amp; .venv/bin/pip install -e .   # requires Python 3.11+, yfinance&gt;=0.2.40, pandas&gt;=2.0, numpy&gt;=1.24</pre>
+            <pre class="cmd">ln -sf &quot;$PWD/.venv/bin/trading-cli&quot; ~/.local/bin/trading-cli   # or call .venv/bin/trading-cli directly</pre>
+            <pre class="cmd">trading-cli --help</pre>
+            <pre class="cmd">trading-cli --doctor   # probes yfinance and cache health</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>trading-cli --scan-only --limit 50 --period 1y — the fastest run: a qualifier table plus the NEAR MISS block, a few seconds when cached. --scan-only skips the backtest stages, so the 70% HUNT and leaderboard blocks only appear on a full run.</li>
+            <li>trading-cli --ticker BBCA — one-ticker deep dive with the Trend Template checks, VCP score, entry plan and per-strategy backtest stats.</li>
+            <li>trading-cli --json &gt; picks.json then jq &#x27;.leaderboard&#x27; — the machine-readable expectancy leaderboard the agent workflow parses.</li>
+            <li>trading-cli --period 2y --validate — per-window out-of-sample results for the top strategies plus the pooled wf_regime block.</li>
+            <li>trading-cli --doctor — confirms the data path with a live probe of ^JKSE plus sample tickers and reports cache size.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What the repo states</h2>
+          <div class="card-grid">
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Universe per scan</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">~900 IDX tickers</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">scalp_ema_5 pooled winrate</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">~48% (n=110)</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">hr_pdl: pooled to OOS</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">50.8% to 12.5%</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">70% winrate sleeve (README finding)</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">not proven</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Round-trip cost model</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">~0.5%</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">tune.py grid OOS best</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">57.1% vs 55.6%</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>The README&#x27;s own honesty section states there is no proven 70% win-rate sleeve on daily yfinance OHLCV alone: every higher-R and divergence candidate failed both the pooled Wilson gate and the 2y walk-forward gate, and the measured ceiling is about 50% pooled win.</li>
+            <li>Institutional and broker-flow filters are not built: broker concentration or a foreign net-buy streak needs an idx.co.id scrape the README calls fragile, so it stays deferred behind ml_filter.gate_pooled_n(need=100), and there is no intraday VWAP because the data path is daily yfinance only.</li>
+            <li>Regime gating is deliberately soft (a -20 combo demote, not a hard veto) with fixed, untuned thresholds, so Stage 4 tape still produces candidates; changing it is gated on out-of-sample evidence at n&gt;=100.</li>
+            <li>Everything depends on Yahoo Finance daily data through trading_cli/data.py, which throttles and needs --workers 4 when it answers 401/429, so coverage and quality are only as good as that feed.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli/blob/main/research-idx-70pct-2026-08-29.md" target="_blank" rel="noopener">70% hunt research</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener">github.com/mariobgsp/trading-cli</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">All six projects</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

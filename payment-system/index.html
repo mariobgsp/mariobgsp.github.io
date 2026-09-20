@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Payment System — Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds.</title>
+    <meta name="description" content="Payment System: Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds." />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero hero-compact" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb" href="/work/">&larr; All work</a>
+            <p class="kicker"><b>[ Go ]</b> 1 of 6</p>
+            <h1 class="hero-name">Payment System</h1>
+            <p class="hero-title">Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds.</p>
+            <div class="cmd-wrap"><pre class="cmd">cd project &amp;&amp; docker compose up --build</pre></div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener">Repository on GitHub</a>
+              <a class="btn btn-ghost" href="#install">Install</a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">Go</li><li class="tag">PostgreSQL</li><li class="tag">Redis</li><li class="tag">Next.js</li><li class="tag">Docker Compose</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">A working payment lifecycle built end to end: a customer signs in, picks a product, places an order, charges it, and refunds it. Every state change runs through one TransactionLifecycle module that pairs a PostgreSQL transaction with an outbox row and an idempotency key, so retries and duplicate clicks cannot double-charge.</p>
+          <p class="prose">It exists as a reference implementation of the unglamorous parts of payments: HMAC-verified partner callbacks with a 300s replay window, background workers that turn outbox rows into invoice files, and a dead-letter queue for poison messages.</p>
+          <p class="prose">It is aimed at backend engineers who want to read real code for retries, callbacks and reconciliation rather than a slide deck about them.</p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it is put together</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>monolith/ - a single Go binary holding the TransactionLifecycle deep module: monolith/lifecycle/lifecycle.go for the state chart (CREATED to READY to SUCCESS/FAILED/REFUND) plus idempotency, and pricing.go for the discount math.</li>
+  <li>monolith/cmd/ - wiring and the endpoint table: routes.go, handlers.go for the new API, legacy.go for the ms-* compatible paths, http.go for envelopes, partner and outbox transport.</li>
+  <li>monolith/store/ - the persistence seam: store.go types with pg.go for production and memory.go for the dev/test fake, over PG transaction + store schemas.</li>
+  <li>monolith/jobs/ - the background half: outbox.go polls every 5s and routes rows (ms-notify-payment to an invoice, servicelogs kept queryable) with 3x backoff then a terminal dlq.* row; sweeper.go moves stale READY to FAILED after 5m and purges servicelogs past LOG_RETENTION_DAYS. The invoice worker (monolith/invoice/ + invoiceworker/) is the consumer: it writes receipt files to INVOICE_DIR/invoice_&lt;tx&gt;.json with the transaction id sanitized against path traversal.</li>
+  <li>ms-paymentagr/ - the partner stub (Go/Gin + Redis): charge, refund, a CheckoutUrl redirect page and HMAC-SHA256 signed callbacks, gated behind the api-key header and driven by ms-paymentagr/usecase/.</li>
+  <li>frontend/ - Next.js 16 + TypeScript + Tailwind portal (login, catalog, checkout, status, refunds) whose server-side client lives in frontend/src/lib/gateway.ts.</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-payment-system.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">cd project</pre>
+            <pre class="cmd">cp .env.example .env</pre>
+            <pre class="cmd"># edit .env and set every secret (PARTNER_API_KEY, NOTIFY_SECRET, POSTGRES_PASSWORD, ...)</pre>
+            <pre class="cmd">docker compose up --build</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>Wait for the five containers (postgres, redis, ms-paymentagr, monolith, frontend) to go healthy; the first boot seeds the schemas, outbox/idempotency tables and demo users/products.</li>
+            <li>Open http://localhost:3000 and sign in with one of the seeded demo accounts from project/pg-init-scripts/sql/20-store-schema.sql.</li>
+            <li>Place an order and watch the state move: POST /ms/api/v1/order/product with an Idempotency-Key inserts product_trx as CREATED plus its outbox and idempotency rows in one transaction.</li>
+            <li>Create the payment: POST /ms/api/v1/payment/create/SHOPEEPAY?transaction_id= moves CREATED to READY and returns a CheckoutUrl; calling it twice returns the same url.</li>
+            <li>A signed SUCCEEDED callback to POST /ms/api/v1/payment/notify (with x-callback-signature and x-callback-timestamp) drives READY to SUCCESS, and within 5s the poller writes INVOICE_DIR/invoice_&lt;tx&gt;.json; a forged signature is rejected with 401.</li>
+            <li>Refund with POST /ms/api/v1/payment/refund (SUCCESS to REFUND) - a second refund returns 409 - then read the audit trail at GET /v1/logs?limit=.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>The README publishes no benchmark numbers: the service-split decision is explicitly deferred until a load measurement justifies it, so there is no latency or throughput evidence to quote.</li>
+            <li>Callback verification is wide open when NOTIFY_SECRET is unset - the README documents that as a local-dev-only state, not a deployable one.</li>
+            <li>Sessions are short-lived opaque tokens held in memory, so they do not survive a restart or span instances.</li>
+            <li>The Java/Spring services are decommissioned and no longer in the tree - only the Go monolith, the partner stub and the Next.js frontend ship, with git history (and one leftover diagram) preserving the old design.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="http://localhost:3000" target="_blank" rel="noopener">Local web portal</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="http://localhost:8085" target="_blank" rel="noopener">Local monolith API</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener">github.com/mariobgsp/payment-system</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">All six projects</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

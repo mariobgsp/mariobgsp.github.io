@@ -370,3 +370,128 @@ a { color: inherit; }
   }
   .card:hover, .btn:hover { transform: none; }
 }
+
+/* ==========================================================================
+   PAGE BLOCKS - shared by /work/ and every /<project>/ landing page
+   ========================================================================== */
+.card h3 { margin: 0; }
+
+/* thumbnail */
+.thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--hairline-soft);
+  background: var(--paper-3);
+  transition: border-color var(--ease);
+}
+.card:hover .thumb { border-color: rgba(255, 122, 61, 0.5); }
+
+.card-role {
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.block-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--steel-dim);
+  margin-bottom: 8px;
+}
+
+.card-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* hero stat strip */
+.stat-row { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 24px; }
+.stat b {
+  display: block;
+  font-family: var(--px);
+  font-size: 0.72rem;
+  color: var(--accent);
+  line-height: 1.8;
+}
+.stat span {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--steel-dim);
+}
+
+/* install / run command block */
+.cmd {
+  position: relative;
+  display: block;
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper-3);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--accent);
+  padding: 12px 14px 12px 34px;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+.cmd::before {
+  content: "$";
+  position: absolute;
+  left: 13px;
+  color: var(--accent);
+}
+.cmd-wrap { margin-top: 20px; max-width: 640px; }
+
+/* prose + step lists on project pages */
+.prose { font-size: 1.05rem; line-height: 1.65; color: var(--steel); text-wrap: pretty; }
+.prose + .prose { margin-top: 12px; }
+.blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+
+/* two-column section: prose left, list right */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+
+/* wide hub card on /work/ */
+.span-all { grid-column: 1 / -1; }
+
+.footer-col h3 {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--steel-dim);
+  margin-bottom: 8px;
+}
+.footer-col a,
+.footer-col span { font-size: 0.95rem; color: var(--steel); }
+
+/* back link above a project hero */
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--steel-dim);
+  text-decoration: none;
+  margin-bottom: 18px;
+  transition: color var(--ease);
+}
+.crumb:hover { color: var(--accent); }
+
+/* hero variant for project pages: no forced full-height */
+.hero-compact { min-height: auto; padding: calc(var(--nav-h) + 34px) 0 8px; }
+
+/* section anchor offset for the fixed nav */
+.anchor { position: relative; top: calc(var(--nav-h) * -1); display: block; height: 0; }
+
+@media (max-width: 760px) {
+  .split { grid-template-columns: 1fr; gap: 22px; }
+}

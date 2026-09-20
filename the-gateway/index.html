@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>The Gateway — Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side.</title>
+    <meta name="description" content="The Gateway: Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side." />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero hero-compact" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb" href="/work/">&larr; All work</a>
+            <p class="kicker"><b>[ Go ]</b> 2 of 6</p>
+            <h1 class="hero-name">The Gateway</h1>
+            <p class="hero-title">Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side.</p>
+            <div class="cmd-wrap"><pre class="cmd">cd project &amp;&amp; docker compose up -d postgres</pre></div>
+            <div class="stat-row">
+            <div class="stat"><b>5 fails / 10 min</b><span>Config: login throttle</span></div>
+            <div class="stat"><b>2 to 10</b><span>Config: HPA replica range</span></div>
+            <div class="stat"><b>30s (5s dial)</b><span>Config: upstream timeout</span></div>
+            <div class="stat"><b>20s</b><span>Config: BFF request abort</span></div>
+            </div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener">Repository on GitHub</a>
+              <a class="btn btn-ghost" href="#install">Install</a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">Next.js 15</li><li class="tag">React 19</li><li class="tag">TypeScript</li><li class="tag">chi + pgx</li><li class="tag">PostgreSQL</li><li class="tag">Kubernetes</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">It is a self-hosted API management console: you register an upstream API by giving it an identifier, host, path, method, and the headers or parameters it may pass through, then the gateway forwards those calls for you.</p>
+          <p class="prose">It also manages store accounts (a client id plus a secret key you can regenerate) and keeps the login token in a server-side httpOnly cookie, so no JWT ever reaches browser JavaScript or localStorage.</p>
+          <p class="prose">It is for a developer or small team that wants one controlled front door for internal or third-party APIs instead of scattering upstream credentials across every client app.</p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it is put together</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>Browser to Next.js BFF: frontend/src/middleware.ts guards /home, /api/* and /store/*, and frontend/src/lib/session.ts keeps the JWT in an httpOnly, SameSite=Lax cookie.</li>
+  <li>frontend/src/app/gw/[...path]/route.ts dispatches the declarative route table in frontend/src/lib/gwRoutes.ts; frontend/src/lib/bffGateway.ts owns session to 401 mapping, the 20s AbortController, sanitization, and envelope to NextResponse translation.</li>
+  <li>Go surface: gateway-go/internal/handler/handler.go wires chi routes, leaving only /health and /gateway/user/login public; everything under /api/gateway and /api/store passes through the Bearer-token middleware in internal/handler/middleware.go.</li>
+  <li>Persistence: gateway-go/internal/store is split per entity (user, account, api, postgres.go) over pgx, and the signing secret is read per request from the system_properties table.</li>
+  <li>Forwarding: gateway-go/internal/service/forward.go takes a typed ForwardRequest and internal/service/upstream.go applies the persisted header allowlist, encodes the query once, and calls the upstream with a 5s dial and 30s client timeout.</li>
+  <li>Runtime: k8s/gateway-go/deployment.yaml runs 2 replicas with /health probes at 32Mi request / 64Mi limit, and hpa.yaml scales 2 to 10 pods on CPU 60% and memory 70%.</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-the-gateway.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">cd project &amp;&amp; docker compose up -d postgres</pre>
+            <pre class="cmd">psql &quot;$DATABASE_URL&quot; -f pg-init-scripts/gateway.sql   # still inside project/</pre>
+            <pre class="cmd">cd ../gateway-go</pre>
+            <pre class="cmd">DATABASE_URL=postgres://microservices:password@localhost:5432/gateway?sslmode=disable go run ./cmd/server</pre>
+            <pre class="cmd">cd ../frontend &amp;&amp; npm install</pre>
+            <pre class="cmd">BACKEND_API_URL=http://localhost:8080 npm run dev</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>Seed the database with project/pg-init-scripts/gateway.sql: it creates the api_gateway table with three example upstreams pointing at https://api.thecatapi.com.</li>
+            <li>Start the Go service and the frontend, then open http://localhost:3000 and sign in with a seeded user from that same SQL file.</li>
+            <li>You land on /home (frontend/src/app/home/page.tsx) with API and Store tabs listing the configured upstreams and store accounts.</li>
+            <li>Click an API row to open its detail page, edit the allowed headers and parameters, then press Try it Now! to send a real request through /gw/apis/execute/&lt;identifier&gt; and see the upstream response body.</li>
+            <li>curl http://localhost:8080/health returns {&quot;status&quot;:&quot;ok&quot;}, the same check the Kubernetes probes use.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What the repo states</h2>
+          <div class="card-grid">
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Config: login throttle</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">5 fails / 10 min</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Config: HPA replica range</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">2 to 10</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Config: upstream timeout</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">30s (5s dial)</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Config: BFF request abort</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">20s</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>The README has no limitations section, so the scope notes here are read off the code rather than claimed.</li>
+            <li>Login throttling is per-username and in memory (gateway-go/internal/auth/auth.go), so counters reset on restart and do not aggregate across the 2 to 10 replicas the HPA can run.</li>
+            <li>The BFF route table accepts only GET and POST (frontend/src/lib/gwRoutes.ts) even though upstream forwarding itself supports GET, POST, PUT, PATCH and DELETE.</li>
+            <li>Kubernetes manifests cover gateway-go only (k8s/gateway-go/); the frontend and PostgreSQL have no Deployment or Service, and the repo ships no benchmark or load-test numbers at all.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway/blob/main/specs/tech-architecture/tech-stack.md" target="_blank" rel="noopener">Tech stack notes</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener">github.com/mariobgsp/the-gateway</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">All six projects</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

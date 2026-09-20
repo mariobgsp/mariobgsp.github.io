@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>t-notes — Local-first notes and kanban in the browser - no cloud, no framework, no build step.</title>
+    <meta name="description" content="t-notes: Local-first notes and kanban in the browser - no cloud, no framework, no build step." />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero hero-compact" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb" href="/work/">&larr; All work</a>
+            <p class="kicker"><b>[ JavaScript ]</b> 6 of 6</p>
+            <h1 class="hero-name">t-notes</h1>
+            <p class="hero-title">Local-first notes and kanban in the browser - no cloud, no framework, no build step.</p>
+            <div class="cmd-wrap"><pre class="cmd">python3 -m http.server 8000</pre></div>
+            <div class="stat-row">
+            <div class="stat"><b>9.7 MiB</b><span>Windows exe size</span></div>
+            <div class="stat"><b>50 items</b><span>Notes list render window</span></div>
+            <div class="stat"><b>15</b><span>e2e tests (t-notes.spec.js)</span></div>
+            </div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/t-notes" target="_blank" rel="noopener">Repository on GitHub</a>
+              <a class="btn btn-ghost" href="#install">Install</a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">local-first</li><li class="tag">kanban</li><li class="tag">vanilla JS</li><li class="tag">Go</li><li class="tag">Tauri</li><li class="tag">no dependencies</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">t-notes is a single-user notes app and a kanban board in one, with all data kept in your own browser - nothing is sent to a server, and there is no account or sync service.</p>
+          <p class="prose">A note can also be pinned to a board list, and then the same item shows up as a card in both views, so edits stay in sync. Cards carry checklists with progress, due dates, comments, labels, tags and image attachments.</p>
+          <p class="prose">It is for people who want Trello&#x27;s core without the cloud: run it from static files on any OS with a browser, or on Windows as a small Go exe or a Tauri desktop app.</p>
+          <p class="prose">An optional AI assistant (bring your own key) can summarize, draft checklists and suggest ideas; the key stays local and is never exported.</p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it is put together</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>web/ is the entire UI with no framework and no build step: index.html, styles.css and app.js, plus logo.svg - styles.css uses content-visibility: auto for list rendering and defines the light/dark/midnight themes.</li>
+  <li>All state lives in browser localStorage under the key t-notes-v1 (const K at the top of web/app.js) and is written on every mutation; notes pinned to a board list render as cards, so the board and Notes view are one system.</li>
+  <li>main.go embeds web/ with //go:embed and serves it from a local net/http server, opening the default browser; the same binary self-installs when its filename contains &#x27;setup&#x27; (or --install) and removes itself with --uninstall.</li>
+  <li>src-tauri/ is the Tauri v2 desktop shell: src/main.rs exposes one Rust command, match_notes (batch substring match for large-corpus search, with a JS fallback), and tauri.conf.json sets frontendDist to ../web and bundles an NSIS installer with the tauri-plugin-autostart plugin for the launch-on-login toggle.</li>
+  <li>e2e/t-notes.spec.js is the Playwright suite, run against system Chromium with a mocked AI endpoint; build-windows.sh cross-compiles the Windows exe and setup exe from Linux with GOOS=windows go build.</li>
+  <li>Two host paths share the same web/ frontend: the Go exe (a browser launcher, with an /api/startup fallback for the ⏻ toggle) and the Tauri app (own window, real installer).</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-t-notes.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">cd t-notes/web</pre>
+            <pre class="cmd">python3 -m http.server 8000   # open http://localhost:8000 (Ctrl-C to stop)</pre>
+            <pre class="cmd">cd ..   # the two optional commands below run from the repo root</pre>
+            <pre class="cmd">sh build-windows.sh   # optional: dist/t-notes.exe + dist/t-notes-setup.exe from Linux (needs Go)</pre>
+            <pre class="cmd">npm install &amp;&amp; npx tauri dev   # optional: Tauri desktop app on Linux (needs Rust)</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>Run python3 -m http.server 8000 inside t-notes/web and open http://localhost:8000 - the Notes and board UI loads with no build step.</li>
+            <li>Click + New note, type a title first, and save: the note appears in the Notes list and a toast confirms every action.</li>
+            <li>Create a column with the New list… box, then add a card and drag it between columns to see the board update.</li>
+            <li>Pin a note to a board list so it renders as a card too, then click it to open the detail dialog (body, checklist + progress, list picker, image attachments).</li>
+            <li>Toggle the theme button to cycle light / dark / midnight - the choice persists across reloads.</li>
+            <li>Use ⤓ to export all data as JSON and ⤒ to restore it, or the ? button for the in-app guide.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What the repo states</h2>
+          <div class="card-grid">
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Windows exe size</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">9.7 MiB</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Notes list render window</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">50 items</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">e2e tests (t-notes.spec.js)</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">15</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>The Windows installer is unsigned: SmartScreen shows an &quot;Unknown publisher&quot; warning and the user must click More info → Run anyway (signing needs a paid cert, skipped for now).</li>
+            <li>There is no auto-updater yet - new versions are manual downloads from GitHub Releases.</li>
+            <li>The first install needs internet once for the WebView2 bootstrapper (nearly all Windows 10/11 PCs already have WebView2).</li>
+            <li>It is single-user and local-only: data lives in browser localStorage, so there is no sync, no sharing and no multi-device story.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/t-notes/releases/latest" target="_blank" rel="noopener">Releases</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/t-notes/blob/main/e2e/t-notes.spec.js" target="_blank" rel="noopener">Playwright suite</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/t-notes" target="_blank" rel="noopener">github.com/mariobgsp/t-notes</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">All six projects</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>routre — One static Go binary that cuts AI token bills and fails over providers for any CLI.</title>
+    <meta name="description" content="routre: One static Go binary that cuts AI token bills and fails over providers for any CLI." />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero hero-compact" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb" href="/work/">&larr; All work</a>
+            <p class="kicker"><b>[ Go ]</b> 3 of 6</p>
+            <h1 class="hero-name">routre</h1>
+            <p class="hero-title">One static Go binary that cuts AI token bills and fails over providers for any CLI.</p>
+            <div class="cmd-wrap"><pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh</pre></div>
+            <div class="stat-row">
+            <div class="stat"><b>91.5%</b><span>RTK tool-token reduction</span></div>
+            <div class="stat"><b>90.3%</b><span>Worst per-payload reduction</span></div>
+            <div class="stat"><b>10 MiB</b><span>Idle RSS</span></div>
+            <div class="stat"><b>12.9 MiB</b><span>Peak RSS, 3 opencode sessions</span></div>
+            <div class="stat"><b>10.6 MiB</b><span>Static binary size</span></div>
+            <div class="stat"><b>509</b><span>Models in config.all.json</span></div>
+            </div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener">Repository on GitHub</a>
+              <a class="btn btn-ghost" href="#install">Install</a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">Go</li><li class="tag">LLM gateway</li><li class="tag">OpenAI-compatible</li><li class="tag">token compression</li><li class="tag">failover</li><li class="tag">single binary</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">routre is a small local gateway that sits between your AI apps and AI providers on your own machine. You point a coding agent at http://127.0.0.1:20128 once, and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.</p>
+          <p class="prose">It ships as one static Go binary (~10.6 MiB) with no Node, Python, Postgres or Redis, and idles at about 10 MiB RAM.</p>
+          <p class="prose">It is aimed at anyone running OpenAI/Anthropic-compatible CLIs (opencode, Claude Code, Codex, Cursor) who wants lower token bills and less downtime, plus a per-agent token/cost ledger and a loopback-only browser dashboard.</p>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it is put together</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>CLI entrypoint is main.go with one file per command (setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go); bench.go is the gate that fails on any RTK regression below the target.</li>
+  <li>Every request walks a 7-step pipeline in internal/proxy/: detect dialect → RTK compress → cache lookup → tiered route → candidateRunner retry → translate → relay.</li>
+  <li>internal/rtk/ holds 12 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open, never grows a payload, 500 B–10 MiB window.</li>
+  <li>internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross.</li>
+  <li>internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover.</li>
+  <li>internal/proxy/dialect/ is the cross-kind SSE state machine (OpenAI ↔ Anthropic ↔ Gemini); internal/usage/ persists the token/cost ledger to ~/.routre/usage.json, and the loopback-only /ui dashboard is served from internal/proxy.</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-routre.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh</pre>
+            <pre class="cmd">routre version</pre>
+            <pre class="cmd">routre setup</pre>
+            <pre class="cmd">routre serve</pre>
+            <pre class="cmd">export OPENAI_BASE_URL=http://127.0.0.1:20128</pre>
+            <pre class="cmd">export ANTHROPIC_BASE_URL=http://127.0.0.1:20128</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>routre setup — wizard writes config.json (providers, tiers, models) and routre.env (API keys, 0600) with no shell exports needed.</li>
+            <li>routre check — validates the config and reports which API keys are set.</li>
+            <li>routre serve — starts the gateway on 127.0.0.1:20128 in the foreground (routre start --autostart for a daemon at boot).</li>
+            <li>curl http://127.0.0.1:20128/healthz — returns ok; then run any agent with OPENAI_BASE_URL/ANTHROPIC_BASE_URL pointed at the gateway.</li>
+            <li>routre list — shows connected providers plus the per-agent token and cost ledger, including rtk and cache savings.</li>
+            <li>Open http://127.0.0.1:20128/ui in a browser to set keys and edit the full config without touching JSON by hand.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What the repo states</h2>
+          <div class="card-grid">
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">RTK tool-token reduction</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">91.5%</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Worst per-payload reduction</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">90.3%</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Idle RSS</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">10 MiB</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Peak RSS, 3 opencode sessions</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">12.9 MiB</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Static binary size</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">10.6 MiB</p>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Models in config.all.json</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">509</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>The ≥90% figure is measured on tool-result tokens only; output tokens are never compressed, so real-session savings depend on how tool-heavy your traffic is.</li>
+            <li>Token estimates are an approximation (≈4 bytes/token) — a benchmark instrument, not billing-grade; tiktoken integration is listed as planned.</li>
+            <li>The npm distribution is deprecated: the package prints the curl command and exits, and no release automation remains for it.</li>
+            <li>Windows self-update is deferred — routre update on Windows prints a re-install hint instead of replacing the running .exe; Windows binaries are still shipped for manual install.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/releases/latest" target="_blank" rel="noopener">Releases</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/blob/main/docs/AGENT_ROUTRE_GUIDE.md" target="_blank" rel="noopener">Agent guide</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener">github.com/mariobgsp/routre</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">All six projects</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

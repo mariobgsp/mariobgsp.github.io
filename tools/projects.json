@@ -1,0 +1,590 @@
+[
+  {
+    "slug": "payment-system",
+    "name": "Payment System",
+    "strapline": "Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds.",
+    "lang": "Go",
+    "tags": [
+      "Go",
+      "PostgreSQL",
+      "Redis",
+      "Next.js",
+      "Docker Compose"
+    ],
+    "hero_cmd": "cd project && docker compose up --build",
+    "what": [
+      "A working payment lifecycle built end to end: a customer signs in, picks a product, places an order, charges it, and refunds it. Every state change runs through one TransactionLifecycle module that pairs a PostgreSQL transaction with an outbox row and an idempotency key, so retries and duplicate clicks cannot double-charge.",
+      "It exists as a reference implementation of the unglamorous parts of payments: HMAC-verified partner callbacks with a 300s replay window, background workers that turn outbox rows into invoice files, and a dead-letter queue for poison messages.",
+      "It is aimed at backend engineers who want to read real code for retries, callbacks and reconciliation rather than a slide deck about them."
+    ],
+    "architecture": [
+      "monolith/ - a single Go binary holding the TransactionLifecycle deep module: monolith/lifecycle/lifecycle.go for the state chart (CREATED to READY to SUCCESS/FAILED/REFUND) plus idempotency, and pricing.go for the discount math.",
+      "monolith/cmd/ - wiring and the endpoint table: routes.go, handlers.go for the new API, legacy.go for the ms-* compatible paths, http.go for envelopes, partner and outbox transport.",
+      "monolith/store/ - the persistence seam: store.go types with pg.go for production and memory.go for the dev/test fake, over PG transaction + store schemas.",
+      "monolith/jobs/ - the background half: outbox.go polls every 5s and routes rows (ms-notify-payment to an invoice, servicelogs kept queryable) with 3x backoff then a terminal dlq.* row; sweeper.go moves stale READY to FAILED after 5m and purges servicelogs past LOG_RETENTION_DAYS. The invoice worker (monolith/invoice/ + invoiceworker/) is the consumer: it writes receipt files to INVOICE_DIR/invoice_<tx>.json with the transaction id sanitized against path traversal.",
+      "ms-paymentagr/ - the partner stub (Go/Gin + Redis): charge, refund, a CheckoutUrl redirect page and HMAC-SHA256 signed callbacks, gated behind the api-key header and driven by ms-paymentagr/usecase/.",
+      "frontend/ - Next.js 16 + TypeScript + Tailwind portal (login, catalog, checkout, status, refunds) whose server-side client lives in frontend/src/lib/gateway.ts."
+    ],
+    "install": [
+      "cd project",
+      "cp .env.example .env",
+      "# edit .env and set every secret (PARTNER_API_KEY, NOTIFY_SECRET, POSTGRES_PASSWORD, ...)",
+      "docker compose up --build"
+    ],
+    "quickstart": [
+      "Wait for the five containers (postgres, redis, ms-paymentagr, monolith, frontend) to go healthy; the first boot seeds the schemas, outbox/idempotency tables and demo users/products.",
+      "Open http://localhost:3000 and sign in with one of the seeded demo accounts from project/pg-init-scripts/sql/20-store-schema.sql.",
+      "Place an order and watch the state move: POST /ms/api/v1/order/product with an Idempotency-Key inserts product_trx as CREATED plus its outbox and idempotency rows in one transaction.",
+      "Create the payment: POST /ms/api/v1/payment/create/SHOPEEPAY?transaction_id= moves CREATED to READY and returns a CheckoutUrl; calling it twice returns the same url.",
+      "A signed SUCCEEDED callback to POST /ms/api/v1/payment/notify (with x-callback-signature and x-callback-timestamp) drives READY to SUCCESS, and within 5s the poller writes INVOICE_DIR/invoice_<tx>.json; a forged signature is rejected with 401.",
+      "Refund with POST /ms/api/v1/payment/refund (SUCCESS to REFUND) - a second refund returns 409 - then read the audit trail at GET /v1/logs?limit=."
+    ],
+    "results": [],
+    "tradeoffs": [
+      "The README publishes no benchmark numbers: the service-split decision is explicitly deferred until a load measurement justifies it, so there is no latency or throughput evidence to quote.",
+      "Callback verification is wide open when NOTIFY_SECRET is unset - the README documents that as a local-dev-only state, not a deployable one.",
+      "Sessions are short-lived opaque tokens held in memory, so they do not survive a restart or span instances.",
+      "The Java/Spring services are decommissioned and no longer in the tree - only the Go monolith, the partner stub and the Next.js frontend ship, with git history (and one leftover diagram) preserving the old design."
+    ],
+    "links": [
+      {
+        "label": "Repository",
+        "url": "https://github.com/mariobgsp/payment-system"
+      },
+      {
+        "label": "Local web portal",
+        "url": "http://localhost:3000"
+      },
+      {
+        "label": "Local monolith API",
+        "url": "http://localhost:8085"
+      }
+    ],
+    "upwork": {
+      "title": "Payment System",
+      "role": "Backend Engineer & System Architect",
+      "description": "Designed and built a production-style payment platform using Go, PostgreSQL, Redis, Docker Compose, and Next.js. The system supports order creation, payment charging, HMAC-secured callbacks, refunds, invoice generation, and transaction logs. Implemented idempotency protection, authorization, transactional outbox processing, retries, dead-letter queues, and background workers for reliable asynchronous workflows.",
+      "skills": [
+        "Go",
+        "REST API",
+        "PostgreSQL",
+        "Redis",
+        "Docker"
+      ],
+      "deliverables": [
+        "Payment lifecycle API",
+        "Idempotency protection",
+        "HMAC callback verification",
+        "Transactional outbox and DLQ",
+        "Invoice background worker"
+      ]
+    }
+  },
+  {
+    "slug": "the-gateway",
+    "name": "The Gateway",
+    "strapline": "Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side.",
+    "lang": "Go",
+    "tags": [
+      "Next.js 15",
+      "React 19",
+      "TypeScript",
+      "chi + pgx",
+      "PostgreSQL",
+      "Kubernetes"
+    ],
+    "hero_cmd": "cd project && docker compose up -d postgres",
+    "what": [
+      "It is a self-hosted API management console: you register an upstream API by giving it an identifier, host, path, method, and the headers or parameters it may pass through, then the gateway forwards those calls for you.",
+      "It also manages store accounts (a client id plus a secret key you can regenerate) and keeps the login token in a server-side httpOnly cookie, so no JWT ever reaches browser JavaScript or localStorage.",
+      "It is for a developer or small team that wants one controlled front door for internal or third-party APIs instead of scattering upstream credentials across every client app."
+    ],
+    "architecture": [
+      "Browser to Next.js BFF: frontend/src/middleware.ts guards /home, /api/* and /store/*, and frontend/src/lib/session.ts keeps the JWT in an httpOnly, SameSite=Lax cookie.",
+      "frontend/src/app/gw/[...path]/route.ts dispatches the declarative route table in frontend/src/lib/gwRoutes.ts; frontend/src/lib/bffGateway.ts owns session to 401 mapping, the 20s AbortController, sanitization, and envelope to NextResponse translation.",
+      "Go surface: gateway-go/internal/handler/handler.go wires chi routes, leaving only /health and /gateway/user/login public; everything under /api/gateway and /api/store passes through the Bearer-token middleware in internal/handler/middleware.go.",
+      "Persistence: gateway-go/internal/store is split per entity (user, account, api, postgres.go) over pgx, and the signing secret is read per request from the system_properties table.",
+      "Forwarding: gateway-go/internal/service/forward.go takes a typed ForwardRequest and internal/service/upstream.go applies the persisted header allowlist, encodes the query once, and calls the upstream with a 5s dial and 30s client timeout.",
+      "Runtime: k8s/gateway-go/deployment.yaml runs 2 replicas with /health probes at 32Mi request / 64Mi limit, and hpa.yaml scales 2 to 10 pods on CPU 60% and memory 70%."
+    ],
+    "install": [
+      "cd project && docker compose up -d postgres",
+      "psql \"$DATABASE_URL\" -f pg-init-scripts/gateway.sql   # still inside project/",
+      "cd ../gateway-go",
+      "DATABASE_URL=postgres://microservices:password@localhost:5432/gateway?sslmode=disable go run ./cmd/server",
+      "cd ../frontend && npm install",
+      "BACKEND_API_URL=http://localhost:8080 npm run dev"
+    ],
+    "quickstart": [
+      "Seed the database with project/pg-init-scripts/gateway.sql: it creates the api_gateway table with three example upstreams pointing at https://api.thecatapi.com.",
+      "Start the Go service and the frontend, then open http://localhost:3000 and sign in with a seeded user from that same SQL file.",
+      "You land on /home (frontend/src/app/home/page.tsx) with API and Store tabs listing the configured upstreams and store accounts.",
+      "Click an API row to open its detail page, edit the allowed headers and parameters, then press Try it Now! to send a real request through /gw/apis/execute/<identifier> and see the upstream response body.",
+      "curl http://localhost:8080/health returns {\"status\":\"ok\"}, the same check the Kubernetes probes use."
+    ],
+    "results": [
+      {
+        "label": "Config: login throttle",
+        "value": "5 fails / 10 min"
+      },
+      {
+        "label": "Config: HPA replica range",
+        "value": "2 to 10"
+      },
+      {
+        "label": "Config: upstream timeout",
+        "value": "30s (5s dial)"
+      },
+      {
+        "label": "Config: BFF request abort",
+        "value": "20s"
+      }
+    ],
+    "tradeoffs": [
+      "The README has no limitations section, so the scope notes here are read off the code rather than claimed.",
+      "Login throttling is per-username and in memory (gateway-go/internal/auth/auth.go), so counters reset on restart and do not aggregate across the 2 to 10 replicas the HPA can run.",
+      "The BFF route table accepts only GET and POST (frontend/src/lib/gwRoutes.ts) even though upstream forwarding itself supports GET, POST, PUT, PATCH and DELETE.",
+      "Kubernetes manifests cover gateway-go only (k8s/gateway-go/); the frontend and PostgreSQL have no Deployment or Service, and the repo ships no benchmark or load-test numbers at all."
+    ],
+    "links": [
+      {
+        "label": "Source",
+        "url": "https://github.com/mariobgsp/the-gateway"
+      },
+      {
+        "label": "Tech stack notes",
+        "url": "https://github.com/mariobgsp/the-gateway/blob/main/specs/tech-architecture/tech-stack.md"
+      }
+    ],
+    "upwork": {
+      "title": "The Gateway",
+      "role": "Backend Engineer & API Architect",
+      "description": "Built an API gateway platform with a Next.js 15 Backend-for-Frontend layer in front of a Go gateway service and PostgreSQL. The BFF proxies requests server-side, applying auth, timeouts and envelope mapping, and never exposes JWTs to browser JavaScript. The Go gateway implements JWT authentication, rate limiting, API and store services, and forwarding to configured upstream APIs, shipped with Kubernetes manifests.",
+      "skills": [
+        "Go",
+        "Next.js",
+        "PostgreSQL",
+        "JWT Authentication",
+        "Rate Limiting"
+      ],
+      "deliverables": [
+        "Next.js BFF proxy layer",
+        "Go gateway service",
+        "httpOnly cookie session auth",
+        "JWT auth with rate limiting",
+        "Kubernetes deployment manifests"
+      ]
+    }
+  },
+  {
+    "slug": "routre",
+    "name": "routre",
+    "strapline": "One static Go binary that cuts AI token bills and fails over providers for any CLI.",
+    "lang": "Go",
+    "tags": [
+      "Go",
+      "LLM gateway",
+      "OpenAI-compatible",
+      "token compression",
+      "failover",
+      "single binary"
+    ],
+    "hero_cmd": "curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh",
+    "what": [
+      "routre is a small local gateway that sits between your AI apps and AI providers on your own machine. You point a coding agent at http://127.0.0.1:20128 once, and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.",
+      "It ships as one static Go binary (~10.6 MiB) with no Node, Python, Postgres or Redis, and idles at about 10 MiB RAM.",
+      "It is aimed at anyone running OpenAI/Anthropic-compatible CLIs (opencode, Claude Code, Codex, Cursor) who wants lower token bills and less downtime, plus a per-agent token/cost ledger and a loopback-only browser dashboard."
+    ],
+    "architecture": [
+      "CLI entrypoint is main.go with one file per command (setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go); bench.go is the gate that fails on any RTK regression below the target.",
+      "Every request walks a 7-step pipeline in internal/proxy/: detect dialect → RTK compress → cache lookup → tiered route → candidateRunner retry → translate → relay.",
+      "internal/rtk/ holds 12 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open, never grows a payload, 500 B–10 MiB window.",
+      "internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross.",
+      "internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover.",
+      "internal/proxy/dialect/ is the cross-kind SSE state machine (OpenAI ↔ Anthropic ↔ Gemini); internal/usage/ persists the token/cost ledger to ~/.routre/usage.json, and the loopback-only /ui dashboard is served from internal/proxy."
+    ],
+    "install": [
+      "curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh",
+      "routre version",
+      "routre setup",
+      "routre serve",
+      "export OPENAI_BASE_URL=http://127.0.0.1:20128",
+      "export ANTHROPIC_BASE_URL=http://127.0.0.1:20128"
+    ],
+    "quickstart": [
+      "routre setup — wizard writes config.json (providers, tiers, models) and routre.env (API keys, 0600) with no shell exports needed.",
+      "routre check — validates the config and reports which API keys are set.",
+      "routre serve — starts the gateway on 127.0.0.1:20128 in the foreground (routre start --autostart for a daemon at boot).",
+      "curl http://127.0.0.1:20128/healthz — returns ok; then run any agent with OPENAI_BASE_URL/ANTHROPIC_BASE_URL pointed at the gateway.",
+      "routre list — shows connected providers plus the per-agent token and cost ledger, including rtk and cache savings.",
+      "Open http://127.0.0.1:20128/ui in a browser to set keys and edit the full config without touching JSON by hand."
+    ],
+    "results": [
+      {
+        "label": "RTK tool-token reduction",
+        "value": "91.5%"
+      },
+      {
+        "label": "Worst per-payload reduction",
+        "value": "90.3%"
+      },
+      {
+        "label": "Idle RSS",
+        "value": "10 MiB"
+      },
+      {
+        "label": "Peak RSS, 3 opencode sessions",
+        "value": "12.9 MiB"
+      },
+      {
+        "label": "Static binary size",
+        "value": "10.6 MiB"
+      },
+      {
+        "label": "Models in config.all.json",
+        "value": "509"
+      }
+    ],
+    "tradeoffs": [
+      "The ≥90% figure is measured on tool-result tokens only; output tokens are never compressed, so real-session savings depend on how tool-heavy your traffic is.",
+      "Token estimates are an approximation (≈4 bytes/token) — a benchmark instrument, not billing-grade; tiktoken integration is listed as planned.",
+      "The npm distribution is deprecated: the package prints the curl command and exits, and no release automation remains for it.",
+      "Windows self-update is deferred — routre update on Windows prints a re-install hint instead of replacing the running .exe; Windows binaries are still shipped for manual install."
+    ],
+    "links": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/mariobgsp/routre"
+      },
+      {
+        "label": "Releases",
+        "url": "https://github.com/mariobgsp/routre/releases/latest"
+      },
+      {
+        "label": "Changelog",
+        "url": "https://github.com/mariobgsp/routre/blob/main/CHANGELOG.md"
+      },
+      {
+        "label": "Agent guide",
+        "url": "https://github.com/mariobgsp/routre/blob/main/docs/AGENT_ROUTRE_GUIDE.md"
+      }
+    ],
+    "upwork": {
+      "title": "routre",
+      "role": "Go Backend Engineer & Systems Developer",
+      "description": "Developed a lightweight local LLM gateway for coding agents using Go. The gateway provides a unified interface for multiple providers, automatic failover, model-list refresh, response caching, token compression, and per-agent token and cost tracking. Designed as a low-memory static binary with no external runtime dependencies, improving reliability and visibility for local AI-assisted development workflows.",
+      "skills": [
+        "Go",
+        "HTTP API",
+        "Gateway Architecture",
+        "Response Caching",
+        "Fault Tolerance"
+      ],
+      "deliverables": [
+        "Unified LLM provider interface",
+        "Automatic provider failover",
+        "Response caching",
+        "Token and cost ledger",
+        "Lightweight static binary"
+      ]
+    }
+  },
+  {
+    "slug": "trading-suite",
+    "name": "Trading Suite",
+    "strapline": "Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes.",
+    "lang": "Python",
+    "tags": [
+      "Python",
+      "FastAPI",
+      "Next.js",
+      "TypeScript",
+      "SQLite"
+    ],
+    "hero_cmd": "./trading-suite run",
+    "what": [
+      "A self-hosted desk for the Indonesian stock market (IDX). It pulls quotes, history, foreign flow and broker activity from public feeds, caches them, and turns them into five screens: an overview, a charting page with foreign-flow bars, a streaming screener, a per-ticker profiler, and calculators.",
+      "It is for one person or a small team who wants their own copy of the market data rather than a subscription, and who is happy to run a backend and a front end on their own machine.",
+      "Nothing is stored in a company cloud: quotes live in a local SQLite WAL cache under backend/data/cache.db, and the only outbound calls are to the public data sources."
+    ],
+    "architecture": [
+      "backend/app/main.py wires FastAPI routers from backend/app/routers/ (market, screener, validator, intel, analysis, regime, backtest, portfolio, summary, alerts, sentiment); services live one level up in backend/app/*.py. The front end is Next.js 16 app-router routes in src/app/{overview,markets,screener,profiler,calculators}, with the nav generated from one source in src/lib/apps.ts.",
+      "Screener: backend/app/screener.py with backend/app/routers/screener.py streams results over SSE at GET /api/screener/scan/stream, and the suspended-ticker filter runs in backend/app/idx.py before the ThreadPool fan-out so excluded names are never fetched.",
+      "Bandarmology (Indonesian broker-flow analysis) is the strongest single feature: backend/app/validator.py holds BandarmologyAnalyzer (phase, intent radar, flow metrics), served by backend/app/routers/validator.py at GET /api/validator/{ticker} and rendered inside the profiler page at src/app/profiler/page.tsx.",
+      "FIFO portfolio P/L is a real engine - backend/app/_fifo.py holds FIFOEngine and JSON load/save, called only by backend/app/portfolio.py - but it is API-only: next.config.ts redirects /portfolio to /profiler, so there is no standalone portfolio screen.",
+      "Backtesting is backend/app/backtest.py (pattern_backtests) behind GET /api/analysis/backtest/{ticker} in backend/app/routers/analysis.py - likewise API-only, since /backtest redirects to /profiler.",
+      "Caching is the seam that makes it cheap: backend/app/cache.py plus backend/app/db.py give per-feed TTLs in a SQLite WAL file with stale-while-revalidate and _spawn_refresh dedupe; the front end mirrors it in src/lib/cache.ts (memory + sessionStorage)."
+    ],
+    "install": [
+      "cd backend",
+      "python -m venv .venv",
+      ".venv/bin/pip install -r requirements.txt",
+      "cp ../.env.example .env   # optional; runs empty",
+      "cd .. && npm install"
+    ],
+    "quickstart": [
+      "Start both halves with the runner from the repo root: chmod +x ./trading-suite && ./trading-suite run (backend on :8000, front end on :3000).",
+      "Open http://localhost:3000 - the launcher shows exactly five cards: Overview, Markets, Screener, Profiler, Calculators.",
+      "Go to /screener: the scan streams in over SSE rather than waiting for one big payload.",
+      "Open /profiler?ticker=BBCA - one screen showing quote, candles, beta, regime, the bandarmology phase, the intent radar, the broker panel and an entry plan.",
+      "Check the backend directly at http://127.0.0.1:8000/api/health, and browse the auto-generated API at http://127.0.0.1:8000/docs."
+    ],
+    "results": [
+      {
+        "label": "Backend test suite",
+        "value": "39 passed"
+      },
+      {
+        "label": "IDX universe in config",
+        "value": "900+ tickers"
+      },
+      {
+        "label": "UI routes after lean pass",
+        "value": "22 apps to 5"
+      },
+      {
+        "label": "Rows per IDX summary call",
+        "value": "~963"
+      }
+    ],
+    "tradeoffs": [
+      "AI-generated summaries are not a working feature any more: backend/app/ai.py is an explicit no-op stub ('AI section has been dismantled'), it returns None and nothing imports it, so every caller falls back to deterministic text - the README's OPENCODE_GO_API_KEY row is stale and was left out of the claims above.",
+      "FIFO portfolio tracking and pattern backtesting are backend-only: next.config.ts hard-redirects /portfolio and /backtest to /profiler, so both show up as API endpoints rather than screens.",
+      "Broker data is best-effort and partly credentialed: the Stockbit panel needs STOCKBIT_JWT_TOKEN (or user/password) and shows a degraded message without it.",
+      "Accuracy is bounded by third-party sources - an IDX summary endpoint scraped with curl_cffi, yfinance .JK history, and TradingView - so the numbers are cached copies of someone else's feed, not an exchange-grade tick store."
+    ],
+    "links": [
+      {
+        "label": "Repository",
+        "url": "https://github.com/mariobgsp/trading-suite"
+      },
+      {
+        "label": "Local front end",
+        "url": "http://localhost:3000"
+      },
+      {
+        "label": "Local API docs",
+        "url": "http://127.0.0.1:8000/docs"
+      }
+    ],
+    "upwork": {
+      "title": "Trading Suite",
+      "role": "Backend Engineer & Quantitative Software Developer",
+      "description": "Built a financial data platform using Python and FastAPI for Indonesian stock market analysis. The platform includes live quotes, multi-ticker screening, technical indicators, bandarmology validation, FIFO portfolio tracking, market-regime filtering, historical backtesting, and AI-generated market summaries. Designed data-processing workflows and API endpoints for market analysis, portfolio calculations, and reproducible trading research.",
+      "skills": [
+        "Python",
+        "FastAPI",
+        "REST API",
+        "Data Analysis",
+        "Backtesting"
+      ],
+      "deliverables": [
+        "FastAPI backend",
+        "Live quote integration",
+        "Stock screening engine",
+        "FIFO portfolio tracking",
+        "Backtesting workflows"
+      ]
+    }
+  },
+  {
+    "slug": "trading-cli",
+    "name": "Trading CLI",
+    "strapline": "Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.",
+    "lang": "Python",
+    "tags": [
+      "Python 3.11+",
+      "pandas",
+      "yfinance",
+      "IDX/IHSG",
+      "Backtesting",
+      "Walk-forward"
+    ],
+    "hero_cmd": "trading-cli --period 1y --json > /tmp/picks.json",
+    "what": [
+      "It screens roughly 900 IDX/IHSG tickers each morning against the Minervini Trend Template (8 checks) plus a VCP contraction score, then plans the entry zone, stop and targets for the ones that qualify.",
+      "Each pick is also backtested across 18 strategies with real IDX fees and slippage, tagged with the market regime at entry, and re-checked walk-forward out-of-sample so a threshold is only kept when it survives unseen data.",
+      "It is for a swing trader or a screening agent that wants machine-readable output and an explicit no-trade answer instead of a forced recommendation."
+    ],
+    "architecture": [
+      "trading_cli/cli.py is the whole surface (exposed as the trading-cli script in pyproject.toml): it parses the flags, runs the scan, ranks by expectancy, splits qualifiers from near_miss, and prints the JSON that carries picks, near_miss, leaderboard, regime_pooled and wf_regime.",
+      "trading_cli/scan.py:scan_universe() fetches ^JKSE plus the tickers and calls trading_cli/minervini.py:trend_template(), vcp_score() and rs_vs_ihsg() before applying the regime gates (ADTV, ATR14, IHSG stage, cmf).",
+      "trading_cli/backtest.py holds the 18-entry STRATS table (_sig_vcp_breakout, _sig_scalp_ema_5 and so on) and backtest.run(), which fills at the next open with fees plus slippage and tags each trade through trading_cli/regime.py:tag_ihsg_stage(), tag_atr_regime() and regime_of().",
+      "trading_cli/validate.py:walk_forward() replays the strategies on rolling train-252 / step-60 windows for out-of-sample confirmation, while trading_cli/tune.py:tune_vcp() grids the VCP thresholds under the same gate.",
+      "trading_cli/entry.py:plan() converts the 20-day-high pivot into the buy zone, the tightest stop (20-day low, close minus 2 ATR, or -8%) and T1/T2/T3 targets; trading_cli/ml_filter.py:gate_pooled_n() and check_leakage() guard any future ML work.",
+      "Data path: trading_cli/data.py (yfinance fetch, throttle, rate-limit backoff, 4-thread batch) over trading_cli/cache.py (SQLite in WAL mode under the XDG cache dir, 12h history TTL, stale-while-revalidate)."
+    ],
+    "install": [
+      "cd trading-cli",
+      "python3 -m venv .venv && .venv/bin/pip install -e .   # requires Python 3.11+, yfinance>=0.2.40, pandas>=2.0, numpy>=1.24",
+      "ln -sf \"$PWD/.venv/bin/trading-cli\" ~/.local/bin/trading-cli   # or call .venv/bin/trading-cli directly",
+      "trading-cli --help",
+      "trading-cli --doctor   # probes yfinance and cache health"
+    ],
+    "quickstart": [
+      "trading-cli --scan-only --limit 50 --period 1y — the fastest run: a qualifier table plus the NEAR MISS block, a few seconds when cached. --scan-only skips the backtest stages, so the 70% HUNT and leaderboard blocks only appear on a full run.",
+      "trading-cli --ticker BBCA — one-ticker deep dive with the Trend Template checks, VCP score, entry plan and per-strategy backtest stats.",
+      "trading-cli --json > picks.json then jq '.leaderboard' — the machine-readable expectancy leaderboard the agent workflow parses.",
+      "trading-cli --period 2y --validate — per-window out-of-sample results for the top strategies plus the pooled wf_regime block.",
+      "trading-cli --doctor — confirms the data path with a live probe of ^JKSE plus sample tickers and reports cache size."
+    ],
+    "results": [
+      {
+        "label": "Universe per scan",
+        "value": "~900 IDX tickers"
+      },
+      {
+        "label": "scalp_ema_5 pooled winrate",
+        "value": "~48% (n=110)"
+      },
+      {
+        "label": "hr_pdl: pooled to OOS",
+        "value": "50.8% to 12.5%"
+      },
+      {
+        "label": "70% winrate sleeve (README finding)",
+        "value": "not proven"
+      },
+      {
+        "label": "Round-trip cost model",
+        "value": "~0.5%"
+      },
+      {
+        "label": "tune.py grid OOS best",
+        "value": "57.1% vs 55.6%"
+      }
+    ],
+    "tradeoffs": [
+      "The README's own honesty section states there is no proven 70% win-rate sleeve on daily yfinance OHLCV alone: every higher-R and divergence candidate failed both the pooled Wilson gate and the 2y walk-forward gate, and the measured ceiling is about 50% pooled win.",
+      "Institutional and broker-flow filters are not built: broker concentration or a foreign net-buy streak needs an idx.co.id scrape the README calls fragile, so it stays deferred behind ml_filter.gate_pooled_n(need=100), and there is no intraday VWAP because the data path is daily yfinance only.",
+      "Regime gating is deliberately soft (a -20 combo demote, not a hard veto) with fixed, untuned thresholds, so Stage 4 tape still produces candidates; changing it is gated on out-of-sample evidence at n>=100.",
+      "Everything depends on Yahoo Finance daily data through trading_cli/data.py, which throttles and needs --workers 4 when it answers 401/429, so coverage and quality are only as good as that feed."
+    ],
+    "links": [
+      {
+        "label": "Source",
+        "url": "https://github.com/mariobgsp/trading-cli"
+      },
+      {
+        "label": "70% hunt research",
+        "url": "https://github.com/mariobgsp/trading-cli/blob/main/research-idx-70pct-2026-08-29.md"
+      }
+    ],
+    "upwork": {
+      "title": "Trading CLI",
+      "role": "Python Developer & Quantitative Research Engineer",
+      "description": "Created a Python command-line stock screening tool for Indonesian and IHSG markets. The application detects Stage 2 trends, volatility contraction patterns, pullbacks, breakouts, and reversals. It also includes technical indicators, institutional-flow analysis, market-regime filters, multiple backtesting strategies, and walk-forward out-of-sample evaluation for more disciplined and reproducible analysis.",
+      "skills": [
+        "Python",
+        "CLI Development",
+        "Algorithm Design",
+        "Financial Data Analysis",
+        "Quantitative Research"
+      ],
+      "deliverables": [
+        "Technical stock scanner",
+        "Breakout and pullback detection",
+        "Market-regime filter",
+        "Backtesting strategies",
+        "Walk-forward evaluation"
+      ]
+    }
+  },
+  {
+    "slug": "t-notes",
+    "name": "t-notes",
+    "strapline": "Local-first notes and kanban in the browser - no cloud, no framework, no build step.",
+    "lang": "JavaScript",
+    "tags": [
+      "local-first",
+      "kanban",
+      "vanilla JS",
+      "Go",
+      "Tauri",
+      "no dependencies"
+    ],
+    "hero_cmd": "python3 -m http.server 8000",
+    "what": [
+      "t-notes is a single-user notes app and a kanban board in one, with all data kept in your own browser - nothing is sent to a server, and there is no account or sync service.",
+      "A note can also be pinned to a board list, and then the same item shows up as a card in both views, so edits stay in sync. Cards carry checklists with progress, due dates, comments, labels, tags and image attachments.",
+      "It is for people who want Trello's core without the cloud: run it from static files on any OS with a browser, or on Windows as a small Go exe or a Tauri desktop app.",
+      "An optional AI assistant (bring your own key) can summarize, draft checklists and suggest ideas; the key stays local and is never exported."
+    ],
+    "architecture": [
+      "web/ is the entire UI with no framework and no build step: index.html, styles.css and app.js, plus logo.svg - styles.css uses content-visibility: auto for list rendering and defines the light/dark/midnight themes.",
+      "All state lives in browser localStorage under the key t-notes-v1 (const K at the top of web/app.js) and is written on every mutation; notes pinned to a board list render as cards, so the board and Notes view are one system.",
+      "main.go embeds web/ with //go:embed and serves it from a local net/http server, opening the default browser; the same binary self-installs when its filename contains 'setup' (or --install) and removes itself with --uninstall.",
+      "src-tauri/ is the Tauri v2 desktop shell: src/main.rs exposes one Rust command, match_notes (batch substring match for large-corpus search, with a JS fallback), and tauri.conf.json sets frontendDist to ../web and bundles an NSIS installer with the tauri-plugin-autostart plugin for the launch-on-login toggle.",
+      "e2e/t-notes.spec.js is the Playwright suite, run against system Chromium with a mocked AI endpoint; build-windows.sh cross-compiles the Windows exe and setup exe from Linux with GOOS=windows go build.",
+      "Two host paths share the same web/ frontend: the Go exe (a browser launcher, with an /api/startup fallback for the ⏻ toggle) and the Tauri app (own window, real installer)."
+    ],
+    "install": [
+      "cd t-notes/web",
+      "python3 -m http.server 8000   # open http://localhost:8000 (Ctrl-C to stop)",
+      "cd ..   # the two optional commands below run from the repo root",
+      "sh build-windows.sh   # optional: dist/t-notes.exe + dist/t-notes-setup.exe from Linux (needs Go)",
+      "npm install && npx tauri dev   # optional: Tauri desktop app on Linux (needs Rust)"
+    ],
+    "quickstart": [
+      "Run python3 -m http.server 8000 inside t-notes/web and open http://localhost:8000 - the Notes and board UI loads with no build step.",
+      "Click + New note, type a title first, and save: the note appears in the Notes list and a toast confirms every action.",
+      "Create a column with the New list… box, then add a card and drag it between columns to see the board update.",
+      "Pin a note to a board list so it renders as a card too, then click it to open the detail dialog (body, checklist + progress, list picker, image attachments).",
+      "Toggle the theme button to cycle light / dark / midnight - the choice persists across reloads.",
+      "Use ⤓ to export all data as JSON and ⤒ to restore it, or the ? button for the in-app guide."
+    ],
+    "results": [
+      {
+        "label": "Windows exe size",
+        "value": "9.7 MiB"
+      },
+      {
+        "label": "Notes list render window",
+        "value": "50 items"
+      },
+      {
+        "label": "e2e tests (t-notes.spec.js)",
+        "value": "15"
+      }
+    ],
+    "tradeoffs": [
+      "The Windows installer is unsigned: SmartScreen shows an \"Unknown publisher\" warning and the user must click More info → Run anyway (signing needs a paid cert, skipped for now).",
+      "There is no auto-updater yet - new versions are manual downloads from GitHub Releases.",
+      "The first install needs internet once for the WebView2 bootstrapper (nearly all Windows 10/11 PCs already have WebView2).",
+      "It is single-user and local-only: data lives in browser localStorage, so there is no sync, no sharing and no multi-device story."
+    ],
+    "links": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/mariobgsp/t-notes"
+      },
+      {
+        "label": "Releases",
+        "url": "https://github.com/mariobgsp/t-notes/releases/latest"
+      },
+      {
+        "label": "Playwright suite",
+        "url": "https://github.com/mariobgsp/t-notes/blob/main/e2e/t-notes.spec.js"
+      }
+    ],
+    "upwork": {
+      "title": "t-notes",
+      "role": "Full-Stack Engineer & Application Architect",
+      "description": "Built a local-first notes and Kanban application focused on privacy, offline use, and low resource consumption. The application provides note management, task organization, and board-based workflows without requiring a cloud account. Implemented local persistence, a responsive interface, and desktop packaging with Tauri for users who want full control of their data.",
+      "skills": [
+        "Vanilla JavaScript",
+        "Tauri",
+        "Rust",
+        "Local-First Architecture",
+        "Offline Applications"
+      ],
+      "deliverables": [
+        "Notes management",
+        "Kanban board workflow",
+        "Offline data persistence",
+        "Responsive user interface",
+        "Desktop application package"
+      ]
+    }
+  }
+]
