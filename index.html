@@ -2530,17 +2530,19 @@
           <h2 class="sheet-title reveal">Projects</h2>
           <div class="sheet-rule reveal"></div>
           <div class="projects-grid stagger">
-            <a href="/work/" class="project-card plate">
+            <a href="/work/" class="project-card plate prj-featured">
               <span class="prj-index">PRJ-01</span>
               <h3 class="prj-name">Selected Work — Backend &amp; API</h3>
               <p class="prj-desc">
-                Six production-style backend systems, written up: payments with
-                idempotency and outbox+DLQ, an API gateway, a Go LLM gateway,
-                market-data tooling. Stack, deliverables and thumbnail per repo.
+                Deep-dives into six production-style backend systems: payments
+                with idempotency and outbox+DLQ, an API gateway, a Go LLM
+                gateway, and market-data tooling. Role, description, stack,
+                deliverables and thumbnail for each.
               </p>
               <div class="prj-meta">
                 <span class="prj-lang"
-                  ><span class="lang-dot lang-go"></span>Go · Java · Python</span
+                  ><span class="lang-dot lang-go"></span>Go · Python ·
+                  TypeScript</span
                 >
                 <span class="prj-tag">Portfolio</span>
                 <span class="prj-tag">6 Projects</span>
@@ -2548,40 +2550,68 @@
               </div>
             </a>
             <a
-              href="https://github.com/mariobgsp/t-notes"
+              href="https://github.com/mariobgsp/arness"
               target="_blank"
               rel="noopener"
               class="project-card plate"
             >
               <span class="prj-index">PRJ-02</span>
-              <h3 class="prj-name">T-Notes</h3>
+              <h3 class="prj-name">Arness</h3>
               <p class="prj-desc">
-                Local-first notes + kanban board. Trello's core, none of its
-                cloud. Zero deps, tiny RAM, Windows installer via Tauri.
+                A lean, local AI coding harness. Single binary, zero runtime
+                deps: CLI + TUI, MCP and LSP support, skills, extensions and an
+                optimizer.
+              </p>
+              <div class="prj-meta">
+                <span class="prj-lang"
+                  ><span class="lang-dot lang-ts"></span>TypeScript</span
+                >
+                <span class="prj-tag">AI Harness</span>
+                <span class="prj-tag">CLI + TUI</span>
+                <span class="prj-go" aria-hidden="true">↗</span>
+              </div>
+            </a>
+            <a
+              href="https://github.com/mariobgsp/local-postman"
+              target="_blank"
+              rel="noopener"
+              class="project-card plate"
+            >
+              <span class="prj-index">PRJ-03</span>
+              <h3 class="prj-name">Local Postman</h3>
+              <p class="prj-desc">
+                A Postman-like HTTP client that runs entirely on your machine —
+                no account, no cloud, no telemetry. Requests, collections,
+                environments and history stored as plain JSON files.
               </p>
               <div class="prj-meta">
                 <span class="prj-lang"
                   ><span class="lang-dot lang-js"></span>JavaScript</span
                 >
-                <span class="prj-tag">Notes</span>
-                <span class="prj-tag">Tauri</span>
+                <span class="prj-tag">HTTP Client</span>
+                <span class="prj-tag">Local-First</span>
                 <span class="prj-go" aria-hidden="true">↗</span>
               </div>
             </a>
-            <a href="/routre/" class="project-card plate">
-              <span class="prj-index">PRJ-03</span>
-              <h3 class="prj-name">Routre</h3>
+            <a
+              href="https://github.com/mariobgsp/token-usage-cli"
+              target="_blank"
+              rel="noopener"
+              class="project-card plate"
+            >
+              <span class="prj-index">PRJ-04</span>
+              <h3 class="prj-name">Token Usage CLI</h3>
               <p class="prj-desc">
-                Low-RAM LLM gateway for coding agents — auto failover, RTK token
-                compression (-90% tool-heavy), response caching, per-agent cost
-                ledger. Single Go binary ~6.7 MiB, ~9 MiB RAM, npm-installable.
+                Track AI token usage and spend from local tool logs (opencode,
+                pi, Hermes, Codex, Claude Code) with usage bars and a cost
+                breakdown per agent.
               </p>
               <div class="prj-meta">
                 <span class="prj-lang"
-                  ><span class="lang-dot lang-go"></span>Go</span
+                  ><span class="lang-dot lang-py"></span>Python</span
                 >
-                <span class="prj-tag">LLM Gateway</span>
-                <span class="prj-tag">Proxy</span>
+                <span class="prj-tag">CLI</span>
+                <span class="prj-tag">Cost Tracking</span>
                 <span class="prj-go" aria-hidden="true">↗</span>
               </div>
             </a>
