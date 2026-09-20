@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Selected Work — Muhammad Ario Bagus Prakusa</title>
+    <meta
+      name="description"
+      content="Backend and API engineering portfolio — payments, gateways, LLM infrastructure, market data. Go, Java/Spring, Python, PostgreSQL, Kubernetes."
+    />
+    <meta name="theme-color" content="#12101f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+    <style>
+      /* page-local additions on top of theme.css (routre blueprint tokens) */
+      .card h3 { margin: 0; }
+      .thumb {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--hairline-soft);
+        background: var(--paper-3);
+        transition: border-color var(--ease);
+      }
+      .card:hover .thumb { border-color: rgba(255, 122, 61, 0.5); }
+      .card-role {
+        font-family: var(--mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-size: 0.85rem;
+      }
+      .block-label {
+        display: block;
+        font-family: var(--mono);
+        font-size: 0.64rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--steel-dim);
+        margin-bottom: 8px;
+      }
+      .card-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+      .stat-row { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 24px; }
+      .stat b {
+        display: block;
+        font-family: var(--px);
+        font-size: 0.72rem;
+        color: var(--accent);
+        line-height: 1.8;
+      }
+      .stat span {
+        font-family: var(--mono);
+        font-size: 0.64rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--steel-dim);
+      }
+      .footer-col h4 {
+        font-family: var(--mono);
+        font-size: 0.64rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--steel-dim);
+        margin-bottom: 8px;
+      }
+      .footer-col a,
+      .footer-col span { font-size: 0.95rem; color: var(--steel); }
+    </style>
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="#top"><span class="logo-dot">&gt;</span> ario.dev</a>
+        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <ul class="nav-links">
+          <li><a href="#work">Work</a></li>
+          <li><a href="#stack">Stack</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <p class="kicker">
+              <b>[ PORTFOLIO ]</b> 6 production-style backend systems
+            </p>
+            <h1 class="hero-name">Muhammad Ario Bagus Prakusa</h1>
+            <p class="hero-title">Backend &amp; API Engineer — payments, gateways, market data</p>
+            <p class="hero-sub">
+              5+ years building production systems for banking and telecommunications. I design
+              APIs that stay correct under retries, callbacks and load — and I ship the tests,
+              diagrams and runbooks that prove it.
+            </p>
+            <div class="actions">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp" target="_blank" rel="noopener">
+                View GitHub
+              </a>
+              <a class="btn btn-ghost" href="#work">Browse selected work</a>
+            </div>
+            <div class="stat-row">
+              <div class="stat"><b>13&times;</b><span>API latency improved</span></div>
+              <div class="stat"><b>18&times;</b><span>Batch throughput improved</span></div>
+              <div class="stat"><b>5+ yrs</b><span>Production backend</span></div>
+              <div class="stat"><b>6</b><span>Open repos below</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="work">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> SELECTED WORK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Systems designed for correctness under failure</h2>
+
+          <div class="card-grid">
+            <!-- 01 payment-system -->
+            <article class="card bracket">
+              <img
+                class="thumb"
+                src="thumbnails/thumb-payment-system.png"
+                width="1200"
+                height="630"
+                loading="lazy"
+                alt=""
+              />
+              <div class="card-head">
+                <h3 class="card-name">Payment System</h3>
+                <span class="card-index">01</span>
+              </div>
+              <p class="card-role">Backend Engineer &amp; System Architect</p>
+              <p class="card-desc">
+                Designed and built a production-style payment platform using Go, PostgreSQL,
+                Redis, Docker Compose, and Next.js. The system supports order creation, payment
+                charging, HMAC-secured callbacks, refunds, invoice generation, and transaction
+                logs. Implemented idempotency protection, authorization, transactional outbox
+                processing, retries, dead-letter queues, and background workers for reliable
+                asynchronous workflows.
+              </p>
+              <div class="meta-row"><span class="meta-label">Repo</span><span class="meta-value">github.com/mariobgsp/payment-system</span></div>
+              <div>
+                <span class="block-label">Skills</span>
+                <ul class="tags">
+                  <li class="tag">Go</li>
+                  <li class="tag">REST API</li>
+                  <li class="tag">PostgreSQL</li>
+                  <li class="tag">Redis</li>
+                  <li class="tag">Docker</li>
+                </ul>
+              </div>
+              <div>
+                <span class="block-label">Deliverables</span>
+                <ul class="deliverables">
+                  <li>Payment lifecycle API</li>
+                  <li>Idempotency protection</li>
+                  <li>HMAC callback verification</li>
+                  <li>Transactional outbox and DLQ</li>
+                  <li>Invoice background worker</li>
+                </ul>
+              </div>
+              <div class="card-tools">
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener" aria-label="payment-system repository on GitHub">Repository</a>
+              </div>
+            </article>
+
+            <!-- 02 the-gateway -->
+            <article class="card bracket">
+              <img
+                class="thumb"
+                src="thumbnails/thumb-the-gateway.png"
+                width="1200"
+                height="630"
+                loading="lazy"
+                alt=""
+              />
+              <div class="card-head">
+                <h3 class="card-name">The Gateway</h3>
+                <span class="card-index">02</span>
+              </div>
+              <p class="card-role">Backend Engineer &amp; API Architect</p>
+              <p class="card-desc">
+                Built an API gateway platform with a Next.js 15 Backend-for-Frontend layer in
+                front of a Go gateway service and PostgreSQL. The BFF proxies requests
+                server-side, applying auth, timeouts and envelope mapping, and never exposes
+                JWTs to browser JavaScript. The Go gateway implements JWT authentication, rate
+                limiting, API and store services, and forwarding to configured upstream APIs,
+                shipped with Kubernetes manifests.
+              </p>
+              <div class="meta-row"><span class="meta-label">Repo</span><span class="meta-value">github.com/mariobgsp/the-gateway</span></div>
+              <div>
+                <span class="block-label">Skills</span>
+                <ul class="tags">
+                  <li class="tag">Go</li>
+                  <li class="tag">Next.js</li>
+                  <li class="tag">PostgreSQL</li>
+                  <li class="tag">JWT Authentication</li>
+                  <li class="tag">Rate Limiting</li>
+                </ul>
+              </div>
+              <div>
+                <span class="block-label">Deliverables</span>
+                <ul class="deliverables">
+                  <li>Next.js BFF proxy layer</li>
+                  <li>Go gateway service</li>
+                  <li>httpOnly cookie session auth</li>
+                  <li>JWT auth with rate limiting</li>
+                  <li>Kubernetes deployment manifests</li>
+                </ul>
+              </div>
+              <div class="card-tools">
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener" aria-label="the-gateway repository on GitHub">Repository</a>
+              </div>
+            </article>
+
+            <!-- 03 routre -->
+            <article class="card bracket">
+              <img
+                class="thumb"
+                src="thumbnails/thumb-routre.png"
+                width="1200"
+                height="630"
+                loading="lazy"
+                alt=""
+              />
+              <div class="card-head">
+                <h3 class="card-name">routre</h3>
+                <span class="card-index">03</span>
+              </div>
+              <p class="card-role">Go Backend Engineer &amp; Systems Developer</p>
+              <p class="card-desc">
+                Developed a lightweight local LLM gateway for coding agents using Go. The gateway
+                provides a unified interface for multiple providers, automatic failover, model-list
+                refresh, response caching, token compression, and per-agent token and cost
+                tracking. Designed as a low-memory static binary with no external runtime
+                dependencies, improving reliability and visibility for local AI-assisted
+                development workflows.
+              </p>
+              <div class="meta-row"><span class="meta-label">Repo</span><span class="meta-value">github.com/mariobgsp/routre</span></div>
+              <div>
+                <span class="block-label">Skills</span>
+                <ul class="tags">
+                  <li class="tag">Go</li>
+                  <li class="tag">HTTP API</li>
+                  <li class="tag">Gateway Architecture</li>
+                  <li class="tag">Response Caching</li>
+                  <li class="tag">Fault Tolerance</li>
+                </ul>
+              </div>
+              <div>
+                <span class="block-label">Deliverables</span>
+                <ul class="deliverables">
+                  <li>Unified LLM provider interface</li>
+                  <li>Automatic provider failover</li>
+                  <li>Response caching</li>
+                  <li>Token and cost ledger</li>
+                  <li>Lightweight static binary</li>
+                </ul>
+              </div>
+              <div class="card-tools">
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener" aria-label="routre repository on GitHub">Repository</a>
+              </div>
+            </article>
+
+            <!-- 04 trading-suite -->
+            <article class="card bracket">
+              <img
+                class="thumb"
+                src="thumbnails/thumb-trading-suite.png"
+                width="1200"
+                height="630"
+                loading="lazy"
+                alt=""
+              />
+              <div class="card-head">
+                <h3 class="card-name">Trading Suite</h3>
+                <span class="card-index">04</span>
+              </div>
+              <p class="card-role">Backend Engineer &amp; Quantitative Software Developer</p>
+              <p class="card-desc">
+                Built a financial data platform using Python and FastAPI for Indonesian stock
+                market analysis. The platform includes live quotes, multi-ticker screening,
+                technical indicators, bandarmology validation, FIFO portfolio tracking,
+                market-regime filtering, historical backtesting, and AI-generated market
+                summaries. Designed data-processing workflows and API endpoints for market
+                analysis, portfolio calculations, and reproducible trading research.
+              </p>
+              <div class="meta-row"><span class="meta-label">Repo</span><span class="meta-value">github.com/mariobgsp/trading-suite</span></div>
+              <div>
+                <span class="block-label">Skills</span>
+                <ul class="tags">
+                  <li class="tag">Python</li>
+                  <li class="tag">FastAPI</li>
+                  <li class="tag">REST API</li>
+                  <li class="tag">Data Analysis</li>
+                  <li class="tag">Backtesting</li>
+                </ul>
+              </div>
+              <div>
+                <span class="block-label">Deliverables</span>
+                <ul class="deliverables">
+                  <li>FastAPI backend</li>
+                  <li>Live quote integration</li>
+                  <li>Stock screening engine</li>
+                  <li>FIFO portfolio tracking</li>
+                  <li>Backtesting workflows</li>
+                </ul>
+              </div>
+              <div class="card-tools">
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener" aria-label="trading-suite repository on GitHub">Repository</a>
+              </div>
+            </article>
+
+            <!-- 05 trading-cli -->
+            <article class="card bracket">
+              <img
+                class="thumb"
+                src="thumbnails/thumb-trading-cli.png"
+                width="1200"
+                height="630"
+                loading="lazy"
+                alt=""
+              />
+              <div class="card-head">
+                <h3 class="card-name">Trading CLI</h3>
+                <span class="card-index">05</span>
+              </div>
+              <p class="card-role">Python Developer &amp; Quantitative Research Engineer</p>
+              <p class="card-desc">
+                Created a Python command-line stock screening tool for Indonesian and IHSG
+                markets. The application detects Stage 2 trends, volatility contraction
+                patterns, pullbacks, breakouts, and reversals. It also includes
+                technical indicators, institutional-flow analysis, market-regime filters, multiple
+                backtesting strategies, and walk-forward out-of-sample evaluation for more
+                disciplined and reproducible analysis.
+              </p>
+              <div class="meta-row"><span class="meta-label">Repo</span><span class="meta-value">github.com/mariobgsp/trading-cli</span></div>
+              <div>
+                <span class="block-label">Skills</span>
+                <ul class="tags">
+                  <li class="tag">Python</li>
+                  <li class="tag">CLI Development</li>
+                  <li class="tag">Algorithm Design</li>
+                  <li class="tag">Financial Data Analysis</li>
+                  <li class="tag">Quantitative Research</li>
+                </ul>
+              </div>
+              <div>
+                <span class="block-label">Deliverables</span>
+                <ul class="deliverables">
+                  <li>Technical stock scanner</li>
+                  <li>Breakout and pullback detection</li>
+                  <li>Market-regime filter</li>
+                  <li>Backtesting strategies</li>
+                  <li>Walk-forward evaluation</li>
+                </ul>
+              </div>
+              <div class="card-tools">
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener" aria-label="trading-cli repository on GitHub">Repository</a>
+              </div>
+            </article>
+
+            <!-- 06 t-notes -->
+            <article class="card bracket">
+              <img
+                class="thumb"
+                src="thumbnails/thumb-t-notes.png"
+                width="1200"
+                height="630"
+                loading="lazy"
+                alt=""
+              />
+              <div class="card-head">
+                <h3 class="card-name">t-notes</h3>
+                <span class="card-index">06</span>
+              </div>
+              <p class="card-role">Full-Stack Engineer &amp; Application Architect</p>
+              <p class="card-desc">
+                Built a local-first notes and Kanban application focused on privacy, offline use,
+                and low resource consumption. The application provides note management, task
+                organization, and board-based workflows without requiring a cloud account.
+                Implemented local persistence, a responsive interface, and desktop packaging with
+                Tauri for users who want full control of their data.
+              </p>
+              <div class="meta-row"><span class="meta-label">Repo</span><span class="meta-value">github.com/mariobgsp/t-notes</span></div>
+              <div>
+                <span class="block-label">Skills</span>
+                <ul class="tags">
+                  <li class="tag">Vanilla JavaScript</li>
+                  <li class="tag">Tauri</li>
+                  <li class="tag">Rust</li>
+                  <li class="tag">Local-First Architecture</li>
+                  <li class="tag">Offline Applications</li>
+                </ul>
+              </div>
+              <div>
+                <span class="block-label">Deliverables</span>
+                <ul class="deliverables">
+                  <li>Notes management</li>
+                  <li>Kanban board workflow</li>
+                  <li>Offline data persistence</li>
+                  <li>Responsive user interface</li>
+                  <li>Desktop application package</li>
+                </ul>
+              </div>
+              <div class="card-tools">
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/t-notes" target="_blank" rel="noopener" aria-label="t-notes repository on GitHub">Repository</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+
+      <section class="section" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What I reach for, and why</h2>
+          <div class="card-grid">
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Languages</h3><span class="card-index">LANG</span></div>
+              <p class="card-desc">Go, Java 17, Python, TypeScript. Chosen per workload, not per fashion.</p>
+              <ul class="tags">
+                <li class="tag">Go</li><li class="tag">Java 17</li><li class="tag">Python</li><li class="tag">TypeScript</li>
+              </ul>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">APIs &amp; frameworks</h3><span class="card-index">API</span></div>
+              <p class="card-desc">Spring Boot, Echo, FastAPI, Next.js route handlers. Contract-first, versioned, documented.</p>
+              <ul class="tags">
+                <li class="tag">Spring Boot</li><li class="tag">Echo</li><li class="tag">FastAPI</li><li class="tag">Next.js</li>
+              </ul>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Data</h3><span class="card-index">DATA</span></div>
+              <p class="card-desc">PostgreSQL, MySQL, Oracle, Elasticsearch, Redis. Query plans before micro-optimisations.</p>
+              <ul class="tags">
+                <li class="tag">PostgreSQL</li><li class="tag">MySQL</li><li class="tag">Oracle</li><li class="tag">Redis</li><li class="tag">Elasticsearch</li>
+              </ul>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Reliability</h3><span class="card-index">OPS</span></div>
+              <p class="card-desc">Idempotency keys, outbox plus DLQ, retry with backoff, HMAC-verified callbacks, replay windows.</p>
+              <ul class="tags">
+                <li class="tag">Idempotency</li><li class="tag">Outbox</li><li class="tag">DLQ</li><li class="tag">HMAC</li>
+              </ul>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Delivery</h3><span class="card-index">SHIP</span></div>
+              <p class="card-desc">Docker and Compose, Kubernetes on GCP, API Gateway, Git, CI pipelines.</p>
+              <ul class="tags">
+                <li class="tag">Docker</li><li class="tag">Kubernetes</li><li class="tag">GCP</li><li class="tag">CI/CD</li>
+              </ul>
+            </div>
+            <div class="card bracket">
+              <div class="card-head"><h3 class="card-name">Messaging</h3><span class="card-index">MSG</span></div>
+              <p class="card-desc">Kafka, RabbitMQ, Solace. At-least-once delivery made safe by idempotent consumers.</p>
+              <ul class="tags">
+                <li class="tag">Kafka</li><li class="tag">RabbitMQ</li><li class="tag">Solace</li><li class="tag">Outbox Pattern</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h4>GitHub</h4>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h4>Focus</h4>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h4>Experience</h4>
+            <span>Banking &amp; telecommunications</span>
+          </div>
+          <div class="footer-col">
+            <h4>Availability</h4>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories — no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
