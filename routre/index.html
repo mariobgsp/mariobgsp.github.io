@@ -5,36 +5,45 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>routre — One static Go binary that cuts AI token bills and fails over providers for any CLI.</title>
     <meta name="description" content="routre: One static Go binary that cuts AI token bills and fails over providers for any CLI." />
-    <meta name="theme-color" content="#12101f" />
+    <meta name="theme-color" content="#050505" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/theme.css" />
   </head>
   <body>
+    <div class="bg-mesh" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
-    <div class="scanlines" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
     <header class="topnav">
       <div class="topnav-inner">
-        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
-        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
         <ul class="nav-links">
-          <li><a href="/work/">Work</a></li>
+          <li><a href="/work/" class="active">Work</a></li>
           <li><a href="/">Home</a></li>
           <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
       </div>
     </header>
 
+    <div class="nav-menu">
+      <a href="/work/">Work</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
     <main class="page">
-      <section class="hero hero-compact" id="top">
+      <section class="hero hero-compact anchor" id="top">
         <div class="container">
           <div class="hero-inner">
-            <a class="crumb" href="/work/">&larr; All work</a>
-            <p class="kicker"><b>[ Go ]</b> 3 of 6</p>
-            <h1 class="hero-name">routre</h1>
-            <p class="hero-title">One static Go binary that cuts AI token bills and fails over providers for any CLI.</p>
+            <a class="crumb reveal" href="/work/">&larr; All work</a>
+            <p class="kicker reveal"><b>[ Go ]</b> 3 of 6</p>
+            <h1 class="hero-name reveal">routre</h1>
+            <p class="hero-title reveal">One static Go binary that cuts AI token bills and fails over providers for any CLI.</p>
             <div class="cmd-wrap"><pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh</pre></div>
             <div class="stat-row">
             <div class="stat"><b>91.5%</b><span>RTK tool-token reduction</span></div>
@@ -45,8 +54,8 @@
             <div class="stat"><b>509</b><span>Models in config.all.json</span></div>
             </div>
             <div class="actions" style="margin-top: 24px">
-              <a class="btn btn-primary" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener">Repository on GitHub</a>
-              <a class="btn btn-ghost" href="#install">Install</a>
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener">Repository on GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#install">Install<span class="ext">&#8595;</span></a>
             </div>
             <ul class="tags" style="margin-top: 20px">
               <li class="tag">Go</li><li class="tag">LLM gateway</li><li class="tag">OpenAI-compatible</li><li class="tag">token compression</li><li class="tag">failover</li><li class="tag">single binary</li>
@@ -55,7 +64,7 @@
         </div>
       </section>
 
-      <section class="section" id="what">
+      <section class="section anchor reveal" id="what">
         <div class="container">
           <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
           <div class="section-rule"></div>
@@ -66,7 +75,7 @@
         </div>
       </section>
 
-      <section class="section" id="architecture">
+      <section class="section anchor reveal" id="architecture">
         <div class="container">
           <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
@@ -85,7 +94,7 @@
         </div>
       </section>
 
-      <section class="section" id="install">
+      <section class="section anchor reveal" id="install">
         <div class="container">
           <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
           <div class="section-rule"></div>
@@ -101,7 +110,7 @@
         </div>
       </section>
 
-      <section class="section" id="quickstart">
+      <section class="section anchor reveal" id="quickstart">
         <div class="container">
           <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
@@ -117,33 +126,33 @@
         </div>
       </section>
 
-      <section class="section" id="results">
+      <section class="section anchor reveal" id="results">
         <div class="container">
           <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
-          <div class="card-grid">
-            <div class="card bracket">
+          <div class="card-grid stagger">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">RTK tool-token reduction</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">91.5%</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Worst per-payload reduction</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">90.3%</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Idle RSS</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">10 MiB</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Peak RSS, 3 opencode sessions</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">12.9 MiB</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Static binary size</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">10.6 MiB</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Models in config.all.json</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">509</p>
             </div>
@@ -151,7 +160,7 @@
         </div>
       </section>
 
-      <section class="section" id="tradeoffs">
+      <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
           <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
@@ -165,16 +174,16 @@
         </div>
       </section>
 
-      <section class="section" id="repo">
+      <section class="section anchor reveal" id="repo">
         <div class="container">
           <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
-          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/releases/latest" target="_blank" rel="noopener">Releases</a></div>
-          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></div>
-          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/blob/main/docs/AGENT_ROUTRE_GUIDE.md" target="_blank" rel="noopener">Agent guide</a></div>
-          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener">github.com/mariobgsp/routre</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/releases/latest" target="_blank" rel="noopener">Releases<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/routre/blob/main/docs/AGENT_ROUTRE_GUIDE.md" target="_blank" rel="noopener">Agent guide<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener">github.com/mariobgsp/routre<span class="ext">&#8599;</span></a><a class="btn btn-ghost" href="/work/">Other projects<span class="ext">&#8594;</span></a></div>
         </div>
       </section>
 
@@ -206,5 +215,7 @@
         </p>
       </div>
     </footer>
+
+    <script src="../assets/site.js"></script>
   </body>
 </html>

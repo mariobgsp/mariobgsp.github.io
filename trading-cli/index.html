@@ -5,36 +5,45 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Trading CLI — Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</title>
     <meta name="description" content="Trading CLI: Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates." />
-    <meta name="theme-color" content="#12101f" />
+    <meta name="theme-color" content="#050505" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/theme.css" />
   </head>
   <body>
+    <div class="bg-mesh" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
-    <div class="scanlines" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
     <header class="topnav">
       <div class="topnav-inner">
-        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
-        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
         <ul class="nav-links">
-          <li><a href="/work/">Work</a></li>
+          <li><a href="/work/" class="active">Work</a></li>
           <li><a href="/">Home</a></li>
           <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
       </div>
     </header>
 
+    <div class="nav-menu">
+      <a href="/work/">Work</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
     <main class="page">
-      <section class="hero hero-compact" id="top">
+      <section class="hero hero-compact anchor" id="top">
         <div class="container">
           <div class="hero-inner">
-            <a class="crumb" href="/work/">&larr; All work</a>
-            <p class="kicker"><b>[ Python ]</b> 5 of 6</p>
-            <h1 class="hero-name">Trading CLI</h1>
-            <p class="hero-title">Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</p>
+            <a class="crumb reveal" href="/work/">&larr; All work</a>
+            <p class="kicker reveal"><b>[ Python ]</b> 5 of 6</p>
+            <h1 class="hero-name reveal">Trading CLI</h1>
+            <p class="hero-title reveal">Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</p>
             <div class="cmd-wrap"><pre class="cmd">trading-cli --period 1y --json &gt; /tmp/picks.json</pre></div>
             <div class="stat-row">
             <div class="stat"><b>~900 IDX tickers</b><span>Universe per scan</span></div>
@@ -45,8 +54,8 @@
             <div class="stat"><b>57.1% vs 55.6%</b><span>tune.py grid OOS best</span></div>
             </div>
             <div class="actions" style="margin-top: 24px">
-              <a class="btn btn-primary" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener">Repository on GitHub</a>
-              <a class="btn btn-ghost" href="#install">Install</a>
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener">Repository on GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#install">Install<span class="ext">&#8595;</span></a>
             </div>
             <ul class="tags" style="margin-top: 20px">
               <li class="tag">Python 3.11+</li><li class="tag">pandas</li><li class="tag">yfinance</li><li class="tag">IDX/IHSG</li><li class="tag">Backtesting</li><li class="tag">Walk-forward</li>
@@ -55,7 +64,7 @@
         </div>
       </section>
 
-      <section class="section" id="what">
+      <section class="section anchor reveal" id="what">
         <div class="container">
           <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
           <div class="section-rule"></div>
@@ -66,7 +75,7 @@
         </div>
       </section>
 
-      <section class="section" id="architecture">
+      <section class="section anchor reveal" id="architecture">
         <div class="container">
           <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
@@ -85,7 +94,7 @@
         </div>
       </section>
 
-      <section class="section" id="install">
+      <section class="section anchor reveal" id="install">
         <div class="container">
           <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
           <div class="section-rule"></div>
@@ -100,7 +109,7 @@
         </div>
       </section>
 
-      <section class="section" id="quickstart">
+      <section class="section anchor reveal" id="quickstart">
         <div class="container">
           <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
@@ -115,33 +124,33 @@
         </div>
       </section>
 
-      <section class="section" id="results">
+      <section class="section anchor reveal" id="results">
         <div class="container">
           <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
-          <div class="card-grid">
-            <div class="card bracket">
+          <div class="card-grid stagger">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Universe per scan</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">~900 IDX tickers</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">scalp_ema_5 pooled winrate</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">~48% (n=110)</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">hr_pdl: pooled to OOS</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">50.8% to 12.5%</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">70% winrate sleeve (README finding)</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">not proven</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">Round-trip cost model</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">~0.5%</p>
             </div>
-            <div class="card bracket">
+            <div class="card">
               <div class="card-head"><h3 class="card-name">tune.py grid OOS best</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">57.1% vs 55.6%</p>
             </div>
@@ -149,7 +158,7 @@
         </div>
       </section>
 
-      <section class="section" id="tradeoffs">
+      <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
           <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
@@ -163,14 +172,14 @@
         </div>
       </section>
 
-      <section class="section" id="repo">
+      <section class="section anchor reveal" id="repo">
         <div class="container">
           <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
-          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli/blob/main/research-idx-70pct-2026-08-29.md" target="_blank" rel="noopener">70% hunt research</a></div>
-          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener">github.com/mariobgsp/trading-cli</a><a class="btn btn-ghost" href="/work/">Other projects</a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli/blob/main/research-idx-70pct-2026-08-29.md" target="_blank" rel="noopener">70% hunt research<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener">github.com/mariobgsp/trading-cli<span class="ext">&#8599;</span></a><a class="btn btn-ghost" href="/work/">Other projects<span class="ext">&#8594;</span></a></div>
         </div>
       </section>
 
@@ -202,5 +211,7 @@
         </p>
       </div>
     </footer>
+
+    <script src="../assets/site.js"></script>
   </body>
 </html>

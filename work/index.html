@@ -5,44 +5,53 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Selected Work — Backend &amp; API Engineering</title>
     <meta name="description" content="Six production-style backend systems: payments with idempotency and outbox, an API gateway, a Go LLM gateway, and market-data tooling. Stack, deliverables and measured facts per project." />
-    <meta name="theme-color" content="#12101f" />
+    <meta name="theme-color" content="#050505" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/theme.css" />
   </head>
   <body>
+    <div class="bg-mesh" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
-    <div class="scanlines" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
     <header class="topnav">
       <div class="topnav-inner">
-        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
-        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
         <ul class="nav-links">
           <li><a href="/work/" class="active">Work</a></li>
           <li><a href="/">Home</a></li>
           <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
       </div>
     </header>
 
+    <div class="nav-menu">
+      <a href="/work/">Work</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
     <main class="page">
-      <section class="hero" id="top">
+      <section class="hero anchor" id="top">
         <div class="container">
           <div class="hero-inner">
-            <p class="kicker"><b>[ PORTFOLIO ]</b> 6 production-style backend systems</p>
-            <h1 class="hero-name">Selected Work</h1>
-            <p class="hero-title">Backend &amp; API engineering &mdash; payments, gateways, market data</p>
-            <p class="hero-sub">
+            <p class="kicker reveal"><b>[ PORTFOLIO ]</b> 6 production-style backend systems</p>
+            <h1 class="hero-name reveal">Selected Work</h1>
+            <p class="hero-title reveal">Backend &amp; API engineering &mdash; payments, gateways, market data</p>
+            <p class="hero-sub reveal">
               One page per project: what it is, how it is put together, how to run it,
               the numbers the repository actually states, and what it does not do.
             </p>
-            <div class="actions">
-              <a class="btn btn-primary" href="https://github.com/mariobgsp" target="_blank" rel="noopener">View GitHub</a>
-              <a class="btn btn-ghost" href="#projects">Browse the 6 projects</a>
+            <div class="actions reveal">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp" target="_blank" rel="noopener">View GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#projects">Browse the 6 projects<span class="ext">&#8595;</span></a>
             </div>
-            <div class="stat-row">
+            <div class="stat-row reveal">
               <div class="stat"><b>6</b><span>Projects written up</span></div>
               <div class="stat"><b>23</b><span>Measured facts cited</span></div>
               <div class="stat"><b>6</b><span>Repos on GitHub</span></div>
@@ -52,14 +61,18 @@
         </div>
       </section>
 
-      <section class="section" id="projects">
+      <section class="section anchor reveal" id="projects">
         <div class="container">
           <p class="kicker"><b>[ 01 ]</b> THE PROJECTS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Pick one and read its own page</h2>
+          <p class="prose prose-lead">
+            Every value on these pages is quoted from the repository's own README, tests or
+            config. Where the README publishes nothing, this page says so.
+          </p>
 
-          <div class="card-grid">
-            <article class="card bracket">
+          <div class="card-grid stagger">
+            <article class="card span-7">
               <img class="thumb" src="../assets/thumbs/thumb-payment-system.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">Payment System</h3>
@@ -81,11 +94,11 @@
   <li>Invoice background worker</li></ul>
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/payment-system/">Read the write-up</a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener" aria-label="payment-system repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/payment-system/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener" aria-label="payment-system repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>
-            <article class="card bracket">
+            <article class="card span-5">
               <img class="thumb" src="../assets/thumbs/thumb-the-gateway.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">The Gateway</h3>
@@ -107,11 +120,11 @@
   <li>Kubernetes deployment manifests</li></ul>
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/the-gateway/">Read the write-up</a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener" aria-label="the-gateway repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/the-gateway/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener" aria-label="the-gateway repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>
-            <article class="card bracket">
+            <article class="card span-5">
               <img class="thumb" src="../assets/thumbs/thumb-routre.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">routre</h3>
@@ -133,11 +146,11 @@
   <li>Lightweight static binary</li></ul>
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/routre/">Read the write-up</a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener" aria-label="routre repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/routre/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener" aria-label="routre repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>
-            <article class="card bracket">
+            <article class="card span-7">
               <img class="thumb" src="../assets/thumbs/thumb-trading-suite.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">Trading Suite</h3>
@@ -159,11 +172,11 @@
   <li>Backtesting workflows</li></ul>
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/trading-suite/">Read the write-up</a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener" aria-label="trading-suite repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/trading-suite/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener" aria-label="trading-suite repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>
-            <article class="card bracket">
+            <article class="card span-7">
               <img class="thumb" src="../assets/thumbs/thumb-trading-cli.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">Trading CLI</h3>
@@ -185,11 +198,11 @@
   <li>Walk-forward evaluation</li></ul>
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/trading-cli/">Read the write-up</a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener" aria-label="trading-cli repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/trading-cli/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener" aria-label="trading-cli repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>
-            <article class="card bracket">
+            <article class="card span-5">
               <img class="thumb" src="../assets/thumbs/thumb-t-notes.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">t-notes</h3>
@@ -211,8 +224,8 @@
   <li>Desktop application package</li></ul>
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/t-notes/">Read the write-up</a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/t-notes" target="_blank" rel="noopener" aria-label="t-notes repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/t-notes/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/t-notes" target="_blank" rel="noopener" aria-label="t-notes repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>
           </div>
@@ -247,5 +260,7 @@
         </p>
       </div>
     </footer>
+
+    <script src="../assets/site.js"></script>
   </body>
 </html>

@@ -26,16 +26,27 @@ def e(value):
     return html.escape(str(value), quote=True)
 
 
+NAV_ITEMS = [("Work", "/work/"), ("Home", "/"),
+             ("GitHub", "https://github.com/mariobgsp")]
+
+
 def nav(active=None):
-    """Top-nav links. `active` is a slug for project pages, 'work' for the index."""
-    items = [("Work", "/work/", active == "work"), ("Home", "/", False),
-             ("GitHub", "https://github.com/mariobgsp", False)]
+    """Pill links for wide screens. `active` is a slug or 'work'."""
     out = []
-    for label, href, on in items:
+    for label, href in NAV_ITEMS:
         ext = ' target="_blank" rel="noopener"' if href.startswith("http") else ""
-        cls = ' class="active"' if on else ""
+        cls = ' class="active"' if active and label == "Work" else ""
         out.append(f'<li><a href="{e(href)}"{cls}{ext}>{e(label)}</a></li>')
     return "\n          ".join(out)
+
+
+def nav_menu():
+    """Full-screen overlay shown below 860px."""
+    out = []
+    for label, href in NAV_ITEMS:
+        ext = ' target="_blank" rel="noopener"' if href.startswith("http") else ""
+        out.append(f'      <a href="{e(href)}"{ext}>{e(label)}</a>')
+    return "\n".join(out)
 
 
 FOOTER = """<footer class="footer" id="contact">
@@ -73,31 +84,40 @@ def shell(title, description, body, active=None):
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{e(title)}</title>
     <meta name="description" content="{e(description)}" />
-    <meta name="theme-color" content="#12101f" />
+    <meta name="theme-color" content="#050505" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{UP}assets/theme.css" />
   </head>
   <body>
+    <div class="bg-mesh" aria-hidden="true"></div>
     <div class="bg-grid" aria-hidden="true"></div>
-    <div class="scanlines" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
     <header class="topnav">
       <div class="topnav-inner">
-        <a class="nav-logo" href="/"><span class="logo-dot">&gt;</span> ario.dev</a>
-        <span class="nav-status">BACKEND &amp; API ENGINEER</span>
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
         <ul class="nav-links">
           {nav(active)}
         </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
       </div>
     </header>
+
+    <div class="nav-menu">
+{nav_menu()}
+    </div>
 
     <main class="page">
 {body}
     </main>
 
     {FOOTER}
+
+    <script src="{UP}assets/site.js"></script>
   </body>
 </html>
 """
@@ -118,8 +138,8 @@ def stat_row(results):
 
 
 def section(sec_id, num, kicker, title, body, extra_class=""):
-    cls = f'section {extra_class}'.strip()
-    return f"""      <section class="{cls}" id="{sec_id}">
+    cls = f'section anchor {extra_class}'.strip()
+    return f"""      <section class="{cls} reveal" id="{sec_id}">
         <div class="container">
           <p class="kicker"><b>[ {num} ]</b> {e(kicker)}</p>
           <div class="section-rule"></div>
@@ -138,17 +158,17 @@ def project_page(p, index, total):
     def sec(sec_id, kicker, title, body):
         """Number the sections in the order they actually appear."""
         return section(sec_id, f"{next(counter):02d}", kicker, title, body)
-    hero = f"""      <section class="hero hero-compact" id="top">
+    hero = f"""      <section class="hero hero-compact anchor" id="top">
         <div class="container">
           <div class="hero-inner">
-            <a class="crumb" href="/work/">&larr; All work</a>
-            <p class="kicker"><b>[ {e(p["lang"])} ]</b> {index} of {total}</p>
-            <h1 class="hero-name">{e(p["name"])}</h1>
-            <p class="hero-title">{e(p["strapline"])}</p>
+            <a class="crumb reveal" href="/work/">&larr; All work</a>
+            <p class="kicker reveal"><b>[ {e(p["lang"])} ]</b> {index} of {total}</p>
+            <h1 class="hero-name reveal">{e(p["name"])}</h1>
+            <p class="hero-title reveal">{e(p["strapline"])}</p>
             <div class="cmd-wrap"><pre class="cmd">{e(p["hero_cmd"])}</pre></div>{stat_row(p["results"])}
             <div class="actions" style="margin-top: 24px">
-              <a class="btn btn-primary" href="{e(repo)}" target="_blank" rel="noopener">Repository on GitHub</a>
-              <a class="btn btn-ghost" href="#install">Install</a>
+              <a class="btn btn-primary" href="{e(repo)}" target="_blank" rel="noopener">Repository on GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#install">Install<span class="ext">&#8595;</span></a>
             </div>
             <ul class="tags" style="margin-top: 20px">
               {"".join(f'<li class="tag">{e(t)}</li>' for t in p["tags"])}
@@ -183,32 +203,32 @@ def project_page(p, index, total):
 
     if p["results"]:
         cards = "\n".join(
-            f"""            <div class="card bracket">
+            f"""            <div class="card">
               <div class="card-head"><h3 class="card-name">{e(r["label"])}</h3><span class="card-index">REPO STATES</span></div>
               <p class="card-role">{e(r["value"])}</p>
             </div>"""
             for r in p["results"]
         )
-        parts.append(sec("results", "NUMBERS", "What the repo states", f'          <div class="card-grid">\n{cards}\n          </div>'))
+        parts.append(sec("results", "NUMBERS", "What the repo states", f'          <div class="card-grid stagger">\n{cards}\n          </div>'))
 
     trade = "\n".join(f"            <li>{e(t)}</li>" for t in p["tradeoffs"])
     parts.append(sec(
         "tradeoffs", "TRADEOFFS", "What it does not do",
         f'          <ol class="deliverables">\n{trade}\n          </ol>'))
 
-    links = [l for l in p["links"] if l["url"] != repo and l["url"].startswith("http")]
+    links = [x for x in p["links"] if x["url"] != repo and x["url"].startswith("http")]
     link_html = ""
     if links:
         link_html = "\n" + "\n".join(
             f'          <div class="actions" style="margin-top: 20px">'
-            f'<a class="btn btn-ghost" href="{e(l["url"])}" target="_blank" rel="noopener">{e(l["label"])}</a></div>'
-            for l in links)
+            f'<a class="btn btn-ghost" href="{e(x["url"])}" target="_blank" rel="noopener">{e(x["label"])}<span class="ext">&#8599;</span></a></div>'
+            for x in links)
     parts.append(sec(
         "repo", "SOURCE", "Read the code",
         f'          <p class="prose">The full implementation, tests and documentation live in the repository.</p>'
         f'{link_html}\n          <div class="actions" style="margin-top: 20px">'
-        f'<a class="btn btn-primary" href="{e(repo)}" target="_blank" rel="noopener">github.com/mariobgsp/{e(p["slug"])}</a>'
-        f'<a class="btn btn-ghost" href="/work/">Other projects</a></div>'))
+        f'<a class="btn btn-primary" href="{e(repo)}" target="_blank" rel="noopener">github.com/mariobgsp/{e(p["slug"])}<span class="ext">&#8599;</span></a>'
+        f'<a class="btn btn-ghost" href="/work/">Other projects<span class="ext">&#8594;</span></a></div>'))
 
     body = "\n\n".join(parts) + '\n\n      <hr class="hairline" />'
     return shell(
@@ -220,10 +240,11 @@ def project_page(p, index, total):
 # ------------------------------------------------------------------ index page
 
 def work_page(projects):
+    spans = ("span-7", "span-5", "span-5", "span-7", "span-7", "span-5")
     cards = []
     for i, p in enumerate(projects, 1):
         u = p["upwork"]
-        cards.append(f"""            <article class="card bracket">
+        cards.append(f"""            <article class="card {spans[(i - 1) % len(spans)]}">
               <img class="thumb" src="{UP}assets/thumbs/thumb-{e(p['slug'])}.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">{e(u["title"])}</h3>
@@ -241,8 +262,8 @@ def work_page(projects):
                 {bullets(u["deliverables"])}
               </div>
               <div class="card-tools">
-                <a class="btn btn-primary" href="/{e(p['slug'])}/">Read the write-up</a>
-                <a class="btn btn-ghost" href="{e(REPO_URL.format(p['slug']))}" target="_blank" rel="noopener" aria-label="{e(p['slug'])} repository on GitHub">Repository</a>
+                <a class="btn btn-primary" href="/{e(p['slug'])}/">Read the write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="{e(REPO_URL.format(p['slug']))}" target="_blank" rel="noopener" aria-label="{e(p['slug'])} repository on GitHub">Repository<span class="ext">&#8599;</span></a>
               </div>
             </article>""")
 
@@ -256,34 +277,38 @@ def work_page(projects):
     stat_html = "\n".join(
         f'              <div class="stat"><b>{e(v)}</b><span>{e(k)}</span></div>' for v, k in stats)
 
-    body = f"""      <section class="hero" id="top">
+    body = f"""      <section class="hero anchor" id="top">
         <div class="container">
           <div class="hero-inner">
-            <p class="kicker"><b>[ PORTFOLIO ]</b> {len(projects)} production-style backend systems</p>
-            <h1 class="hero-name">Selected Work</h1>
-            <p class="hero-title">Backend &amp; API engineering &mdash; payments, gateways, market data</p>
-            <p class="hero-sub">
+            <p class="kicker reveal"><b>[ PORTFOLIO ]</b> {len(projects)} production-style backend systems</p>
+            <h1 class="hero-name reveal">Selected Work</h1>
+            <p class="hero-title reveal">Backend &amp; API engineering &mdash; payments, gateways, market data</p>
+            <p class="hero-sub reveal">
               One page per project: what it is, how it is put together, how to run it,
               the numbers the repository actually states, and what it does not do.
             </p>
-            <div class="actions">
-              <a class="btn btn-primary" href="https://github.com/mariobgsp" target="_blank" rel="noopener">View GitHub</a>
-              <a class="btn btn-ghost" href="#projects">Browse the {len(projects)} projects</a>
+            <div class="actions reveal">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp" target="_blank" rel="noopener">View GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#projects">Browse the {len(projects)} projects<span class="ext">&#8595;</span></a>
             </div>
-            <div class="stat-row">
+            <div class="stat-row reveal">
 {stat_html}
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section" id="projects">
+      <section class="section anchor reveal" id="projects">
         <div class="container">
           <p class="kicker"><b>[ 01 ]</b> THE PROJECTS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Pick one and read its own page</h2>
+          <p class="prose prose-lead">
+            Every value on these pages is quoted from the repository's own README, tests or
+            config. Where the README publishes nothing, this page says so.
+          </p>
 
-          <div class="card-grid">
+          <div class="card-grid stagger">
 {chr(10).join(cards)}
           </div>
         </div>
@@ -302,7 +327,11 @@ def work_page(projects):
 # ------------------------------------------------------------------------ main
 
 def main():
-    projects = json.loads(DATA.read_text(encoding="utf-8"))
+    try:
+        projects = json.loads(DATA.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as err:
+        print(f"CANNOT READ {DATA.relative_to(ROOT)}: {err}")
+        return 1
     slugs = [p["slug"] for p in projects]
 
     problems = []
