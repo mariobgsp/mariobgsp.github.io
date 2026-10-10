@@ -949,3 +949,123 @@
     }
   }
 })();
+
+/* ================================================================= widgets ===
+   Interactive project-page widgets + copy buttons. Progressive enhancement
+   only: every widget renders a readable static fallback in the HTML, and this
+   script collapses, toggles and remembers. No libraries, no requests. */
+(function () {
+  "use strict";
+
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = "Copied";
+      btn.classList.add("copied");
+      window.setTimeout(function () {
+        btn.textContent = "Copy";
+        btn.classList.remove("copied");
+      }, 1600);
+    }
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (err) { /* noop */ }
+      document.body.removeChild(ta);
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function each(list, fn) { Array.prototype.slice.call(list).forEach(fn); }
+
+  /* copy button after every command block, on every page */
+  each(document.querySelectorAll("pre.cmd"), function (pre) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy-cmd";
+    btn.textContent = "Copy";
+    btn.setAttribute("aria-label", "Copy command to clipboard");
+    btn.addEventListener("click", function () {
+      copyText(pre.textContent.replace(/^\$\s/, ""), btn);
+    });
+    pre.insertAdjacentElement("afterend", btn);
+  });
+
+  /* flow: expandable steps + cache hit/miss path */
+  each(document.querySelectorAll('[data-widget="flow"]'), function (widget) {
+    var steps = Array.prototype.slice.call(widget.querySelectorAll(".flow-step"));
+    function setMode(mode) {
+      steps.forEach(function (step) {
+        var modes = (step.getAttribute("data-flow-modes") || "").split(/\s+/);
+        step.classList.toggle("is-off-path", modes.indexOf(mode) === -1);
+      });
+      each(widget.querySelectorAll("[data-flow-mode]"), function (btn) {
+        var active = btn.getAttribute("data-flow-mode") === mode;
+        btn.classList.toggle("is-active", active);
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+    }
+    steps.forEach(function (step) {
+      var btn = step.querySelector(".flow-step-btn");
+      var detail = step.querySelector(".flow-detail");
+      if (!btn || !detail) return;
+      detail.hidden = true;
+      btn.addEventListener("click", function () {
+        var open = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", open ? "false" : "true");
+        detail.hidden = open;
+      });
+    });
+    each(widget.querySelectorAll("[data-flow-mode]"), function (btn) {
+      btn.addEventListener("click", function () { setMode(btn.getAttribute("data-flow-mode")); });
+    });
+    var initial = widget.querySelector("[data-flow-mode][aria-pressed='true']");
+    if (initial) setMode(initial.getAttribute("data-flow-mode"));
+  });
+
+  /* checklist: remember ticks in localStorage (browser-only) */
+  each(document.querySelectorAll('[data-widget="checklist"]'), function (widget) {
+    var key = widget.getAttribute("data-storage-key") || "routre-checklist";
+    var saved = {};
+    try { saved = JSON.parse(window.localStorage.getItem(key) || "{}") || {}; } catch (err) { saved = {}; }
+    each(widget.querySelectorAll(".checklist-box"), function (box) {
+      var id = box.getAttribute("data-check");
+      var li = box.closest ? box.closest(".checklist-step") : null;
+      if (saved[id]) {
+        box.checked = true;
+        if (li) li.classList.add("is-done");
+      }
+      box.addEventListener("change", function () {
+        saved[id] = box.checked;
+        if (li) li.classList.toggle("is-done", box.checked);
+        try { window.localStorage.setItem(key, JSON.stringify(saved)); } catch (err) { /* noop */ }
+      });
+    });
+  });
+
+  /* faq: accordion; every answer is visible without JavaScript */
+  each(document.querySelectorAll('[data-widget="faq"]'), function (widget) {
+    each(widget.querySelectorAll(".faq-item"), function (item) {
+      var btn = item.querySelector(".faq-q");
+      var answer = item.querySelector(".faq-a");
+      if (!btn || !answer) return;
+      answer.hidden = true;
+      btn.addEventListener("click", function () {
+        var open = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", open ? "false" : "true");
+        answer.hidden = open;
+        item.classList.toggle("is-open", !open);
+      });
+    });
+  });
+})();
+

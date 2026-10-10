@@ -191,16 +191,17 @@
     ],
     "hero_cmd": "curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh",
     "what": [
-      "routre is a small local gateway that sits between your AI apps and AI providers on your own machine. You point a coding agent at http://127.0.0.1:20128 once, and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.",
-      "It ships as one static Go binary (~10.6 MiB) with no Node, Python, Postgres or Redis, and idles at about 10 MiB RAM.",
+      "routre is a small local gateway that sits between your AI apps and AI providers on your own machine. Point a coding agent at http://127.0.0.1:20128 once and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.",
+      "It ships as one static Go binary (10.9 MiB) with no Node, Python, Postgres or Redis; it idles at about 12.6 MiB RAM, adds ~26 ms p50 on a 1 MiB body, and its bundled catalog lists 509 models.",
+      "The shipped RTK level is \"routre\": the repo's benchmark measures 94.8% aggregate / 93.3% worst-payload tool-token reduction (level: standard measures ~91%).",
       "It is aimed at anyone running OpenAI/Anthropic-compatible CLIs (opencode, Claude Code, Codex, Cursor) who wants lower token bills and less downtime, plus a per-agent token/cost ledger and a loopback-only browser dashboard."
     ],
     "architecture": [
       "CLI entrypoint is main.go with one file per command (setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go); bench.go is the gate that fails on any RTK regression below the target.",
       "Every request walks a 7-step pipeline in internal/proxy/: detect dialect → RTK compress → cache lookup → tiered route → candidateRunner retry → translate → relay.",
-      "internal/rtk/ holds 12 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open, never grows a payload, 500 B–10 MiB window.",
-      "internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross.",
-      "internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover.",
+      "internal/rtk/ holds 11 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open and never grows a payload. Very large payloads stay bounded: filters score at most a 512 KiB scan window and one request body gets a 150 ms compression budget.",
+      "internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross. An on-disk snapshot keeps the cache warm across restarts instead of starting cold.",
+      "internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover. Slow upstreams get adaptive, configurable budgets: timeouts.candidate_seconds defaults to 45 s, with one bounded 45 s extension and a 120 s header ceiling.",
       "internal/proxy/dialect/ is the cross-kind SSE state machine (OpenAI ↔ Anthropic ↔ Gemini); internal/usage/ persists the token/cost ledger to ~/.routre/usage.json, and the loopback-only /ui dashboard is served from internal/proxy."
     ],
     "install": [
@@ -222,23 +223,23 @@
     "results": [
       {
         "label": "RTK tool-token reduction",
-        "value": "91.5%"
+        "value": "94.8%"
       },
       {
         "label": "Worst per-payload reduction",
-        "value": "90.3%"
+        "value": "93.3%"
       },
       {
         "label": "Idle RSS",
-        "value": "10 MiB"
-      },
-      {
-        "label": "Peak RSS, 3 opencode sessions",
-        "value": "12.9 MiB"
+        "value": "12.6 MiB"
       },
       {
         "label": "Static binary size",
-        "value": "10.6 MiB"
+        "value": "10.9 MiB"
+      },
+      {
+        "label": "Gateway-added latency (1 MiB body)",
+        "value": "~26 ms p50"
       },
       {
         "label": "Models in config.all.json",
@@ -287,7 +288,153 @@
         "Token and cost ledger",
         "Lightweight static binary"
       ]
-    }
+    },
+    "widgets": [
+      {
+        "type": "flow",
+        "anchor": "flow",
+        "after": "architecture",
+        "kicker": "REQUEST PIPELINE",
+        "title": "What happens to one request",
+        "intro": "Seven steps run in order. Choose a cache miss to follow a full upstream round-trip, or a cache hit to see where the reply short-circuits.",
+        "default_mode": "miss",
+        "modes": [
+          {
+            "id": "miss",
+            "label": "Cache miss"
+          },
+          {
+            "id": "hit",
+            "label": "Cache hit"
+          }
+        ],
+        "steps": [
+          {
+            "title": "Detect dialect",
+            "what": "Work out whether the caller is speaking OpenAI, Anthropic or Gemini.",
+            "detail": "The three dialects differ in paths, headers and event shapes. routre normalises the incoming request here so every later step sees one shape.",
+            "modes": [
+              "miss",
+              "hit"
+            ]
+          },
+          {
+            "title": "RTK compress",
+            "what": "Shrink repetitive tool output before it is billed, and fail open if it cannot.",
+            "detail": "11 heuristic filters target diffs, logs, grep hits, file trees and build noise. Compression is fail-open and never grows a payload; very large payloads stop at a 512 KiB scan window or a 150 ms budget.",
+            "modes": [
+              "miss",
+              "hit"
+            ]
+          },
+          {
+            "title": "Cache lookup",
+            "what": "Hash the processed body and look for an identical earlier request.",
+            "detail": "The key is SHA-256 over the canonical JSON body after RTK. On a hit the saved response is replayed byte-for-byte with no upstream call, so the request jumps straight to the relay.",
+            "modes": [
+              "miss",
+              "hit"
+            ]
+          },
+          {
+            "title": "Route across tiers",
+            "what": "Pick the cheapest healthy provider from the subscription → cheap → free tiers.",
+            "detail": "Tiers are walked in config order and a provider that just failed is held back by an exponential cooldown (2 s to 5 m), so a busy provider is skipped rather than retried forever.",
+            "modes": [
+              "miss"
+            ]
+          },
+          {
+            "title": "Retry / failover",
+            "what": "Retry once, refresh an expired token, then move to the next provider.",
+            "detail": "One immediate connection-level retry, one free auth refresh on 401/403, then failover. Each candidate gets an adaptive slice — timeouts.candidate_seconds is 45 s by default, with one bounded 45 s extension while the socket is alive.",
+            "modes": [
+              "miss"
+            ]
+          },
+          {
+            "title": "Translate dialect",
+            "what": "Rewrite the upstream answer back into the dialect the caller asked for.",
+            "detail": "A cross-kind SSE state machine converts streaming events on the fly, so an OpenAI-shaped client can talk to an Anthropic provider and vice versa.",
+            "modes": [
+              "miss"
+            ]
+          },
+          {
+            "title": "Relay",
+            "what": "Stream the answer home — from upstream on a miss, from memory on a hit.",
+            "detail": "On a miss the upstream stream is relayed as it arrives; on a hit the saved stream is replayed. Mid-stream aborts are never cached.",
+            "modes": [
+              "miss",
+              "hit"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "checklist",
+        "anchor": "get-started",
+        "after": "quickstart",
+        "kicker": "QUICK START",
+        "title": "Get started in 3 steps",
+        "intro": "Copy each block and tick it off. Progress is remembered in this browser only.",
+        "storage_key": "routre.get-started.v1",
+        "steps": [
+          {
+            "id": "install",
+            "title": "Install the binary",
+            "body": "Download the latest release and put routre on your PATH. Nothing else is installed.",
+            "cmd": "curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh"
+          },
+          {
+            "id": "setup",
+            "title": "Run setup, then start it",
+            "body": "The wizard writes config.json (providers, tiers, models) and a 0600 routre.env for your API keys. routre serve starts the gateway on 127.0.0.1:20128.",
+            "cmd": "routre setup\nroutre serve"
+          },
+          {
+            "id": "point",
+            "title": "Point your client at the gateway",
+            "body": "Export the gateway URL for your client, then open the dashboard to add keys. Any OpenAI/Anthropic-compatible CLI now routes through routre.",
+            "cmd": "export OPENAI_BASE_URL=http://127.0.0.1:20128\nexport ANTHROPIC_BASE_URL=http://127.0.0.1:20128\nopen http://127.0.0.1:20128/ui"
+          }
+        ]
+      },
+      {
+        "type": "faq",
+        "anchor": "faq",
+        "after": "tradeoffs",
+        "kicker": "PLAIN ANSWERS",
+        "title": "Questions people actually ask",
+        "intro": "Short answers, no marketing.",
+        "items": [
+          {
+            "q": "Does my code leave my machine?",
+            "a": "Only in the prompt you already send to your AI provider, and only to that provider. routre binds to 127.0.0.1, so it is reachable from your own computer and not from the network, and it puts no third party between you and the provider."
+          },
+          {
+            "q": "Do I need Node, Python, Postgres or Redis?",
+            "a": "No. routre is one static Go binary. Install it, run routre setup, and it manages its own JSON config, on-disk cache and token ledger. There is no runtime, database or message broker to run."
+          },
+          {
+            "q": "What happens if a provider is down or busy?",
+            "a": "routre retries once, refreshes an expired auth token if needed, then moves to the next candidate in tier order. A provider that fails is cooled down for 2 s to 5 m, and the whole attempt stays inside configurable timeouts (a 45 s candidate slice by default)."
+          },
+          {
+            "q": "Will it work with Claude Code, Codex, opencode or Cursor?",
+            "a": "Yes. Any client that speaks the OpenAI or Anthropic HTTP API works — point OPENAI_BASE_URL or ANTHROPIC_BASE_URL at http://127.0.0.1:20128. Cross-dialect translation means an OpenAI-shaped client can reach an Anthropic provider and vice versa."
+          },
+          {
+            "q": "Does it cost anything?",
+            "a": "routre itself is MIT-licensed open source with no paid tier. You still pay your AI providers for the tokens you use; RTK compression and the response cache are what cut the tokens billed."
+          },
+          {
+            "q": "What does it NOT do?",
+            "a": "It does not compress output tokens, its token estimates are approximate (~4 bytes/token, a benchmark instrument rather than billing-grade), the npm package is deprecated, and Windows self-update is deferred. It is a local gateway, not a hosted service."
+          }
+        ]
+      }
+    ]
   },
   {
     "slug": "trading-suite",

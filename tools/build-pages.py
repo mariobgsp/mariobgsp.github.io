@@ -149,6 +149,131 @@ def section(sec_id, num, kicker, title, body, extra_class=""):
       </section>"""
 
 
+# ------------------------------------------------------------------- widgets
+
+WIDGET_TYPES = ("flow", "checklist", "faq")
+
+
+def widget_problems(p):
+    """Schema problems for one project's optional interactive widgets."""
+    problems = []
+    widgets = p.get("widgets") or []
+    if not isinstance(widgets, list):
+        return [f"{p['slug']}: widgets must be a list"]
+    seen = set()
+    for w in widgets:
+        if not isinstance(w, dict):
+            problems.append(f"{p['slug']}: each widget must be an object")
+            continue
+        wtype = w.get("type")
+        anchor = w.get("anchor")
+        if wtype not in WIDGET_TYPES:
+            problems.append(f"{p['slug']}: unknown widget type {wtype!r}")
+            continue
+        if not anchor:
+            problems.append(f"{p['slug']}: {wtype} widget has no anchor")
+        elif anchor in seen:
+            problems.append(f"{p['slug']}: duplicate widget anchor {anchor!r}")
+        else:
+            seen.add(anchor)
+        if not w.get("title"):
+            problems.append(f"{p['slug']}: {wtype} {anchor} has no title")
+        if not w.get("kicker"):
+            problems.append(f"{p['slug']}: {wtype} {anchor} has no kicker")
+        if wtype == "flow":
+            steps = w.get("steps")
+            if not isinstance(steps, list) or len(steps) < 2:
+                problems.append(f"{p['slug']}: flow {anchor} needs at least 2 steps")
+            else:
+                for s in steps:
+                    if not s.get("title") or not s.get("what") or not s.get("detail"):
+                        problems.append(f"{p['slug']}: flow {anchor} steps need title, what and detail")
+                        break
+        elif wtype == "checklist":
+            steps = w.get("steps")
+            if not isinstance(steps, list) or not steps:
+                problems.append(f"{p['slug']}: checklist {anchor} needs steps")
+            else:
+                for s in steps:
+                    if not s.get("id") or not s.get("title") or not s.get("cmd"):
+                        problems.append(f"{p['slug']}: checklist {anchor} steps need id, title and cmd")
+                        break
+            if not w.get("storage_key"):
+                problems.append(f"{p['slug']}: checklist {anchor} has no storage_key")
+        elif wtype == "faq":
+            items = w.get("items")
+            if not isinstance(items, list) or not items:
+                problems.append(f"{p['slug']}: faq {anchor} needs items")
+            else:
+                for it in items:
+                    if not it.get("q") or not it.get("a"):
+                        problems.append(f"{p['slug']}: faq {anchor} items need q and a")
+                        break
+    return problems
+
+
+def render_widget_body(w):
+    """Render one widget's markup: a readable static fallback that the
+    progressive-enhancement script in assets/site.js then wires up."""
+    wtype = w["type"]
+    anchor = e(w["anchor"])
+    intro = ""
+    if w.get("intro"):
+        intro = f'\n            <p class="prose widget-intro">{e(w["intro"])}</p>'
+
+    if wtype == "flow":
+        modes = w.get("modes") or []
+        toolbar = ""
+        if modes:
+            btns = []
+            for m in modes:
+                active = m.get("id") == w.get("default_mode")
+                cls = "widget-toggle is-active" if active else "widget-toggle"
+                pressed = "true" if active else "false"
+                btns.append(
+                    f'              <button type="button" class="{cls}" data-flow-mode="{e(m["id"])}" aria-pressed="{pressed}">{e(m["label"])}</button>')
+            toolbar = ('\n            <div class="widget-toolbar" role="group" aria-label="Request path">\n'
+                       + "\n".join(btns) + "\n            </div>")
+        steps = []
+        for i, s in enumerate(w["steps"]):
+            sid = f"{anchor}-step-{i}"
+            mode_attr = " ".join(s.get("modes") or [])
+            steps.append(
+                f'''            <li class="flow-step" data-flow-modes="{e(mode_attr)}">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="{sid}">
+                <span class="flow-step-title">{e(s["title"])}</span>
+                <span class="flow-step-what">{e(s["what"])}</span>
+              </button>
+              <div class="flow-detail" id="{sid}"><p>{e(s["detail"])}</p></div>
+            </li>''')
+        return (f'          <div class="widget" data-widget="flow" id="{anchor}">{intro}{toolbar}\n'
+                f'            <ol class="flow-list">\n' + "\n".join(steps) + "\n            </ol>\n          </div>")
+
+    if wtype == "checklist":
+        key = e(w.get("storage_key", "checklist-" + anchor))
+        steps = []
+        for s in w["steps"]:
+            steps.append(
+                f'''            <li class="checklist-step" data-step="{e(s["id"])}">
+              <label class="checklist-head"><input type="checkbox" class="checklist-box" data-check="{e(s["id"])}"><span class="checklist-title">{e(s["title"])}</span></label>
+              <p class="checklist-body">{e(s["body"])}</p>
+              <div class="cmd-wrap" style="max-width:100%"><pre class="cmd">{e(s["cmd"])}</pre></div>
+            </li>''')
+        return (f'          <div class="widget" data-widget="checklist" id="{anchor}" data-storage-key="{key}">{intro}\n'
+                f'            <ol class="checklist">\n' + "\n".join(steps) + "\n            </ol>\n          </div>")
+
+    items = []
+    for i, it in enumerate(w["items"]):
+        aid = f"{anchor}-a{i}"
+        items.append(
+            f'''            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="{aid}"><span>{e(it["q"])}</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="{aid}"><p>{e(it["a"])}</p></div>
+            </div>''')
+    return (f'          <div class="widget" data-widget="faq" id="{anchor}">{intro}\n'
+            + "\n".join(items) + "\n          </div>")
+
+
 # ---------------------------------------------------------------- project page
 
 def project_page(p, index, total):
@@ -179,8 +304,21 @@ def project_page(p, index, total):
 
     parts = [hero]
 
+    widgets = p.get("widgets") or []
+
+    def widget_section(w):
+        return sec(w["anchor"], w.get("kicker", "Interactive"), w["title"], render_widget_body(w))
+
+    def append_widgets(section_key):
+        """Widgets declare the section they follow, so content order stays in
+        projects.json rather than in this renderer."""
+        for w in widgets:
+            if w.get("after") == section_key:
+                parts.append(widget_section(w))
+
     what = "\n".join(f'          <p class="prose">{e(x)}</p>' for x in p["what"])
     parts.append(sec("what", "WHAT IT IS", "In plain words", what))
+    append_widgets("what")
 
     parts.append(sec(
         "architecture", "ARCHITECTURE", "How it is put together",
@@ -190,6 +328,7 @@ def project_page(p, index, total):
               <img class="thumb" src="{UP}assets/thumbs/thumb-{e(p["slug"])}.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
           </div>"""))
+    append_widgets("architecture")
 
     install = "\n".join(f'            <pre class="cmd">{e(line)}</pre>' for line in p["install"])
     parts.append(sec(
@@ -200,6 +339,7 @@ def project_page(p, index, total):
     parts.append(sec(
         "quickstart", "QUICKSTART", "See it work",
         f'          <ol class="deliverables">\n{quick}\n          </ol>'))
+    append_widgets("quickstart")
 
     if p["results"]:
         cards = "\n".join(
@@ -215,6 +355,7 @@ def project_page(p, index, total):
     parts.append(sec(
         "tradeoffs", "TRADEOFFS", "What it does not do",
         f'          <ol class="deliverables">\n{trade}\n          </ol>'))
+    append_widgets("tradeoffs")
 
     links = [x for x in p["links"] if x["url"] != repo and x["url"].startswith("http")]
     link_html = ""
@@ -351,6 +492,7 @@ def main():
             problems.append(f"{p['slug']}: strapline {len(p['strapline'])} chars")
         if not pathlib.Path(ROOT / "assets" / "thumbs" / f"thumb-{p['slug']}.png").exists():
             problems.append(f"{p['slug']}: thumbnail missing")
+        problems += widget_problems(p)
 
     if problems:
         print("DATA PROBLEMS:")

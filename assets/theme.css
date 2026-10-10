@@ -1625,3 +1625,103 @@ html[data-freeze] *::after {
 
   body { background: #fff !important; }
 }
+
+/* ================================================================= widgets ===
+   Interactive project-page widgets (flow / checklist / faq) and command copy
+   buttons. Additive: no existing selector is modified. */
+
+.widget { margin-top: 18px; }
+.widget-intro { margin-top: 0; }
+.widget-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 16px; }
+.widget-toggle {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+.widget-toggle:hover { color: var(--ink); border-color: var(--line-strong); }
+.widget-toggle.is-active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+
+.flow-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.flow-step {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.015);
+  transition: opacity var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.flow-step.is-off-path { opacity: 0.45; }
+.flow-step-btn {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.flow-step-title { color: var(--ink); font-weight: 500; }
+.flow-step-what { color: var(--ink-note); font-size: 0.9rem; }
+.flow-step-btn[aria-expanded="true"] { border-bottom: 1px solid var(--line-soft); }
+.flow-detail { padding: 12px 16px 16px; color: var(--ink-2); font-size: 0.92rem; }
+.flow-detail p { margin: 0; }
+
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 22px; }
+.checklist-step { border-left: 2px solid var(--line-soft); padding-left: 16px; transition: border-color var(--dur) var(--ease); }
+.checklist-head { display: flex; align-items: baseline; gap: 10px; cursor: pointer; }
+.checklist-title { color: var(--ink); font-weight: 500; }
+.checklist-body { color: var(--ink-2); margin: 6px 0 10px; }
+.checklist-step.is-done { border-left-color: var(--emerald); }
+.checklist-step.is-done .checklist-title { color: var(--ink-2); text-decoration: line-through; }
+
+.faq-item { border-top: 1px solid var(--line-soft); }
+.faq-item:last-child { border-bottom: 1px solid var(--line-soft); }
+.faq-q {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  padding: 16px 0;
+  cursor: pointer;
+}
+.faq-mark { color: var(--violet); font-family: var(--mono); transition: transform var(--dur) var(--ease); }
+.faq-item.is-open .faq-mark { transform: rotate(45deg); }
+.faq-a { padding: 0 0 18px; color: var(--ink-2); }
+.faq-a p { margin: 0; }
+
+.copy-cmd {
+  display: inline-block;
+  margin: 0 0 14px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.copy-cmd:hover { color: var(--ink); border-color: var(--line-strong); }
+.copy-cmd.copied { color: var(--emerald); border-color: var(--emerald); }
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-toggle, .flow-step, .copy-cmd, .faq-mark, .checklist-step { transition: none !important; }
+}
+

@@ -46,11 +46,11 @@
             <p class="hero-title reveal">One static Go binary that cuts AI token bills and fails over providers for any CLI.</p>
             <div class="cmd-wrap"><pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh</pre></div>
             <div class="stat-row">
-            <div class="stat"><b>91.5%</b><span>RTK tool-token reduction</span></div>
-            <div class="stat"><b>90.3%</b><span>Worst per-payload reduction</span></div>
-            <div class="stat"><b>10 MiB</b><span>Idle RSS</span></div>
-            <div class="stat"><b>12.9 MiB</b><span>Peak RSS, 3 opencode sessions</span></div>
-            <div class="stat"><b>10.6 MiB</b><span>Static binary size</span></div>
+            <div class="stat"><b>94.8%</b><span>RTK tool-token reduction</span></div>
+            <div class="stat"><b>93.3%</b><span>Worst per-payload reduction</span></div>
+            <div class="stat"><b>12.6 MiB</b><span>Idle RSS</span></div>
+            <div class="stat"><b>10.9 MiB</b><span>Static binary size</span></div>
+            <div class="stat"><b>~26 ms p50</b><span>Gateway-added latency (1 MiB body)</span></div>
             <div class="stat"><b>509</b><span>Models in config.all.json</span></div>
             </div>
             <div class="actions" style="margin-top: 24px">
@@ -69,8 +69,9 @@
           <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">In plain words</h2>
-          <p class="prose">routre is a small local gateway that sits between your AI apps and AI providers on your own machine. You point a coding agent at http://127.0.0.1:20128 once, and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.</p>
-          <p class="prose">It ships as one static Go binary (~10.6 MiB) with no Node, Python, Postgres or Redis, and idles at about 10 MiB RAM.</p>
+          <p class="prose">routre is a small local gateway that sits between your AI apps and AI providers on your own machine. Point a coding agent at http://127.0.0.1:20128 once and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.</p>
+          <p class="prose">It ships as one static Go binary (10.9 MiB) with no Node, Python, Postgres or Redis; it idles at about 12.6 MiB RAM, adds ~26 ms p50 on a 1 MiB body, and its bundled catalog lists 509 models.</p>
+          <p class="prose">The shipped RTK level is &quot;routre&quot;: the repo&#x27;s benchmark measures 94.8% aggregate / 93.3% worst-payload tool-token reduction (level: standard measures ~91%).</p>
           <p class="prose">It is aimed at anyone running OpenAI/Anthropic-compatible CLIs (opencode, Claude Code, Codex, Cursor) who wants lower token bills and less downtime, plus a per-agent token/cost ledger and a loopback-only browser dashboard.</p>
         </div>
       </section>
@@ -83,9 +84,9 @@
           <div class="split">
             <div><ul class="deliverables">  <li>CLI entrypoint is main.go with one file per command (setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go); bench.go is the gate that fails on any RTK regression below the target.</li>
   <li>Every request walks a 7-step pipeline in internal/proxy/: detect dialect → RTK compress → cache lookup → tiered route → candidateRunner retry → translate → relay.</li>
-  <li>internal/rtk/ holds 12 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open, never grows a payload, 500 B–10 MiB window.</li>
-  <li>internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross.</li>
-  <li>internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover.</li>
+  <li>internal/rtk/ holds 11 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open and never grows a payload. Very large payloads stay bounded: filters score at most a 512 KiB scan window and one request body gets a 150 ms compression budget.</li>
+  <li>internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross. An on-disk snapshot keeps the cache warm across restarts instead of starting cold.</li>
+  <li>internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover. Slow upstreams get adaptive, configurable budgets: timeouts.candidate_seconds defaults to 45 s, with one bounded 45 s extension and a 120 s header ceiling.</li>
   <li>internal/proxy/dialect/ is the cross-kind SSE state machine (OpenAI ↔ Anthropic ↔ Gemini); internal/usage/ persists the token/cost ledger to ~/.routre/usage.json, and the loopback-only /ui dashboard is served from internal/proxy.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-routre.png" width="1200" height="630" loading="lazy" alt="" />
@@ -94,9 +95,75 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="flow">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> REQUEST PIPELINE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What happens to one request</h2>
+          <div class="widget" data-widget="flow" id="flow">
+            <p class="prose widget-intro">Seven steps run in order. Choose a cache miss to follow a full upstream round-trip, or a cache hit to see where the reply short-circuits.</p>
+            <div class="widget-toolbar" role="group" aria-label="Request path">
+              <button type="button" class="widget-toggle is-active" data-flow-mode="miss" aria-pressed="true">Cache miss</button>
+              <button type="button" class="widget-toggle" data-flow-mode="hit" aria-pressed="false">Cache hit</button>
+            </div>
+            <ol class="flow-list">
+            <li class="flow-step" data-flow-modes="miss hit">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-0">
+                <span class="flow-step-title">Detect dialect</span>
+                <span class="flow-step-what">Work out whether the caller is speaking OpenAI, Anthropic or Gemini.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-0"><p>The three dialects differ in paths, headers and event shapes. routre normalises the incoming request here so every later step sees one shape.</p></div>
+            </li>
+            <li class="flow-step" data-flow-modes="miss hit">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-1">
+                <span class="flow-step-title">RTK compress</span>
+                <span class="flow-step-what">Shrink repetitive tool output before it is billed, and fail open if it cannot.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-1"><p>11 heuristic filters target diffs, logs, grep hits, file trees and build noise. Compression is fail-open and never grows a payload; very large payloads stop at a 512 KiB scan window or a 150 ms budget.</p></div>
+            </li>
+            <li class="flow-step" data-flow-modes="miss hit">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-2">
+                <span class="flow-step-title">Cache lookup</span>
+                <span class="flow-step-what">Hash the processed body and look for an identical earlier request.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-2"><p>The key is SHA-256 over the canonical JSON body after RTK. On a hit the saved response is replayed byte-for-byte with no upstream call, so the request jumps straight to the relay.</p></div>
+            </li>
+            <li class="flow-step" data-flow-modes="miss">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-3">
+                <span class="flow-step-title">Route across tiers</span>
+                <span class="flow-step-what">Pick the cheapest healthy provider from the subscription → cheap → free tiers.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-3"><p>Tiers are walked in config order and a provider that just failed is held back by an exponential cooldown (2 s to 5 m), so a busy provider is skipped rather than retried forever.</p></div>
+            </li>
+            <li class="flow-step" data-flow-modes="miss">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-4">
+                <span class="flow-step-title">Retry / failover</span>
+                <span class="flow-step-what">Retry once, refresh an expired token, then move to the next provider.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-4"><p>One immediate connection-level retry, one free auth refresh on 401/403, then failover. Each candidate gets an adaptive slice — timeouts.candidate_seconds is 45 s by default, with one bounded 45 s extension while the socket is alive.</p></div>
+            </li>
+            <li class="flow-step" data-flow-modes="miss">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-5">
+                <span class="flow-step-title">Translate dialect</span>
+                <span class="flow-step-what">Rewrite the upstream answer back into the dialect the caller asked for.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-5"><p>A cross-kind SSE state machine converts streaming events on the fly, so an OpenAI-shaped client can talk to an Anthropic provider and vice versa.</p></div>
+            </li>
+            <li class="flow-step" data-flow-modes="miss hit">
+              <button type="button" class="flow-step-btn" aria-expanded="false" aria-controls="flow-step-6">
+                <span class="flow-step-title">Relay</span>
+                <span class="flow-step-what">Stream the answer home — from upstream on a miss, from memory on a hit.</span>
+              </button>
+              <div class="flow-detail" id="flow-step-6"><p>On a miss the upstream stream is relayed as it arrives; on a hit the saved stream is replayed. Mid-stream aborts are never cached.</p></div>
+            </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 04 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -112,7 +179,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 05 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -126,31 +193,62 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="get-started">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> QUICK START</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Get started in 3 steps</h2>
+          <div class="widget" data-widget="checklist" id="get-started" data-storage-key="routre.get-started.v1">
+            <p class="prose widget-intro">Copy each block and tick it off. Progress is remembered in this browser only.</p>
+            <ol class="checklist">
+            <li class="checklist-step" data-step="install">
+              <label class="checklist-head"><input type="checkbox" class="checklist-box" data-check="install"><span class="checklist-title">Install the binary</span></label>
+              <p class="checklist-body">Download the latest release and put routre on your PATH. Nothing else is installed.</p>
+              <div class="cmd-wrap" style="max-width:100%"><pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh</pre></div>
+            </li>
+            <li class="checklist-step" data-step="setup">
+              <label class="checklist-head"><input type="checkbox" class="checklist-box" data-check="setup"><span class="checklist-title">Run setup, then start it</span></label>
+              <p class="checklist-body">The wizard writes config.json (providers, tiers, models) and a 0600 routre.env for your API keys. routre serve starts the gateway on 127.0.0.1:20128.</p>
+              <div class="cmd-wrap" style="max-width:100%"><pre class="cmd">routre setup
+routre serve</pre></div>
+            </li>
+            <li class="checklist-step" data-step="point">
+              <label class="checklist-head"><input type="checkbox" class="checklist-box" data-check="point"><span class="checklist-title">Point your client at the gateway</span></label>
+              <p class="checklist-body">Export the gateway URL for your client, then open the dashboard to add keys. Any OpenAI/Anthropic-compatible CLI now routes through routre.</p>
+              <div class="cmd-wrap" style="max-width:100%"><pre class="cmd">export OPENAI_BASE_URL=http://127.0.0.1:20128
+export ANTHROPIC_BASE_URL=http://127.0.0.1:20128
+open http://127.0.0.1:20128/ui</pre></div>
+            </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="results">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <p class="kicker"><b>[ 07 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
           <div class="card-grid stagger">
             <div class="card">
               <div class="card-head"><h3 class="card-name">RTK tool-token reduction</h3><span class="card-index">REPO STATES</span></div>
-              <p class="card-role">91.5%</p>
+              <p class="card-role">94.8%</p>
             </div>
             <div class="card">
               <div class="card-head"><h3 class="card-name">Worst per-payload reduction</h3><span class="card-index">REPO STATES</span></div>
-              <p class="card-role">90.3%</p>
+              <p class="card-role">93.3%</p>
             </div>
             <div class="card">
               <div class="card-head"><h3 class="card-name">Idle RSS</h3><span class="card-index">REPO STATES</span></div>
-              <p class="card-role">10 MiB</p>
-            </div>
-            <div class="card">
-              <div class="card-head"><h3 class="card-name">Peak RSS, 3 opencode sessions</h3><span class="card-index">REPO STATES</span></div>
-              <p class="card-role">12.9 MiB</p>
+              <p class="card-role">12.6 MiB</p>
             </div>
             <div class="card">
               <div class="card-head"><h3 class="card-name">Static binary size</h3><span class="card-index">REPO STATES</span></div>
-              <p class="card-role">10.6 MiB</p>
+              <p class="card-role">10.9 MiB</p>
+            </div>
+            <div class="card">
+              <div class="card-head"><h3 class="card-name">Gateway-added latency (1 MiB body)</h3><span class="card-index">REPO STATES</span></div>
+              <p class="card-role">~26 ms p50</p>
             </div>
             <div class="card">
               <div class="card-head"><h3 class="card-name">Models in config.all.json</h3><span class="card-index">REPO STATES</span></div>
@@ -162,7 +260,7 @@
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 08 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -174,9 +272,44 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="faq">
+        <div class="container">
+          <p class="kicker"><b>[ 09 ]</b> PLAIN ANSWERS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Questions people actually ask</h2>
+          <div class="widget" data-widget="faq" id="faq">
+            <p class="prose widget-intro">Short answers, no marketing.</p>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a0"><span>Does my code leave my machine?</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="faq-a0"><p>Only in the prompt you already send to your AI provider, and only to that provider. routre binds to 127.0.0.1, so it is reachable from your own computer and not from the network, and it puts no third party between you and the provider.</p></div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a1"><span>Do I need Node, Python, Postgres or Redis?</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="faq-a1"><p>No. routre is one static Go binary. Install it, run routre setup, and it manages its own JSON config, on-disk cache and token ledger. There is no runtime, database or message broker to run.</p></div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a2"><span>What happens if a provider is down or busy?</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="faq-a2"><p>routre retries once, refreshes an expired auth token if needed, then moves to the next candidate in tier order. A provider that fails is cooled down for 2 s to 5 m, and the whole attempt stays inside configurable timeouts (a 45 s candidate slice by default).</p></div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a3"><span>Will it work with Claude Code, Codex, opencode or Cursor?</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="faq-a3"><p>Yes. Any client that speaks the OpenAI or Anthropic HTTP API works — point OPENAI_BASE_URL or ANTHROPIC_BASE_URL at http://127.0.0.1:20128. Cross-dialect translation means an OpenAI-shaped client can reach an Anthropic provider and vice versa.</p></div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a4"><span>Does it cost anything?</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="faq-a4"><p>routre itself is MIT-licensed open source with no paid tier. You still pay your AI providers for the tokens you use; RTK compression and the response cache are what cut the tokens billed.</p></div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false" aria-controls="faq-a5"><span>What does it NOT do?</span><span class="faq-mark" aria-hidden="true">+</span></button>
+              <div class="faq-a" id="faq-a5"><p>It does not compress output tokens, its token estimates are approximate (~4 bytes/token, a benchmark instrument rather than billing-grade), the npm package is deprecated, and Windows self-update is deferred. It is a local gateway, not a hosted service.</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 10 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
