@@ -1,6 +1,7 @@
 /* ==========================================================================
    mariobgsp.dev - shared behaviour for every page
-   Navigation, scroll progress, reveal-on-scroll, magnetic hover.
+   Navigation, scroll progress, reveal-on-scroll, magnetic hover, the
+   ordered-dither pixel field and the animated cursor.
    Root index.html loads this first and then adds its own clock / terminal /
    GitHub feed on top; the generated pages stop here.
    ========================================================================== */
@@ -43,12 +44,19 @@
                      capture of a below-the-fold section is not blank
      ?at=<id>        force the "you are here" state to a section without
                      scrolling, so the rail can be captured in any state
-     ?hover=<sel>    pin one surface in its hovered state (pointer light,
-                     tilt, lift) so it can be captured deterministically
+     ?hover=<sel>    pin one surface in its hovered state (ring, lift) and
+                      park the cursor on it, so it can be captured
+     ?cursor=<x>,<y> park the cursor at viewport coordinates, transitions off
+     ?cursorstate=hover|down
+                      force one cursor state without a real pointer
+     ?click=1        draw one click ripple, frozen mid-animation
+     ?fps=1          after 120 frames publish the field frame rate as
+                      data-field-fps on <html>, for a headless --dump-dom
      ?freeze=1       settle entrances and pause CSS animations
      All of them are inert when absent. */
 
-  var HARNESS = { t: null, scroll: null, focus: null, at: null, hover: null, freeze: false };
+  var HARNESS = { t: null, scroll: null, focus: null, at: null, hover: null, freeze: false,
+                  cursor: null, cursorState: null, click: false, fps: false };
 
   if (window.URLSearchParams) {
     try {
@@ -60,6 +68,17 @@
       HARNESS.at = query.get("at");
       HARNESS.hover = query.get("hover");
       HARNESS.freeze = query.get("freeze") === "1";
+
+      var cParam = query.get("cursor");
+      if (cParam) {
+        var cParts = cParam.split(",");
+        var cX = parseFloat(cParts[0]);
+        var cY = parseFloat(cParts[1]);
+        if (isFinite(cX) && isFinite(cY)) HARNESS.cursor = { x: cX, y: cY };
+      }
+      HARNESS.cursorState = query.get("cursorstate");
+      HARNESS.click = query.get("click") === "1";
+      HARNESS.fps = query.get("fps") === "1";
     } catch (err) { /* malformed query string: run without the harness */ }
   }
 
@@ -189,29 +208,18 @@
   });
 
   /* ---------------------------------------------------- pointer surfaces ---
-     One rAF pass drives everything the pointer does to a surface:
+     One rAF pass drives the only thing the pointer does to a surface:
        --mx/--my    magnetic offset (px)
-       --spot-x/y   pointer light position (px, element-local)
-       --spot-o     pointer light opacity
-       --rx/--ry    tilt (deg, clamped by --tilt-max)
      The rect is cached on enter and refreshed on resize/scroll, so the move
      handler itself never reads layout. Disabled entirely for coarse pointers
      and for reduced motion. */
 
   (function surfaces() {
     var MAGNET = ".btn, .card, .project-card, .gh-panel, .plate, .spec-cluster, .exp-item";
-    var TILT = ".card, .project-card, .spec-cluster";
     var held = null;
     var box = null;
     var point = { x: 0, y: 0 };
     var frame = 0;
-    var tiltMax = 3.2;
-
-    if (window.getComputedStyle) {
-      var raw = getComputedStyle(document.documentElement).getPropertyValue("--tilt-max");
-      var parsed = parseFloat(raw);
-      if (!isNaN(parsed)) tiltMax = parsed;
-    }
 
     function enabled() { return !reduced.matches && fine.matches; }
 
@@ -219,11 +227,6 @@
       if (!el) return;
       el.style.removeProperty("--mx");
       el.style.removeProperty("--my");
-      el.style.removeProperty("--spot-x");
-      el.style.removeProperty("--spot-y");
-      el.style.removeProperty("--spot-o");
-      el.style.removeProperty("--rx");
-      el.style.removeProperty("--ry");
     }
 
     function flush() {
@@ -237,14 +240,6 @@
 
       held.style.setProperty("--mx", (dx * 6).toFixed(2) + "px");
       held.style.setProperty("--my", (dy * 5).toFixed(2) + "px");
-      held.style.setProperty("--spot-x", x.toFixed(1) + "px");
-      held.style.setProperty("--spot-y", y.toFixed(1) + "px");
-      held.style.setProperty("--spot-o", "1");
-
-      if (held.matches(TILT)) {
-        held.style.setProperty("--rx", (-dy * tiltMax).toFixed(3) + "deg");
-        held.style.setProperty("--ry", (dx * tiltMax).toFixed(3) + "deg");
-      }
     }
 
     function hold(el) {
@@ -280,6 +275,193 @@
     window.addEventListener("scroll", refresh, { passive: true });
 
     onMotionChange(function () { if (!enabled()) hold(null); });
+  })();
+
+  /* ----------------------------------------------------------- the cursor ---
+     A trailing ring and a dot. The follow loop writes translate on the two
+     wrappers only; scale and colour live in CSS, so the state animation and
+     the follow can never fight over the same transform. Fine pointers only,
+     and never under reduced motion - the native cursor stays in charge there
+     and is restored if the reader flips the preference mid-session. */
+
+  var cursor = (function () {
+    var HOVER = "a, button, [role='button'], summary, input, textarea, .btn, .card, " +
+                ".project-card, .plate, .exp-item, .spec-cluster, .gh-panel, .tag, " +
+                ".faq-q, .widget-toggle, .flow-step-btn, .copy-cmd, .checklist-head, " +
+                ".sec-rail__tick";
+
+    var root = null;
+    var ring = null;
+    var dot = null;
+    var target = { x: -100, y: -100 };
+    var pos = { x: -100, y: -100 };
+    var raf = 0;
+    var running = false;
+    var frameQueued = false;
+
+    function frame() {
+      raf = requestAnimationFrame(frame);
+      pos.x += (target.x - pos.x) * 0.18;
+      pos.y += (target.y - pos.y) * 0.18;
+      ring.style.transform = "translate3d(" + pos.x.toFixed(2) + "px," + pos.y.toFixed(2) + "px,0)";
+      dot.style.transform = "translate3d(" + target.x.toFixed(2) + "px," + target.y.toFixed(2) + "px,0)";
+    }
+
+    function start() {
+      if (running || !root) return;
+      running = true;
+      raf = requestAnimationFrame(frame);
+    }
+
+    function stop() {
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    }
+
+    function place(x, y) {
+      target.x = pos.x = x;
+      target.y = pos.y = y;
+      if (!root) return;
+      var at = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2) + "px,0)";
+      ring.style.transform = at;
+      dot.style.transform = at;
+    }
+
+    function pulse(x, y, still) {
+      var p = document.createElement("span");
+      p.className = "cursor__pulse" + (still ? " is-still" : "");
+      p.setAttribute("aria-hidden", "true");
+      p.style.transform = "translate3d(" + x.toFixed(2) + "px," + y.toFixed(2) + "px,0)";
+      document.body.appendChild(p);
+      if (still) return;
+
+      var gone = false;
+      function remove() {
+        if (gone) return;
+        gone = true;
+        if (p.parentNode) p.parentNode.removeChild(p);
+      }
+      p.addEventListener("animationend", remove);
+      window.setTimeout(remove, 700);
+    }
+
+    function onMove(event) {
+      target.x = event.clientX;
+      target.y = event.clientY;
+      if (frameQueued) return;
+      frameQueued = true;
+      requestAnimationFrame(function () {
+        frameQueued = false;
+        if (root) root.classList.remove("is-hidden");
+      });
+    }
+
+    function onOver(event) {
+      if (!root || !event.target.closest) return;
+      if (event.target.closest(HOVER)) root.classList.add("is-hover");
+    }
+
+    function onOut(event) {
+      if (!root || !event.target.closest) return;
+      var to = event.relatedTarget;
+      if (to && to.closest && to.closest(HOVER)) return;
+      if (event.target.closest(HOVER)) root.classList.remove("is-hover");
+    }
+
+    function onDown(event) {
+      if (!root) return;
+      root.classList.add("is-down");
+      target.x = event.clientX;
+      target.y = event.clientY;
+    }
+
+    function onUp(event) {
+      if (!root) return;
+      root.classList.remove("is-down");
+      pulse(event.clientX, event.clientY, false);
+    }
+
+    function onHide() { if (root) root.classList.add("is-hidden"); }
+    function onShow() { if (root) root.classList.remove("is-hidden"); }
+
+    function destroy() {
+      stop();
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerover", onOver);
+      document.removeEventListener("pointerout", onOut);
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointerleave", onHide);
+      document.removeEventListener("pointerenter", onShow);
+      if (root && root.parentNode) root.parentNode.removeChild(root);
+      root = ring = dot = null;
+      document.documentElement.classList.remove("has-cursor");
+    }
+
+    /* A fine pointer is the real gate; the harness may force the cursor on so a
+       headless capture (which reports no fine pointer) can still show it. */
+    function wanted() {
+      return fine.matches || HARNESS.cursor !== null || HARNESS.cursorState !== null ||
+             HARNESS.click || HARNESS.hover !== null;
+    }
+
+    function init() {
+      if (root || !wanted() || reduced.matches) return;
+
+      root = document.createElement("div");
+      root.className = "cursor";
+      root.setAttribute("aria-hidden", "true");
+      ring = document.createElement("span");
+      ring.className = "cursor__ring";
+      dot = document.createElement("span");
+      dot.className = "cursor__dot";
+      root.appendChild(ring);
+      root.appendChild(dot);
+      document.body.appendChild(root);
+      document.documentElement.classList.add("has-cursor");
+
+      document.addEventListener("pointermove", onMove, { passive: true });
+      document.addEventListener("pointerover", onOver, { passive: true });
+      document.addEventListener("pointerout", onOut, { passive: true });
+      document.addEventListener("pointerdown", onDown, { passive: true });
+      document.addEventListener("pointerup", onUp, { passive: true });
+      document.addEventListener("pointerleave", onHide, { passive: true });
+      document.addEventListener("pointerenter", onShow, { passive: true });
+
+      place(target.x, target.y);
+      start();
+    }
+
+    /* Harness: park the pointer state so a capture is a state, not a moment. */
+    function park() {
+      if (!root) return;
+      if (HARNESS.cursor || HARNESS.cursorState || HARNESS.click) {
+        root.classList.add("is-static");
+        stop();
+      }
+      if (HARNESS.cursorState === "hover") root.classList.add("is-hover");
+      if (HARNESS.cursorState === "down") root.classList.add("is-down");
+
+      if (HARNESS.cursor || HARNESS.click) {
+        var x = HARNESS.cursor ? HARNESS.cursor.x : Math.round(window.innerWidth * 0.5);
+        var y = HARNESS.cursor ? HARNESS.cursor.y : Math.round(window.innerHeight * 0.5);
+        place(x, y);
+        if (HARNESS.click) pulse(x, y, true);
+      }
+    }
+
+    init();
+    park();
+
+    bindPreference(fine, function () { destroy(); init(); park(); });
+    onMotionChange(function () { destroy(); init(); park(); });
+
+    return {
+      place: place,
+      pulse: pulse,
+      state: function (name) { if (root) root.classList.add(name); }
+    };
   })();
 
   /* ------------------------------------------------------------ hero intro ---
@@ -338,96 +520,73 @@
     });
   })();
 
-  /* --------------------------------------------------------------- field ---
-     The measured field: a curl-noise flow raster with linked neighbours and
-     one slow raster sweep, drawn on a canvas between .bg-mesh and .bg-grid.
+  /* ---------------------------------------------------------- pixel field ---
+     The ambient layer: an animated ordered-dither field. One canvas pixel is
+     one on-screen cell, and CSS scales the backing store up with
+     image-rendering: pixelated, so the cells stay hard-edged at any size.
+     Each frame writes one preallocated ImageData - no per-cell fillRect, no
+     allocation, no sin() and no noise in the loop.
 
-     It reads the same tokens as the rest of the sheet, so the false colour
-     ramp cannot drift from the identity: cold indigo -> violet -> magenta ->
-     amber. A particle's position on the ramp is its own speed, so the warm
-     end means "moving fast" rather than "decorated warm".
+     The cell value cross-fades between two static noise layers, so the dither
+     boils between organic shapes instead of sliding as a stripe. A cell lights
+     when its value crosses its Bayer 8x8 threshold. Lit cells are two flat
+     white tiers; cells within --pixel-accent-r of the pointer take the violet
+     accent and a swell, which is the only pointer influence on the sheet.
 
-     Cost controls: devicePixelRatio capped at 2, dt clamped, neighbour links
-     found through a uniform grid (O(n), not O(n^2)), no canvas shadows, loops
-     paused when the tab is hidden, and a single static frame - never a loop -
-     when the reader asks for reduced motion. */
+     Cost controls: fixed cell count from --pixel-pitch, typed arrays, a 512
+     entry sine LUT, one putImageData per frame, no canvas shadows, no
+     gradients, loop paused while the tab is hidden, and a single static frame
+     - never a loop - when the reader asks for reduced motion. */
 
-  (function field() {
+  (function pixelField() {
     var canvas = document.createElement("canvas");
-    canvas.className = "bg-field";
+    canvas.className = "bg-pixels";
     canvas.setAttribute("aria-hidden", "true");
 
     var ctx = canvas.getContext ? canvas.getContext("2d") : null;
-    if (!ctx) return null;
+    if (!ctx) return;
 
-    var mesh = document.querySelector(".bg-mesh");
-    if (mesh && mesh.parentNode) mesh.parentNode.insertBefore(canvas, mesh.nextSibling);
-    else document.body.insertBefore(canvas, document.body.firstChild);
+    document.body.insertBefore(canvas, document.body.firstChild);
 
-    var scrim = document.createElement("div");
-    scrim.className = "bg-scrim";
-    scrim.setAttribute("aria-hidden", "true");
-    canvas.parentNode.insertBefore(scrim, canvas.nextSibling);
+    /* Bayer 8x8, the classic ordered-dither matrix. */
+    var BAYER = [
+      0, 32, 8, 40, 2, 34, 10, 42,
+      48, 16, 56, 24, 50, 18, 58, 26,
+      12, 44, 4, 36, 14, 46, 6, 38,
+      60, 28, 52, 20, 62, 30, 54, 22,
+      3, 35, 11, 43, 1, 33, 9, 41,
+      51, 19, 59, 27, 49, 17, 57, 25,
+      15, 47, 7, 39, 13, 45, 5, 37,
+      63, 31, 55, 23, 61, 29, 53, 21
+    ];
 
-    var LINK = 132;        // px, neighbour link distance
-    var PERIOD = 18;       // s, the driving field breathes and returns
-    var SWEEP = 12;        // s, raster sweep period
-    var SCALE = 0.0017;    // noise scale, px -> field units
-    var MAX_POINTS = 120;
-    var FALLBACK = [[59, 77, 143], [167, 139, 250], [244, 114, 182], [245, 165, 36]];
+    var SIN = new Float32Array(512);
+    for (var s = 0; s < 512; s++) SIN[s] = Math.sin(s / 512 * Math.PI * 2);
 
-    var stops = FALLBACK;
-    var pts = [];
-    var W = 0;
-    var H = 0;
-    var dpr = 1;
+    var W = 0, H = 0, CW = 0, CH = 0;
+    var img = null;
+    var base = null;    /* static value-noise per cell, layer A */
+    var base2 = null;   /* static value-noise per cell, layer B (morph target) */
+    var phase = null;   /* wave phase offset per cell */
+    var thr = null;     /* Bayer threshold per cell */
+    var swell = null;   /* pointer swell per cell, 0..0.28 */
+    var pitch = 8;
+    var accentR = 176;
     var time = 0;
     var raf = 0;
     var running = false;
     var last = 0;
+    var frames = 0;
+    var fpsStart = 0;
     var pointer = { x: -1e4, y: -1e4, active: false };
-
-    /* ------------------------------------------------------------ colour --- */
-
-    function parseColor(value) {
-      var hex = String(value || "").trim().replace("#", "");
-      if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-      if (hex.length !== 6) return null;
-      return [
-        parseInt(hex.slice(0, 2), 16),
-        parseInt(hex.slice(2, 4), 16),
-        parseInt(hex.slice(4, 6), 16)
-      ];
-    }
 
     if (window.getComputedStyle) {
       var cs = getComputedStyle(document.documentElement);
-      var read = ["--t-cold", "--t-mid", "--t-warm", "--t-hot"].map(function (name) {
-        return parseColor(cs.getPropertyValue(name));
-      });
-      if (read.every(function (c) { return c; })) stops = read;
+      var parsedPitch = parseFloat(cs.getPropertyValue("--pixel-pitch"));
+      if (parsedPitch > 1) pitch = parsedPitch;
+      var parsedR = parseFloat(cs.getPropertyValue("--pixel-accent-r"));
+      if (parsedR > 8) accentR = parsedR;
     }
-
-    function ramp(t) {
-      t = t < 0 ? 0 : t > 1 ? 1 : t;
-      var span = stops.length - 1;
-      var scaled = t * span;
-      var i = Math.min(span - 1, Math.floor(scaled));
-      var f = scaled - i;
-      var a = stops[i];
-      var b = stops[i + 1];
-      return [
-        Math.round(a[0] + (b[0] - a[0]) * f),
-        Math.round(a[1] + (b[1] - a[1]) * f),
-        Math.round(a[2] + (b[2] - a[2]) * f)
-      ];
-    }
-
-    function rgba(c, alpha) {
-      return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + alpha.toFixed(3) + ")";
-    }
-
-    /* ------------------------------------------------------------- noise --- */
 
     function hash2(x, y) {
       var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
@@ -448,160 +607,108 @@
       return (a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v;
     }
 
-    /* Divergence-free curl of a noise potential: no sources or sinks, so the
-       particles flow instead of piling up. */
-    function curl(x, y) {
-      var e = 0.0015;
-      var n1 = noise2(x, y + e);
-      var n2 = noise2(x, y - e);
-      var n3 = noise2(x + e, y);
-      var n4 = noise2(x - e, y);
-      return [(n1 - n2) / (2 * e), -(n3 - n4) / (2 * e)];
-    }
+    /* Everything time-invariant is computed once per resize, never per frame. */
+    function build() {
+      CW = Math.max(2, Math.ceil(W / pitch));
+      CH = Math.max(2, Math.ceil(H / pitch));
+      canvas.width = CW;
+      canvas.height = CH;
 
-    /* -------------------------------------------------------------- setup --- */
+      img = ctx.createImageData(CW, CH);
+      var n = CW * CH;
+      base = new Float32Array(n);
+      base2 = new Float32Array(n);
+      phase = new Int32Array(n);
+      thr = new Float32Array(n);
+      swell = new Float32Array(n);
 
-    function mulberry32(a) {
-      return function () {
-        a |= 0;
-        a = (a + 0x6d2b79f5) | 0;
-        var t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    function seed() {
-      var target = Math.round(W * H / 11000);
-      target = Math.max(32, Math.min(MAX_POINTS, target));
-      if (H > W * 1.4) target = Math.min(target, 48);
-      var rnd = mulberry32(20260409);
-      pts = [];
-      for (var i = 0; i < target; i++) {
-        pts.push({
-          id: i,
-          x: rnd() * W,
-          y: rnd() * H,
-          vx: 0,
-          vy: 0,
-          speed: 0.35 + rnd() * 0.8,
-          size: 1 + rnd() * 1.4,
-          heat: rnd() * 0.5
-        });
+      for (var y = 0; y < CH; y++) {
+        for (var x = 0; x < CW; x++) {
+          var i = y * CW + x;
+          base[i] = noise2(x * 0.085, y * 0.085);
+          base2[i] = noise2(x * 0.13 + 40, y * 0.13 - 25);
+          phase[i] = (x * 37 + y * 61) & 511;
+          thr[i] = BAYER[(y & 7) * 8 + (x & 7)] / 64;
+        }
       }
+
+      last = 0;
+      if (pointer.active) swellAt(pointer.x, pointer.y);
     }
 
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
       W = canvas.clientWidth || window.innerWidth;
       H = canvas.clientHeight || window.innerHeight;
-      canvas.width = Math.round(W * dpr);
-      canvas.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      last = 0;
-      seed();
+      build();
       draw(time);
     }
 
-    /* ---------------------------------------------------------------- sim --- */
+    /* Recomputed on pointermove, not per frame, and only over the cells the
+       accent radius can reach. */
+    function swellAt(px, py) {
+      if (!swell) return;
+      swell.fill(0);
+      if (!pointer.active) return;
 
-    function step(dt, t) {
-      var breath = Math.cos((t % PERIOD) / PERIOD * Math.PI * 2) * 0.7;
-      var k = Math.min(1, dt * 2.2);
+      var r = accentR / pitch;
+      var cx = px / pitch;
+      var cy = py / pitch;
+      var x0 = Math.max(0, Math.floor(cx - r));
+      var x1 = Math.min(CW - 1, Math.ceil(cx + r));
+      var y0 = Math.max(0, Math.floor(cy - r));
+      var y1 = Math.min(CH - 1, Math.ceil(cy + r));
+      var r2 = r * r;
 
-      for (var i = 0; i < pts.length; i++) {
-        var p = pts[i];
-        var c = curl(p.x * SCALE + breath, p.y * SCALE - breath);
-        var mag = Math.sqrt(c[0] * c[0] + c[1] * c[1]) || 1;
-        var speed = 9 + p.speed * 15;
-
-        p.vx += ((c[0] / mag) * speed - p.vx) * k;
-        p.vy += ((c[1] / mag) * speed - p.vy) * k;
-
-        if (pointer.active) {
-          var dx = p.x - pointer.x;
-          var dy = p.y - pointer.y;
+      for (var y = y0; y <= y1; y++) {
+        for (var x = x0; x <= x1; x++) {
+          var dx = x - cx;
+          var dy = y - cy;
           var d2 = dx * dx + dy * dy;
-          if (d2 < 26000 && d2 > 1) {
-            var f = (1 - d2 / 26000) * 900 * dt;
-            var d = Math.sqrt(d2);
-            p.vx += (dx / d) * f;
-            p.vy += (dy / d) * f;
-          }
+          if (d2 > r2) continue;
+          swell[y * CW + x] = (1 - Math.sqrt(d2) / r) * 0.28;
         }
-
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        if (p.x < -60) p.x = W + 60;
-        else if (p.x > W + 60) p.x = -60;
-        if (p.y < -60) p.y = H + 60;
-        else if (p.y > H + 60) p.y = -60;
-
-        /* heat is kinetic: the ramp reads the motion, not a decoration */
-        var v = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-        p.heat += (Math.min(1, v / 26) - p.heat) * Math.min(1, dt * 1.6);
       }
     }
-
-    /* -------------------------------------------------------------- paint --- */
 
     function draw(t) {
-      ctx.clearRect(0, 0, W, H);
+      if (!img) return;
 
-      /* the raster sweep sits under the particles */
-      var sx = ((t % SWEEP) / SWEEP) * (W + 260) - 130;
-      var band = ctx.createLinearGradient(sx - 110, 0, sx + 110, 0);
-      band.addColorStop(0, "rgba(167, 139, 250, 0)");
-      band.addColorStop(0.6, "rgba(167, 139, 250, 0.065)");
-      band.addColorStop(1, "rgba(167, 139, 250, 0)");
-      ctx.fillStyle = band;
-      ctx.fillRect(sx - 110, 0, 220, H);
-      ctx.fillStyle = "rgba(167, 139, 250, 0.09)";
-      ctx.fillRect(sx + 21, 0, 1, H);
+      var data = img.data;
+      var tIdx = Math.round(t * 34);
+      var morph = 0.5 + 0.5 * SIN[Math.round(t * 22) & 511];
+      var n = CW * CH;
+      var k = 0;
 
-      var grid = {};
-      var i;
-      var j;
-      var p;
-      for (i = 0; i < pts.length; i++) {
-        p = pts[i];
-        var key = ((p.x / LINK) | 0) + "_" + ((p.y / LINK) | 0);
-        if (grid[key]) grid[key].push(p);
-        else grid[key] = [p];
-      }
+      for (var i = 0; i < n; i++) {
+        var v = base[i] + (base2[i] - base[i]) * morph +
+                SIN[(phase[i] + tIdx) & 511] * 0.07 + swell[i];
+        var edge = thr[i];
 
-      ctx.lineWidth = 1;
-      for (i = 0; i < pts.length; i++) {
-        p = pts[i];
-        var cx = (p.x / LINK) | 0;
-        var cy = (p.y / LINK) | 0;
-        for (var oy = -1; oy <= 1; oy++) {
-          for (var ox = -1; ox <= 1; ox++) {
-            var bucket = grid[cx + ox + "_" + (cy + oy)];
-            if (!bucket) continue;
-            for (j = 0; j < bucket.length; j++) {
-              var q = bucket[j];
-              if (q.id <= p.id) continue;          /* each pair once */
-              var dx = p.x - q.x;
-              var dy = p.y - q.y;
-              var d = Math.sqrt(dx * dx + dy * dy);
-              if (d >= LINK) continue;
-              ctx.strokeStyle = rgba(ramp((p.heat + q.heat) / 2), (1 - d / LINK) * 0.22);
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(q.x, q.y);
-              ctx.stroke();
-            }
-          }
+        if (v <= edge) {
+          data[k + 3] = 0;                    /* unlit: transparent, solid --bg shows */
+          k += 4;
+          continue;
         }
+
+        var d = v - edge;
+        if (swell[i] > 0.01) {
+          data[k] = 167;
+          data[k + 1] = 139;
+          data[k + 2] = 250;
+          data[k + 3] = Math.round(Math.min(0.46, 0.10 + d * 0.42) * 255);
+        } else {
+          data[k] = 245;
+          data[k + 1] = 245;
+          data[k + 2] = 247;
+          data[k + 3] = Math.round((d > 0.34 ? 0.10 : 0.055) * 255);
+        }
+        k += 4;
       }
 
-      for (i = 0; i < pts.length; i++) {
-        p = pts[i];
-        ctx.fillStyle = rgba(ramp(p.heat), 0.34 + p.heat * 0.36);
-        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      }
+      ctx.putImageData(img, 0, 0);
     }
+
+    function still(t) { time = t; draw(t); }
 
     function frame(now) {
       raf = requestAnimationFrame(frame);
@@ -610,12 +717,23 @@
       last = now;
       if (dt <= 0) return;
       time += dt;
-      step(dt, time);
+
+      if (HARNESS.fps && frames < 121) {
+        if (frames === 0) fpsStart = now;
+        frames++;
+        if (frames === 120) {
+          document.documentElement.setAttribute(
+            "data-field-fps",
+            (119000 / Math.max(1, now - fpsStart)).toFixed(1)
+          );
+        }
+      }
+
       draw(time);
     }
 
     function start() {
-      if (running || motionReduced() || !pts.length) return;
+      if (running || motionReduced() || !img) return;
       running = true;
       last = 0;
       raf = requestAnimationFrame(frame);
@@ -627,23 +745,12 @@
       raf = 0;
     }
 
-    /* One deterministic frame: fixed 60Hz stepping, then a single draw. */
-    function still(t) {
-      var dt = 1 / 60;
-      for (var s = 0; s < t; s += dt) step(dt, s);
-      time = t;
-      draw(t);
-    }
-
-    /* ---------------------------------------------------------- lifecycle --- */
-
     var resizeTimer = 0;
     window.addEventListener("resize", function () {
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
         resizeTimer = 0;
         resize();
-        if (!running) draw(time);
       }, 150);
     }, { passive: true });
 
@@ -656,14 +763,20 @@
       pointer.x = event.clientX;
       pointer.y = event.clientY;
       pointer.active = true;
+      swellAt(pointer.x, pointer.y);
     }, { passive: true });
 
-    document.addEventListener("pointerleave", function () { pointer.active = false; }, { passive: true });
+    document.addEventListener("pointerleave", function () {
+      pointer.active = false;
+      if (swell) swell.fill(0);
+    }, { passive: true });
 
     onMotionChange(function () {
       if (motionReduced()) {
         stop();
-        still(7);
+        pointer.active = false;
+        if (swell) swell.fill(0);
+        still(0);
       } else {
         start();
       }
@@ -675,7 +788,7 @@
       stop();
       still(isFinite(HARNESS.t) ? Math.max(0, HARNESS.t) : 12);
     } else if (motionReduced()) {
-      still(7);
+      still(0);
     } else {
       start();
     }
@@ -931,22 +1044,41 @@
   }
 
   /* ------------------------------------------------------- harness hover ---
-     Pins the pointer state on one surface: the light, the tilt and the lift
-     the pointer loop would have written, so the effect can be captured. */
+     Pins the hovered state on one surface: the ring, the lift and the cursor,
+     so the effect can be captured. The field reads the same point through a
+     synthetic pointermove, so the violet accent is in the capture too. */
 
   if (HARNESS.hover) {
-    var hoverEl = null;
-    try { hoverEl = document.querySelector(HARNESS.hover); } catch (err) { hoverEl = null; }
+    var pinHover = function () {
+      var hoverEl = null;
+      try { hoverEl = document.querySelector(HARNESS.hover); } catch (err) { hoverEl = null; }
+      if (!hoverEl) return;
 
-    if (hoverEl) {
-      var box = hoverEl.getBoundingClientRect();
-      hoverEl.style.setProperty("--spot-x", Math.round(box.width * 0.34) + "px");
-      hoverEl.style.setProperty("--spot-y", Math.round(box.height * 0.3) + "px");
-      hoverEl.style.setProperty("--spot-o", "1");
-      hoverEl.style.setProperty("--rx", "2.4deg");
-      hoverEl.style.setProperty("--ry", "-2.6deg");
-      hoverEl.style.setProperty("--lift", "-6px");
-    }
+      /* A class rather than a real :hover, so the ring can be captured. */
+      hoverEl.classList.add("is-hover");
+      hoverEl.style.setProperty("--lift", "-2px");
+
+      var hoverBox = hoverEl.getBoundingClientRect();
+      var hoverX = Math.round(hoverBox.left + hoverBox.width * 0.34);
+      var hoverY = Math.round(hoverBox.top + hoverBox.height * 0.3);
+
+      cursor.place(hoverX, hoverY);
+      cursor.state("is-hover");
+
+      if (window.PointerEvent) {
+        document.dispatchEvent(new PointerEvent("pointermove", {
+          clientX: hoverX, clientY: hoverY, bubbles: true
+        }));
+      }
+
+      document.documentElement.setAttribute(
+        "data-harness",
+        "hover:" + HARNESS.hover + "@" + hoverX + "," + hoverY
+      );
+    };
+
+    if (document.readyState === "complete") requestAnimationFrame(pinHover);
+    else window.addEventListener("load", function () { requestAnimationFrame(pinHover); });
   }
 })();
 

@@ -84,16 +84,13 @@ def shell(title, description, body, active=None):
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{e(title)}</title>
     <meta name="description" content="{e(description)}" />
-    <meta name="theme-color" content="#050505" />
+    <meta name="theme-color" content="#0a0a0b" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{UP}assets/theme.css" />
   </head>
   <body>
-    <div class="bg-mesh" aria-hidden="true"></div>
-    <div class="bg-grid" aria-hidden="true"></div>
-    <div class="grain" aria-hidden="true"></div>
     <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
     <header class="topnav">

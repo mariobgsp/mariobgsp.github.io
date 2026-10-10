@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Muhammad Ario Bagus Prakusa &mdash; Backend &amp; Microservices Engineer</title>
 <meta name="description" content="Backend and microservices engineer building Java/Spring and Go systems for banking and telecom across Indonesia, Singapore, Malaysia and China.">
-<meta name="theme-color" content="#050505">
+<meta name="theme-color" content="#0a0a0b">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Muhammad Ario Bagus Prakusa &mdash; Backend &amp; Microservices Engineer">
 <meta property="og:description" content="Java/Spring and Go microservices for banking and telecom across ID, SG, MY, CHN.">
@@ -133,7 +133,6 @@
   vertical-align: -0.18em;
   border-radius: 1px;
   background: var(--violet);
-  box-shadow: 0 0 14px rgba(167, 139, 250, 0.9);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -157,7 +156,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px var(--line), 0 0 40px -12px rgba(167, 139, 250, 0.9);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .hc-name {
@@ -295,12 +294,7 @@
   line-height: 1.05;
 }
 
-.spec-accent {
-  background: linear-gradient(100deg, var(--violet), var(--emerald));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+.spec-accent { color: var(--violet); }
 
 .spec-label {
   display: block;
@@ -375,7 +369,7 @@
   margin-left: -5px;
   border-radius: 50%;
   background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--line-strong), 0 0 12px rgba(167, 139, 250, 0.45);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 
 .chain-title {
@@ -423,13 +417,9 @@
   gap: clamp(20px, 4vw, 56px);
   padding: 30px 32px;
   border-radius: var(--r-lg);
-  background:
-    radial-gradient(120% 100% at 0% 0%, rgba(255, 255, 255, 0.05), transparent 55%),
-    linear-gradient(180deg, var(--glass-2), var(--glass));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 0 0 1px var(--line-soft);
-  transition: transform 800ms var(--ease);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-rest);
+  transition: transform 800ms var(--ease), background-color 220ms var(--ease-out);
 }
 
 .exp-date {
@@ -505,14 +495,9 @@
   flex-direction: column;
   padding: clamp(24px, 2.6vw, 34px);
   border-radius: var(--r-xl);
-  background:
-    radial-gradient(120% 100% at 0% 0%, rgba(255, 255, 255, 0.06), transparent 52%),
-    linear-gradient(180deg, var(--glass-2), var(--glass));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 0 0 1px var(--line-soft),
-    0 50px 90px -60px rgba(0, 0, 0, 1);
-  transition: transform 800ms var(--ease);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-rest);
+  transition: transform 800ms var(--ease), background-color 220ms var(--ease-out);
 }
 
 .project-card.span-7 { grid-column: span 7; }
@@ -565,19 +550,13 @@
   background: var(--ink-3);
 }
 
-.lang-go { background: #6ee7b7; box-shadow: 0 0 14px rgba(110, 231, 183, 0.8); }
-.lang-ts { background: #7aa2ff; box-shadow: 0 0 14px rgba(122, 162, 255, 0.8); }
-.lang-js { background: #f5d76e; box-shadow: 0 0 14px rgba(245, 215, 110, 0.7); }
+.lang-go { background: var(--emerald); }
+.lang-ts { background: var(--blue); }
+.lang-js { background: #f5d76e; }
 
 .prj-featured {
-  background:
-    radial-gradient(90% 120% at 100% 0%, rgba(167, 139, 250, 0.20), transparent 60%),
-    radial-gradient(120% 100% at 0% 0%, rgba(255, 255, 255, 0.06), transparent 52%),
-    linear-gradient(180deg, var(--glass-2), var(--glass));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(167, 139, 250, 0.28),
-    0 60px 120px -70px rgba(167, 139, 250, 0.6);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.35);
 }
 
 .prj-go {
@@ -600,14 +579,9 @@
   margin-top: clamp(16px, 2vw, 24px);
   padding: clamp(24px, 2.8vw, 36px);
   border-radius: var(--r-xl);
-  background:
-    radial-gradient(120% 100% at 0% 0%, rgba(122, 162, 255, 0.10), transparent 55%),
-    linear-gradient(180deg, var(--glass-2), var(--glass));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 0 0 1px var(--line-soft),
-    0 50px 90px -60px rgba(0, 0, 0, 1);
-  transition: transform 800ms var(--ease);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-rest);
+  transition: transform 800ms var(--ease), background-color 220ms var(--ease-out);
 }
 
 .gh-head {
@@ -621,7 +595,7 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px var(--line), 0 0 40px -14px rgba(122, 162, 255, 0.9);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .gh-name {
@@ -722,13 +696,9 @@
 .spec-cluster {
   padding: clamp(24px, 2.6vw, 32px);
   border-radius: var(--r-xl);
-  background:
-    radial-gradient(120% 100% at 0% 0%, rgba(255, 255, 255, 0.055), transparent 52%),
-    linear-gradient(180deg, var(--glass-2), var(--glass));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 0 0 1px var(--line-soft);
-  transition: transform 800ms var(--ease);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-rest);
+  transition: transform 800ms var(--ease), background-color 220ms var(--ease-out);
 }
 
 .cluster-title {
@@ -766,8 +736,7 @@
   width: 7px;
   height: 7px;
   border-radius: 2px;
-  background: linear-gradient(140deg, var(--violet), var(--blue));
-  box-shadow: 0 0 12px rgba(167, 139, 250, 0.7);
+  background: var(--violet);
 }
 
 .cert-panel {
@@ -925,30 +894,7 @@ a.tb-value:hover { color: var(--violet); }
   color: var(--emerald);
 }
 
-/* The field's legend and the sheet's scale bar: the same convention the
-   background uses, printed where an instrument would print it. */
-/* One inline unit, deliberately not a flex container: as a wrapping flex item
-   a nested flex box got its children distributed across two lines. */
-.field-legend {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.field-ramp {
-  display: inline-block;
-  width: 64px;
-  height: 6px;
-  margin-right: 10px;
-  vertical-align: middle;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--t-cold), var(--t-mid) 42%, var(--t-warm) 74%, var(--t-hot));
-  box-shadow: inset 0 0 0 1px var(--line-soft);
-}
+/* The sheet's scale bar: the one instrument mark the footer prints. */
 
 .tb-sheet-num::before {
   content: "";
@@ -998,9 +944,6 @@ a.tb-value:hover { color: var(--violet); }
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
 
-<div class="bg-mesh" aria-hidden="true"></div>
-<div class="bg-grid" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
 <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
 
 <nav id="navbar" class="topnav" aria-label="Primary">
@@ -1422,7 +1365,6 @@ a.tb-value:hover { color: var(--violet); }
         </div>
         <div class="tb-foot">
           <span class="tb-status"><span class="led led-green"></span>System nominal</span>
-          <span class="field-legend" aria-hidden="true"><span class="field-ramp"></span>v &middot; false colour</span>
           <span class="mono-tag">&copy; 2026 Muhammad Ario Bagus Prakusa</span>
           <span class="mono-tag tb-sheet-num">Scale 1:1 &mdash; all rights reserved</span>
         </div>
