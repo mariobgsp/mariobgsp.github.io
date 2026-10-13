@@ -1,7 +1,8 @@
 /* ==========================================================================
    mariobgsp.dev - shared behaviour for every page
-   Navigation, scroll progress, reveal-on-scroll, magnetic hover, the
-   ordered-dither pixel field and the animated cursor.
+   Navigation, scroll progress, reveal-on-scroll, magnetic hover, two ambient
+   canvases - the pointer-blind ordered-dither field and the pointer trail -
+   and the animated cursor.
    Root index.html loads this first and then adds its own clock / terminal /
    GitHub feed on top; the generated pages stop here.
    ========================================================================== */
@@ -37,8 +38,8 @@
   }
 
   /* -------------------------------------------------------- dev harness ---
-     ?t=<seconds>    freeze time-driven motion (field, timelines) there;
-                     "end" lands the settled state
+     ?t=<seconds>    freeze time-driven motion (field, trail, timelines)
+                     there; "end" lands the settled state
      ?scroll=<px|id> scroll to a position, for use in a real browser
      ?focus=<px|id>  shift the page instead of scrolling it, so a headless
                      capture of a below-the-fold section is not blank
@@ -50,8 +51,10 @@
      ?cursorstate=hover|down
                       force one cursor state without a real pointer
      ?click=1        draw one click ripple, frozen mid-animation
-     ?fps=1          after 120 frames publish the field frame rate as
-                      data-field-fps on <html>, for a headless --dump-dom
+     ?fps=1          after 120 frames publish the field and trail frame
+                      rates as data-field-fps / data-trail-fps on <html>, and
+                      the live trail particle count as data-trail-count on
+                      every frame, for a headless --dump-dom
      ?freeze=1       settle entrances and pause CSS animations
      All of them are inert when absent. */
 
@@ -527,16 +530,18 @@
      Each frame writes one preallocated ImageData - no per-cell fillRect, no
      allocation, no sin() and no noise in the loop.
 
-     The cell value cross-fades between two static noise layers, so the dither
-     boils between organic shapes instead of sliding as a stripe. A cell lights
-     when its value crosses its Bayer 8x8 threshold. Lit cells are two flat
-     white tiers; cells within --pixel-accent-r of the pointer take the violet
-     accent and a swell, which is the only pointer influence on the sheet.
+     The field is deliberately pointer-blind: nothing the reader does with the
+     pointer reaches it, so it is a texture and never a control. It breathes on
+     its own instead - three static noise layers are sampled with a slowly
+     moving offset and cross-faded, so cells boil between organic shapes
+     without the dither sliding as a stripe. A cell lights when its value
+     crosses its Bayer 8x8 threshold, and lit cells are two flat white tiers.
 
-     Cost controls: fixed cell count from --pixel-pitch, typed arrays, a 512
-     entry sine LUT, one putImageData per frame, no canvas shadows, no
-     gradients, loop paused while the tab is hidden, and a single static frame
-     - never a loop - when the reader asks for reduced motion. */
+     Cost controls: fixed cell count from --pixel-pitch, typed arrays, flat
+     per-cell sampling arrays built once per resize, a 512 entry sine LUT, one
+     putImageData per frame, no canvas shadows, no gradients, loop paused while
+     the tab is hidden, and a single static frame - never a loop - when the
+     reader asks for reduced motion. */
 
   (function pixelField() {
     var canvas = document.createElement("canvas");
@@ -563,29 +568,34 @@
     var SIN = new Float32Array(512);
     for (var s = 0; s < 512; s++) SIN[s] = Math.sin(s / 512 * Math.PI * 2);
 
+    /* Degree-512 index for a period in seconds; the LUT holds one full turn so
+       a period shorter than 1/512s would alias, which these never do. */
+    function turn(seconds) { return 512 / Math.max(0.05, seconds); }
+
     var W = 0, H = 0, CW = 0, CH = 0;
     var img = null;
-    var base = null;    /* static value-noise per cell, layer A */
-    var base2 = null;   /* static value-noise per cell, layer B (morph target) */
-    var phase = null;   /* wave phase offset per cell */
+    var baseA = null;   /* static value-noise per cell, fine grain */
+    var baseB = null;   /* static value-noise per cell, coarse grain */
+    var baseC = null;   /* static value-noise per cell, broad veil */
     var thr = null;     /* Bayer threshold per cell */
-    var swell = null;   /* pointer swell per cell, 0..0.28 */
     var pitch = 8;
-    var accentR = 176;
+    var driftA = 16;    /* layer periods in seconds, from --pixel-drift* */
+    var driftB = 6;
     var time = 0;
     var raf = 0;
     var running = false;
     var last = 0;
     var frames = 0;
     var fpsStart = 0;
-    var pointer = { x: -1e4, y: -1e4, active: false };
 
     if (window.getComputedStyle) {
       var cs = getComputedStyle(document.documentElement);
       var parsedPitch = parseFloat(cs.getPropertyValue("--pixel-pitch"));
       if (parsedPitch > 1) pitch = parsedPitch;
-      var parsedR = parseFloat(cs.getPropertyValue("--pixel-accent-r"));
-      if (parsedR > 8) accentR = parsedR;
+      var parsedA = parseFloat(cs.getPropertyValue("--pixel-drift"));
+      if (parsedA > 0.5) driftA = parsedA;
+      var parsedB = parseFloat(cs.getPropertyValue("--pixel-drift-b"));
+      if (parsedB > 0.5) driftB = parsedB;
     }
 
     function hash2(x, y) {
@@ -607,33 +617,63 @@
       return (a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v;
     }
 
-    /* Everything time-invariant is computed once per resize, never per frame. */
+    /* The noise itself never changes, only where it is sampled. Each layer is
+       a deterministic tile, so a resize rebuilds nothing and a pan costs a
+       float add per cell. 512 cells square covers every viewport this sheet is
+       meant for, at any pitch. */
+    var GRID = 512;
+    var GRID_MASK = GRID - 1;
+    var layers = {};
+
+    function noiseGrid(scale, ox, oy) {
+      var key = scale + "|" + ox + "|" + oy;
+      if (layers[key]) return layers[key];
+      var g = new Float32Array(GRID * GRID);
+      for (var y = 0; y < GRID; y++) {
+        var row = y * GRID;
+        for (var x = 0; x < GRID; x++) {
+          g[row + x] = noise2((x + ox) * scale, (y + oy) * scale);
+        }
+      }
+      layers[key] = g;
+      return g;
+    }
+
+    var gridA = null, gridB = null, gridC = null;
+
+    /* Everything time-invariant is computed once per resize, never per frame:
+       the per-cell sample arrays are plain offsets into the tiles, so even a
+       re-pitch or a resize only updates the Bayer threshold and the mapping. */
     function build() {
       CW = Math.max(2, Math.ceil(W / pitch));
       CH = Math.max(2, Math.ceil(H / pitch));
       canvas.width = CW;
       canvas.height = CH;
 
+      if (!gridA) {
+        gridA = noiseGrid(0.085, 0, 0);
+        gridB = noiseGrid(0.13, 40, -25);
+        gridC = noiseGrid(0.031, -17, 9);
+      }
+
       img = ctx.createImageData(CW, CH);
       var n = CW * CH;
-      base = new Float32Array(n);
-      base2 = new Float32Array(n);
-      phase = new Int32Array(n);
+      baseA = new Float32Array(n);
+      baseB = new Float32Array(n);
+      baseC = new Float32Array(n);
       thr = new Float32Array(n);
-      swell = new Float32Array(n);
 
       for (var y = 0; y < CH; y++) {
         for (var x = 0; x < CW; x++) {
           var i = y * CW + x;
-          base[i] = noise2(x * 0.085, y * 0.085);
-          base2[i] = noise2(x * 0.13 + 40, y * 0.13 - 25);
-          phase[i] = (x * 37 + y * 61) & 511;
+          baseA[i] = gridA[((y & GRID_MASK) << 9) | (x & GRID_MASK)];
+          baseB[i] = gridB[((y & GRID_MASK) << 9) | (x & GRID_MASK)];
+          baseC[i] = gridC[((y & GRID_MASK) << 9) | (x & GRID_MASK)];
           thr[i] = BAYER[(y & 7) * 8 + (x & 7)] / 64;
         }
       }
 
       last = 0;
-      if (pointer.active) swellAt(pointer.x, pointer.y);
     }
 
     function resize() {
@@ -643,45 +683,20 @@
       draw(time);
     }
 
-    /* Recomputed on pointermove, not per frame, and only over the cells the
-       accent radius can reach. */
-    function swellAt(px, py) {
-      if (!swell) return;
-      swell.fill(0);
-      if (!pointer.active) return;
-
-      var r = accentR / pitch;
-      var cx = px / pitch;
-      var cy = py / pitch;
-      var x0 = Math.max(0, Math.floor(cx - r));
-      var x1 = Math.min(CW - 1, Math.ceil(cx + r));
-      var y0 = Math.max(0, Math.floor(cy - r));
-      var y1 = Math.min(CH - 1, Math.ceil(cy + r));
-      var r2 = r * r;
-
-      for (var y = y0; y <= y1; y++) {
-        for (var x = x0; x <= x1; x++) {
-          var dx = x - cx;
-          var dy = y - cy;
-          var d2 = dx * dx + dy * dy;
-          if (d2 > r2) continue;
-          swell[y * CW + x] = (1 - Math.sqrt(d2) / r) * 0.28;
-        }
-      }
-    }
-
     function draw(t) {
       if (!img) return;
 
       var data = img.data;
-      var tIdx = Math.round(t * 34);
-      var morph = 0.5 + 0.5 * SIN[Math.round(t * 22) & 511];
       var n = CW * CH;
       var k = 0;
 
+      /* One weight and one veil for the whole sheet, two LUT reads: everything
+         that used to be per-cell trig is now per-frame. */
+      var morph = 0.5 + 0.5 * SIN[Math.round(t * turn(driftA)) & 511];
+      var veil = SIN[Math.round(t * turn(driftB)) & 511] * 0.19 + 0.19;
+
       for (var i = 0; i < n; i++) {
-        var v = base[i] + (base2[i] - base[i]) * morph +
-                SIN[(phase[i] + tIdx) & 511] * 0.07 + swell[i];
+        var v = baseA[i] + (baseB[i] - baseA[i]) * morph + baseC[i] * veil;
         var edge = thr[i];
 
         if (v <= edge) {
@@ -691,17 +706,10 @@
         }
 
         var d = v - edge;
-        if (swell[i] > 0.01) {
-          data[k] = 167;
-          data[k + 1] = 139;
-          data[k + 2] = 250;
-          data[k + 3] = Math.round(Math.min(0.46, 0.10 + d * 0.42) * 255);
-        } else {
-          data[k] = 245;
-          data[k + 1] = 245;
-          data[k + 2] = 247;
-          data[k + 3] = Math.round((d > 0.34 ? 0.10 : 0.055) * 255);
-        }
+        data[k] = 245;
+        data[k + 1] = 245;
+        data[k + 2] = 247;
+        data[k + 3] = Math.round((d > 0.34 ? 0.10 : 0.055) * 255);
         k += 4;
       }
 
@@ -745,37 +753,26 @@
       raf = 0;
     }
 
+    function onVisibility() {
+      if (document.hidden) stop();
+      else start();
+    }
+
     var resizeTimer = 0;
-    window.addEventListener("resize", function () {
+    function onResize() {
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
         resizeTimer = 0;
         resize();
       }, 150);
-    }, { passive: true });
+    }
 
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) stop();
-      else start();
-    });
-
-    document.addEventListener("pointermove", function (event) {
-      pointer.x = event.clientX;
-      pointer.y = event.clientY;
-      pointer.active = true;
-      swellAt(pointer.x, pointer.y);
-    }, { passive: true });
-
-    document.addEventListener("pointerleave", function () {
-      pointer.active = false;
-      if (swell) swell.fill(0);
-    }, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    document.addEventListener("visibilitychange", onVisibility);
 
     onMotionChange(function () {
       if (motionReduced()) {
         stop();
-        pointer.active = false;
-        if (swell) swell.fill(0);
         still(0);
       } else {
         start();
@@ -794,12 +791,488 @@
     }
   })();
 
+  /* ---------------------------------------------------------- pixel trail ---
+     The pointer's own layer, and the only thing on the sheet the pointer
+     drives. It is deliberately not the field: the field is ambient texture,
+     this is the event - particles seeded along the path the pointer travels,
+     so the pointer draws a comet instead of lighting up a grid.
+
+     One more canvas, stacked after the field, inert to the pointer, bounded
+     everywhere. A fixed pool of particles lives in typed arrays; a sprite
+     atlas is baked once at startup (3 colour families x 3 age buckets), so a
+     frame is one drawImage per particle and never an allocation. Spawning is
+     distance-driven rather than time-driven, so the line is the same length
+     for the same gesture at any refresh rate, and a flick emits a stretched
+     streak instead of a row of dots.
+
+     Cost controls: fixed pool from --trail-max, baked sprites, one rAF, no
+     shadow or gradient work per particle, device pixel ratio capped at 2, the
+     loop starts on the first move and stops by itself once the pool is empty,
+     and it is never created at all for a coarse pointer or reduced motion. */
+
+  (function pixelTrail() {
+    var root = document.createElement("canvas");
+    root.className = "bg-trail";
+    root.setAttribute("aria-hidden", "true");
+
+    var ctx = root.getContext ? root.getContext("2d") : null;
+    if (!ctx) return;
+
+    var field = document.querySelector(".bg-pixels");
+    document.body.insertBefore(root, field ? field.nextSibling : document.body.firstChild);
+
+    /* Fixed tar pit: a click burst and 200 moves in the same second must not be
+       able to allocate anything, so every particle is a slot and the oldest is
+       simply overwritten. */
+    var MAX = 240;
+    var CELL = 8;
+    var lifetime = 0.9;
+    var density = 1;
+    var alphaCap = 0.9;
+    var FAMILY = [[167, 139, 250], [110, 231, 183], [245, 245, 247]];
+
+    var px = new Float32Array(MAX);
+    var py = new Float32Array(MAX);
+    var vx = new Float32Array(MAX);
+    var vy = new Float32Array(MAX);
+    var age = new Float32Array(MAX);
+    var life = new Float32Array(MAX);
+    var size = new Float32Array(MAX);
+    var fam = new Uint8Array(MAX);
+    var live = 0;                        /* slots in use, oldest first */
+    var emitAcc = 0;
+    var glowAt = 0;
+    var lastX = null;
+    var lastY = null;
+    var lastT = 0;
+    var pointerIn = false;
+    var hovering = false;
+    var seeded = false;                  /* harness warm-up owns the RNG */
+    var frozen = false;
+    var rngState = 0x9e3779b9;
+
+    var W = 0, H = 0, raf = 0, running = false, frames = 0, fpsStart = 0, lastFrame = 0;
+    var painted = false;                 /* is there anything on the trail canvas? */
+
+    if (window.getComputedStyle) {
+      var cs = getComputedStyle(document.documentElement);
+      var parsedCell = parseFloat(cs.getPropertyValue("--trail-cell"));
+      if (parsedCell > 1) CELL = parsedCell;
+      var parsedMax = parseFloat(cs.getPropertyValue("--trail-max"));
+      if (parsedMax >= 8) MAX = Math.min(600, Math.round(parsedMax));
+      var parsedLife = parseFloat(cs.getPropertyValue("--trail-life"));
+      if (parsedLife > 50) lifetime = parsedLife / 1000;
+      var parsedDensity = parseFloat(cs.getPropertyValue("--trail-density"));
+      if (parsedDensity > 0.05) density = parsedDensity;
+      var parsedAlpha = parseFloat(cs.getPropertyValue("--trail-alpha"));
+      if (parsedAlpha > 0.05) alphaCap = Math.min(1, parsedAlpha);
+      FAMILY = readFamilies(cs);
+    }
+
+    function readFamilies(cs) {
+      var out = [];
+      for (var i = 0; i < 3; i++) {
+        var name = i === 0 ? "--trail-violet" : i === 1 ? "--trail-emerald" : "--trail-white";
+        var raw = (cs.getPropertyValue(name) || "").trim().split(/\s+/);
+        var r = parseInt(raw[0], 10);
+        var g = parseInt(raw[1], 10);
+        var b = parseInt(raw[2], 10);
+        out.push(isFinite(r) && isFinite(g) && isFinite(b) ? [r, g, b] : [255, 255, 255]);
+      }
+      return out;
+    }
+
+    /* Harness warm-up needs to be reproducible frame to frame, so the seeded
+       path is the only user of this generator; live motion keeps Math.random
+       jitter so the trail never looks rehearsed. */
+    function rand() {
+      if (!seeded) return Math.random();
+      rngState = (rngState + 0x6d2b79f5) | 0;
+      var t = rngState;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+    var atlas = null;
+    var AT = 64;
+    var ATLAS_ROW = 3;
+
+    /* Baked once: three colour families, each in three age buckets, so draw
+       time is a plain blit. Buckets are soft, mid and tight core - the whole
+       reason the trail reads as a spark and not as a blurred dot. */
+    function bake() {
+      atlas = document.createElement("canvas");
+      atlas.width = AT * ATLAS_ROW;
+      atlas.height = AT * ATLAS_ROW;
+      var c = atlas.getContext("2d");
+      if (!c) return;
+
+      /* Gradient coordinates are absolute to the canvas, not to the fill, so
+         each cell is painted in its own translated frame. Getting this wrong
+         silently leaves eight of the nine cells empty - and the one cell the
+         trail happens to sample first hides it. */
+      for (var f = 0; f < 3; f++) {
+        var rgb = FAMILY[f];
+        for (var col = 0; col < 3; col++) {
+          var inner = col === 0 ? 0.30 : col === 1 ? 0.52 : 0.74;
+          var mid = inner + 0.22;
+
+          c.save();
+          c.translate(col * AT, f * AT);
+          var g = c.createRadialGradient(AT / 2, AT / 2, AT * 0.04, AT / 2, AT / 2, AT / 2);
+          g.addColorStop(0, "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ",0.95)");
+          g.addColorStop(inner, "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ",0.75)");
+          g.addColorStop(mid, "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ",0.22)");
+          g.addColorStop(1, "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ",0)");
+          c.fillStyle = g;
+          c.beginPath();
+          c.arc(AT / 2, AT / 2, AT / 2, 0, Math.PI * 2);
+          c.fill();
+          c.restore();
+        }
+      }
+    }
+
+    function spawn(x, y, dvx, dvy, speed, energy) {
+      var i = live % MAX;                 /* overwrite the oldest ring slot */
+      if (live < MAX) live++;
+
+      var jitter = 0.45 + rand();
+      px[i] = x;
+      py[i] = y;
+      vx[i] = dvx * 0.30 + (rand() - 0.5) * 26 * jitter;
+      vy[i] = dvy * 0.30 + (rand() - 0.5) * 26 * jitter - (6 + rand() * 16);
+      age[i] = 0;
+      life[i] = lifetime * (0.7 + rand() * 0.6);
+      size[i] = CELL * (0.85 + Math.min(1.35, speed / 1400)) * (0.7 + rand() * 0.6) * energy;
+      fam[i] = rand() < 0.08 ? 2 : rand() < 0.16 ? 1 : 0;
+    }
+
+    function burst(x, y) {
+      var count = 16;
+      for (var i = 0; i < count; i++) {
+        var ang = (i / count) * Math.PI * 2 + rand() * 0.4;
+        var spd = 90 + rand() * 200;
+        spawn(x, y, Math.cos(ang) * spd, Math.sin(ang) * spd, 0, 1.5);
+      }
+    }
+
+    /* Called from the pointer path only. d is the distance the pointer moved
+       since the last seed, so the emitter is a function of the gesture and not
+       of the frame rate. */
+    function emit(x, y, d, dx, dy, speed) {
+      emitAcc += d;
+      var lineScale = clamp(1.25 - speed / 2400, 0.35, 1.25);
+      var step = Math.max(2.5, 6 / Math.max(0.05, density) * lineScale);
+      var budget = 0;
+
+      while (emitAcc >= step && budget < 12) {
+        emitAcc -= step;
+        var t = rand();                   /* rand() is Math.random unless the harness seeded it */
+        spawn(x + dx * (t - 1) * 0.5, y + dy * (t - 1) * 0.5, dx, dy, speed, 1);
+        budget++;
+      }
+      if (emitAcc > step * 12) emitAcc = 0;
+    }
+
+    function resize() {
+      W = root.clientWidth || window.innerWidth;
+      H = root.clientHeight || window.innerHeight;
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      root.width = Math.max(1, Math.round(W * dpr));
+      root.height = Math.max(1, Math.round(H * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      /* Re-sizing a canvas resets its bitmap, so a frozen trail has to be
+         painted back or a late resize would erase the captured state. */
+      if (frozen && live) draw();
+    }
+
+    function clear() {
+      live = 0;
+      emitAcc = 0;
+      painted = false;
+      ctx.clearRect(0, 0, W, H);
+    }
+
+    function draw() {
+      if (HARNESS.fps) document.documentElement.setAttribute("data-trail-count", String(live));
+      /* The sheet is only cleared once there is nothing left to erase: while it
+         is idle the layer costs one attribute write per frame and no paint. */
+      if (!live) {
+        if (painted) { ctx.clearRect(0, 0, W, H); painted = false; }
+        return;
+      }
+      ctx.clearRect(0, 0, W, H);
+      painted = true;
+
+      var i;
+      for (i = live - 1; i >= 0; i--) {
+        age[i] += dtLast;
+        if (age[i] >= life[i]) {
+          var top = --live;
+          if (i !== top) {                /* swap-remove; order is not read */
+            px[i] = px[top]; py[i] = py[top];
+            vx[i] = vx[top]; vy[i] = vy[top];
+            age[i] = age[top]; life[i] = life[top];
+            size[i] = size[top]; fam[i] = fam[top];
+          }
+        }
+      }
+
+      for (i = 0; i < live; i++) {
+        var a = 1 - age[i] / life[i];
+        var fade = a * a;
+        var speed = Math.sqrt(vx[i] * vx[i] + vy[i] * vy[i]);
+        var stretch = 1 + Math.min(2.4, speed / 220);
+        var angle = Math.atan2(vy[i], vx[i]);
+        var bucket = a > 0.66 ? 2 : a > 0.33 ? 1 : 0;
+        var sx = bucket * AT;
+        var sy = fam[i] * AT;
+        var alphaIv = clamp(fade * 1.15, 0, 1) * alphaCap * 0.34;
+
+        ctx.save();
+        ctx.translate(px[i], py[i]);
+        ctx.rotate(angle);
+        ctx.scale(stretch, 1 / Math.sqrt(stretch));
+        ctx.globalAlpha = alphaIv;
+        ctx.drawImage(atlas, sx, sy, AT, AT, -size[i], -size[i], size[i] * 2, size[i] * 2);
+        ctx.restore();
+      }
+    }
+
+    /* One integration step, shared by the loop and the harness warm-up, so a
+       warmed frame and a live frame are the same simulation. */
+    var dtLast = 1 / 60;
+
+    function step(dt, x, y, isHovering) {
+      if (live) {
+        var drag = Math.pow(0.88, dt * 60);   /* one pow per frame, not per particle */
+        for (var i = 0; i < live; i++) {
+          vx[i] *= drag;
+          vy[i] = vy[i] * drag + 42 * dt;
+          px[i] += vx[i] * dt;
+          py[i] += vy[i] * dt;
+        }
+      }
+
+      if (x === null || y === null) return;
+      if (lastX !== null) {
+        var dx = x - lastX;
+        var dy = y - lastY;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var speed = dist / Math.max(dt, 1 / 240);
+        if (dist > 0.6) emit(x, y, dist, dx, dy, speed);
+      }
+      lastX = x;
+      lastY = y;
+      lastT += dt;
+
+      /* Without a gesture the pointer still has a presence: a soft glow emits
+         one wisp every ~600ms while it is inside the window. */
+      if (pointerIn && lastT >= glowAt + 0.6) {
+        glowAt += 0.6;
+        spawn(x + (rand() - 0.5) * 10, y + (rand() - 0.5) * 10, 0, -10, 0, 0.55);
+      }
+
+      if (isHovering) {
+        var head = live - 1;
+        if (head >= 0 && fam[head] === 0 && rand() < 0.3) fam[head] = 1;
+      }
+    }
+
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      var dt = lastFrame ? Math.min((now - lastFrame) / 1000, 1 / 30) : 1 / 60;
+      lastFrame = now;
+      dtLast = dt;
+
+      if (frames < 121 && HARNESS.fps) {
+        if (frames === 0) fpsStart = now;
+        frames++;
+        if (frames === 120) {
+          document.documentElement.setAttribute(
+            "data-trail-fps",
+            (119000 / Math.max(1, now - fpsStart)).toFixed(1)
+          );
+        }
+      }
+
+      step(dt, pointer.x, pointer.y, hovering);
+      draw();
+
+      if (!live && !pointerIn) stop();
+    }
+
+    function start() {
+      if (running || frozen || !atlas || motionReduced()) return;
+      running = true;
+      lastFrame = 0;
+      raf = requestAnimationFrame(frame);
+    }
+
+    function stop() {
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    }
+
+    function onMove(event) {
+      if (frozen || !enabled()) return;
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      if (lastX === null) { lastX = pointer.x; lastY = pointer.y; }
+      pointerIn = true;
+      start();
+    }
+
+    function onOut(event) {
+      var to = event.relatedTarget;
+      hovering = !!(to && to.closest && to.closest(HOVER));
+    }
+
+    function onOver(event) {
+      hovering = !!(event.target.closest && event.target.closest(HOVER));
+    }
+
+    function onDown(event) {
+      engaged = true;
+      downX = event.clientX;
+      downY = event.clientY;
+    }
+
+    /* A press is a tap only if it stays put: dragging the sheet must not fire a
+       burst at the release point. */
+    function onUp(event) {
+      var tap = engaged &&
+                Math.abs(event.clientX - downX) < 12 &&
+                Math.abs(event.clientY - downY) < 12;
+      if (tap && !frozen && enabled()) burst(event.clientX, event.clientY);
+      engaged = false;
+      start();
+    }
+
+    function onLeave() {
+      pointerIn = false;
+      lastX = null;
+      lastY = null;
+    }
+
+    function onEnter() { pointerIn = true; }
+
+    function enabled() { return fine.matches && !motionReduced(); }
+
+    function bind() {
+      document.addEventListener("pointermove", onMove, { passive: true });
+      document.addEventListener("pointerover", onOver, { passive: true });
+      document.addEventListener("pointerout", onOut, { passive: true });
+      document.addEventListener("pointerdown", onDown, { passive: true });
+      document.addEventListener("pointerup", onUp, { passive: true });
+      document.addEventListener("pointerleave", onLeave, { passive: true });
+      document.addEventListener("pointerenter", onEnter, { passive: true });
+    }
+
+    function unbind() {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerover", onOver);
+      document.removeEventListener("pointerout", onOut);
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointerleave", onLeave);
+      document.removeEventListener("pointerenter", onEnter);
+    }
+
+    function onVisibility() {
+      if (document.hidden) stop();
+      else if (pointerIn) start();
+    }
+
+    var resizeTimer = 0;
+    function onResize() {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        resizeTimer = 0;
+        /* A settled page still fires one debounced resize right after load; it
+           may not repaint the sheet, but it must not erase the harness's
+           frozen frame either - the warmed trail is a state, not a moment. */
+        if (frozen) resize();
+        else clear();
+      }, 150);
+    }
+
+    /* Harness only: replay a gesture with a fixed step so a parked cursor
+       captures a formed trail - and the same trail every time - instead of the
+       empty canvas a cursor with no history would otherwise leave behind. */
+    function warm() {
+      seeded = true;
+      rngState = 0x9e3779b9;
+      frozen = true;
+      stop();
+      clear();
+
+      var toX = pointer.x;
+      var toY = pointer.y;
+      var fromX = toX - 190;
+      var fromY = toY + 90;
+      var steps = 46;
+      var i;
+
+      for (i = 0; i <= steps; i++) {
+        var t = i / steps;
+        var ease = t * t * (3 - 2 * t);
+        pointerIn = true;
+        hovering = HARNESS.cursorState === "hover" || HARNESS.hover !== null;
+        step(1 / 60, fromX + (toX - fromX) * ease, fromY + (toY - fromY) * ease, hovering);
+      }
+
+      if (HARNESS.click) burst(toX, toY);
+      draw();
+      document.documentElement.setAttribute("data-trail-count", String(live));
+    }
+
+    var pointer = { x: -1e4, y: -1e4 };
+    var engaged = false;
+    var downX = 0;
+    var downY = 0;
+    var HOVER = "a, button, [role='button'], summary, input, textarea, .btn, .card, " +
+                ".project-item, .plate, .exp-item, .spec-cluster, .gh-panel, .tag, " +
+                ".faq-q, .widget-toggle, .flow-step-btn, .copy-cmd, .checklist-head";
+
+    bake();
+    resize();
+    if (enabled()) bind();
+    window.addEventListener("resize", onResize, { passive: true });
+    document.addEventListener("visibilitychange", onVisibility);
+
+    onMotionChange(function (isReduced) {
+      if (isReduced) {
+        stop();
+        unbind();
+        clear();
+      } else if (enabled()) {
+        bind();
+        start();
+      }
+    });
+
+    /* Order matters: the canvas has to be sized before the warm-up runs, and a
+       frozen trail must never be re-emitted by a later real pointer move. */
+    if (HARNESS.cursor) {
+      pointer.x = HARNESS.cursor.x;
+      pointer.y = HARNESS.cursor.y;
+      warm();
+    }
+
+  })();
+
+
   /* ---------------------------------------------------------- section flow ---
      Everything that tracks where the reader is: the channel rail, the sliding
      nav indicator, the axis draw, the settling of measured values and the
      scan sweep on an anchor jump. All of it is driven by the scroll pass that
      already existed (onScroll -> markActive); no second scroll listener. */
-
   var flow = (function () {
     var railSections = [].slice.call(
       document.querySelectorAll("main section[id], footer[id]")

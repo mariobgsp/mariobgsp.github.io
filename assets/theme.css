@@ -37,9 +37,24 @@
   --blue: #7aa2ff;
   --ok: var(--emerald);
 
-  /* the pixel field (assets/site.js): one canvas pixel is one on-screen cell */
+  /* the pixel field (assets/site.js): one canvas pixel is one on-screen cell.
+     The field is ambient and pointer-blind; the drift tokens are the period of
+     its two slow cross-fades. */
   --pixel-pitch: 8px;
-  --pixel-accent-r: 176px;
+  --pixel-drift: 16s;
+  --pixel-drift-b: 6s;
+
+  /* the pointer trail (assets/site.js): a second layer with its own canvas.
+     Count, lifetime and spawn density are all bounded; the stop and the alpha
+     are the two that keep it an accent and never a wash. Colours are
+     space-separated triples because the draw loop builds rgba() from them. */
+  --trail-max: 240;
+  --trail-life: 900ms;
+  --trail-density: 1;
+  --trail-alpha: 0.9;
+  --trail-violet: 167 139 250;
+  --trail-emerald: 110 231 183;
+  --trail-white: 245 245 247;
 
   /* the animated cursor (assets/site.js) */
   --cursor-ring: 28px;
@@ -176,10 +191,17 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .skip-link:focus { left: 16px; top: 16px; }
 
 /* ------------------------------------------------------- ambient layers ---
-   One layer only: the ordered-dither pixel field, injected by assets/site.js.
-   The canvas backing store is the cell grid - one canvas pixel is one
-   on-screen cell - and CSS scales it up with nearest-neighbour, so the cells
-   stay hard-edged at any size. */
+   Two stacked layers, both injected by assets/site.js, both inert to the
+   pointer and both sitting under every generated page's content.
+
+   .bg-pixels  the ambient ordered-dither field. Its backing store is the cell
+               grid - one canvas pixel is one on-screen cell - and CSS scales
+               it up with nearest-neighbour, so the cells stay hard-edged at
+               any size. It has no pointer state at all: it breathes on its
+               own and nothing else reaches it.
+   .bg-trail   the pointer's own animation, added after the field so it paints
+               above it. Particles are baked sprites drawn at device
+               resolution, so this layer is deliberately not pixelated. */
 
 .bg-pixels {
   position: fixed;
@@ -191,6 +213,16 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   pointer-events: none;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.bg-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 /* ---------------------------------------------------------- progress bar --- */
@@ -1354,6 +1386,7 @@ html[data-freeze] *::after {
   }
 
   .bg-pixels,
+  .bg-trail,
   .scroll-cue {
     animation: none !important;
     transition: none !important;
@@ -1438,6 +1471,7 @@ html[data-freeze] *::after {
   .edu-block { padding: 14px !important; }
 
   .bg-pixels,
+  .bg-trail,
   .progress-track,
   .sec-rail,
   .nav-pill,
