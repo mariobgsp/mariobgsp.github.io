@@ -818,7 +818,7 @@ html[data-freeze] *::after {
 }
 
 .card,
-.project-card,
+.art-entry,
 .exp-item,
 .spec-cluster,
 .plate,
@@ -829,7 +829,7 @@ html[data-freeze] *::after {
 }
 
 .card::before,
-.project-card::before,
+.art-entry::before,
 .exp-item::before,
 .spec-cluster::before,
 .plate::before,
@@ -848,8 +848,8 @@ html[data-freeze] *::after {
 
 .card:hover::before,
 .card.is-hover::before,
-.project-card:hover::before,
-.project-card.is-hover::before,
+.art-entry:hover::before,
+.art-entry.is-hover::before,
 .exp-item:hover::before,
 .exp-item.is-hover::before,
 .spec-cluster:hover::before,
@@ -1133,7 +1133,7 @@ html[data-freeze] *::after {
 .gh-panel,
 .spec-cluster,
 .exp-item,
-.project-card,
+.art-entry,
 [data-magnetic] {
   transform:
     translate3d(var(--mx, 0px), calc(var(--my, 0px) + var(--lift, 0px)), 0);
@@ -1156,7 +1156,7 @@ html[data-freeze] *::after {
 }
 
 .card:hover,
-.project-card:hover,
+.art-entry:hover,
 .exp-item:hover,
 .spec-cluster:hover,
 .gh-panel:hover { --lift: -2px; }
@@ -1164,7 +1164,7 @@ html[data-freeze] *::after {
 /* Promote only the surface that is actually being driven. */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .card:hover,
-  .project-card:hover,
+  .art-entry:hover,
   .exp-item:hover,
   .spec-cluster:hover,
   .plate:hover,
@@ -1401,12 +1401,12 @@ html[data-freeze] *::after {
   .gh-panel,
   .spec-cluster,
   .exp-item,
-  .project-card,
+  .art-entry,
   [data-magnetic] { transform: none !important; }
 
   /* The hover ring is feedback, not motion: keep it, drop the transition. */
   .card::before,
-  .project-card::before,
+  .art-entry::before,
   .exp-item::before,
   .spec-cluster::before,
   .plate::before,
@@ -1416,7 +1416,7 @@ html[data-freeze] *::after {
   }
 
   .card:hover,
-  .project-card:hover,
+  .art-entry:hover,
   .exp-item:hover,
   .spec-cluster:hover,
   .gh-panel:hover { --lift: 0px !important; }
@@ -1466,7 +1466,7 @@ html[data-freeze] *::after {
   .exp-item,
   .spec-cluster,
   .gh-panel,
-  .project-card,
+  .art-entry,
   .title-block,
   .edu-block { padding: 14px !important; }
 

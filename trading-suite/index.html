@@ -38,7 +38,7 @@
         <div class="container">
           <div class="hero-inner">
             <a class="crumb reveal" href="/work/">&larr; All work</a>
-            <p class="kicker reveal"><b>[ Python ]</b> 4 of 6</p>
+            <p class="kicker reveal"><b>[ Python ]</b> 4 of 7</p>
             <h1 class="hero-name reveal">Trading Suite</h1>
             <p class="hero-title reveal">Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes.</p>
             <div class="cmd-wrap"><pre class="cmd">./trading-suite run</pre></div>
@@ -70,18 +70,55 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">This repo exists to answer one question once a session: which Indonesian stocks should be bought at the next open, and why. It is a self-hosted desk - your own FastAPI backend, your own cached copy of the market data - instead of another market-data subscription.</p>
+          <p class="prose">The strongest feature is bandarmology, Indonesian broker-flow analysis: phase, intent radar and flow metrics computed from broker activity, with a FIFO portfolio engine and a backtest surface behind the same API, so a number on screen can be traced back to the code that produced it.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>Python + FastAPI</dt><dd>The backend: one router per domain (market, screener, validator, intel, analysis, regime, backtest, portfolio, summary, alerts, sentiment) with the analysis kept one level up in service modules.</dd></div>
+            <div class="stack-row"><dt>SQLite in WAL mode</dt><dd>The cache seam: per-feed TTLs with stale-while-revalidate in backend/data/cache.db, so a screen refresh does not hammer the public feeds.</dd></div>
+            <div class="stack-row"><dt>Server-Sent Events</dt><dd>The screener streams results from GET /api/screener/scan/stream and the client mirrors the same cache policy in src/lib/cache.ts (memory + sessionStorage).</dd></div>
+            <div class="stack-row"><dt>Next.js 16 + React + TypeScript</dt><dd>The five UI routes (overview, markets, screener, profiler, calculators) after a lean pass from 22 app routes; the nav is generated from one source in src/lib/apps.ts.</dd></div>
+            <div class="stack-row"><dt>curl_cffi + yfinance</dt><dd>The data path: an IDX summary endpoint and .JK history - cached copies of third-party feeds, not an exchange-grade tick store, and the repo says so.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>backend/app/main.py - wires the routers; backend/app/routers/ holds one router per domain and the services live one level up in backend/app/*.py.</li>
+  <li>backend/app/screener.py, idx.py, cache.py, db.py - the scan path: the suspended-ticker filter runs before the ThreadPool fan-out, then results stream over SSE from the SQLite WAL cache.</li>
+  <li>backend/app/validator.py - BandarmologyAnalyzer (phase, intent radar, flow metrics) behind GET /api/validator/{ticker} and inside the profiler page.</li>
+  <li>backend/app/_fifo.py + portfolio.py - the FIFO P/L engine and its JSON load/save; backend/app/backtest.py + routers/analysis.py - the pattern backtests. Both are API-only: next.config.ts redirects /portfolio and /backtest to /profiler.</li>
+  <li>frontend src/app/{overview,markets,screener,profiler,calculators} with src/lib/apps.ts as the single nav source, and backend/data/cache.db as the only datastore.</li></ul>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="architecture">
         <div class="container">
-          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
-          <h2 class="section-title">How it is put together</h2>
+          <h2 class="section-title">How it works</h2>
           <div class="split">
-            <div><ul class="deliverables">  <li>backend/app/main.py wires FastAPI routers from backend/app/routers/ (market, screener, validator, intel, analysis, regime, backtest, portfolio, summary, alerts, sentiment); services live one level up in backend/app/*.py. The front end is Next.js 16 app-router routes in src/app/{overview,markets,screener,profiler,calculators}, with the nav generated from one source in src/lib/apps.ts.</li>
-  <li>Screener: backend/app/screener.py with backend/app/routers/screener.py streams results over SSE at GET /api/screener/scan/stream, and the suspended-ticker filter runs in backend/app/idx.py before the ThreadPool fan-out so excluded names are never fetched.</li>
-  <li>Bandarmology (Indonesian broker-flow analysis) is the strongest single feature: backend/app/validator.py holds BandarmologyAnalyzer (phase, intent radar, flow metrics), served by backend/app/routers/validator.py at GET /api/validator/{ticker} and rendered inside the profiler page at src/app/profiler/page.tsx.</li>
-  <li>FIFO portfolio P/L is a real engine - backend/app/_fifo.py holds FIFOEngine and JSON load/save, called only by backend/app/portfolio.py - but it is API-only: next.config.ts redirects /portfolio to /profiler, so there is no standalone portfolio screen.</li>
-  <li>Backtesting is backend/app/backtest.py (pattern_backtests) behind GET /api/analysis/backtest/{ticker} in backend/app/routers/analysis.py - likewise API-only, since /backtest redirects to /profiler.</li>
-  <li>Caching is the seam that makes it cheap: backend/app/cache.py plus backend/app/db.py give per-feed TTLs in a SQLite WAL file with stale-while-revalidate and _spawn_refresh dedupe; the front end mirrors it in src/lib/cache.ts (memory + sessionStorage).</li></ul></div>
+            <div><ul class="deliverables">  <li>Caching is the seam that makes it cheap: per-feed TTLs in a SQLite WAL file with stale-while-revalidate and _spawn_refresh dedupe, mirrored in the browser by src/lib/cache.ts.</li>
+  <li>A scan is filtered before it is fetched: the suspended-ticker filter runs in idx.py before the ThreadPool fans out, so excluded names never reach a feed.</li>
+  <li>The API is the product surface: routers stay thin and the analysis lives in service modules, so the profiler page, the validator endpoint and the backtest endpoint all read the same engine.</li>
+  <li>Nothing is stored in a company cloud: quotes live in backend/data/cache.db and the only outbound calls are to the public data sources.</li>
+  <li>AI summaries are no longer a feature: backend/app/ai.py is an explicit no-op stub that returns None and nothing imports it, so every caller falls back to deterministic text.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-trading-suite.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
@@ -91,7 +128,7 @@
 
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 06 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -106,7 +143,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 07 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -121,7 +158,7 @@
 
       <section class="section anchor reveal" id="results">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <p class="kicker"><b>[ 08 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
           <div class="card-grid stagger">
@@ -147,7 +184,7 @@
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 09 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -161,7 +198,7 @@
 
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 10 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
@@ -187,7 +224,7 @@
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>

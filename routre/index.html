@@ -38,7 +38,7 @@
         <div class="container">
           <div class="hero-inner">
             <a class="crumb reveal" href="/work/">&larr; All work</a>
-            <p class="kicker reveal"><b>[ Go ]</b> 3 of 6</p>
+            <p class="kicker reveal"><b>[ Go ]</b> 3 of 7</p>
             <h1 class="hero-name reveal">routre</h1>
             <p class="hero-title reveal">One static Go binary that cuts AI token bills and fails over providers for any CLI.</p>
             <div class="cmd-wrap"><pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/routre/main/install.sh | sh</pre></div>
@@ -73,18 +73,57 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">Agent traffic is repetitive: the same diff, the same grep hits, the same build log are re-sent on every turn and billed again. routre sits on the loopback address between the app and the provider, shrinks that noise before it is billed, and answers identical requests from cache - so a session costs less without the agent changing.</p>
+          <p class="prose">The second motive is availability. Subscription providers get busy or rate-limited mid-task, so the gateway walks provider tiers and fails over instead of failing the request, and keeps a per-agent ledger because nobody could otherwise say what a session actually cost.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>Go, standard library only</dt><dd>One static binary (10.9 MiB, ~12.6 MiB idle) with no Node, Python, Postgres or Redis; the proxy is net/http, so no framework sits between the reader and the request path.</dd></div>
+            <div class="stack-row"><dt>HTTP + SSE dialects</dt><dd>internal/proxy/dialect/ is a cross-kind SSE state machine (OpenAI to Anthropic to Gemini), which is what lets one address serve every OpenAI/Anthropic-compatible CLI.</dd></div>
+            <div class="stack-row"><dt>RTK compression</dt><dd>11 heuristic tool_result filters (git diff and log, grep, tree/ls/find dedup, build output, smart truncate) that never grow a payload and fail open; the shipped level measures 94.8% aggregate tool-token reduction.</dd></div>
+            <div class="stack-row"><dt>LRU response cache</dt><dd>Exact-match on the SHA-256 of the canonical body after RTK; streaming and non-streaming entries share a key space but never cross, and an on-disk snapshot keeps the cache warm across restarts.</dd></div>
+            <div class="stack-row"><dt>Local config + loopback dashboard</dt><dd>routre setup writes config.json and routre.env (0600), and the loopback-only /ui edits keys and routing without hand-editing JSON.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>main.go plus one file per command - setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go; bench.go is the gate that fails on any RTK regression below the target.</li>
+  <li>internal/proxy/ - the pipeline with runner.go for retry and failover; internal/proxy/dialect/ holds the cross-kind SSE state machine.</li>
+  <li>internal/rtk/ - the 11 heuristic tool_result filters, each bounded by a 512 KiB scan window and a 150 ms budget.</li>
+  <li>internal/cache/ - the exact-match LRU keyed on the SHA-256 of the canonical post-RTK body, with its on-disk snapshot for warm restarts.</li>
+  <li>internal/router/ - tier walking and per-provider cooldown; internal/usage/ - the ~/.routre/usage.json token and cost ledger.</li>
+  <li>The loopback-only /ui dashboard is served from internal/proxy/, so the gateway and its settings page ship in the same binary.</li></ul>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="architecture">
         <div class="container">
-          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
-          <h2 class="section-title">How it is put together</h2>
+          <h2 class="section-title">How it works</h2>
           <div class="split">
-            <div><ul class="deliverables">  <li>CLI entrypoint is main.go with one file per command (setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go); bench.go is the gate that fails on any RTK regression below the target.</li>
-  <li>Every request walks a 7-step pipeline in internal/proxy/: detect dialect → RTK compress → cache lookup → tiered route → candidateRunner retry → translate → relay.</li>
-  <li>internal/rtk/ holds 11 heuristic tool_result filters (git-diff, git-log, grep, tree/ls/find dedup, build-output, smart-truncate) — fail-open and never grows a payload. Very large payloads stay bounded: filters score at most a 512 KiB scan window and one request body gets a 150 ms compression budget.</li>
-  <li>internal/cache/ is an exact-match LRU keyed by SHA-256 of the canonical JSON body after RTK; streaming SSE and non-streaming entries share a key space but never cross. An on-disk snapshot keeps the cache warm across restarts instead of starting cold.</li>
-  <li>internal/router/ walks tiers in config order (subscription → cheap → free) with per-provider exponential cooldown 2s → 5m; internal/proxy/runner.go adds one transient retry plus one auth-refresh before failover. Slow upstreams get adaptive, configurable budgets: timeouts.candidate_seconds defaults to 45 s, with one bounded 45 s extension and a 120 s header ceiling.</li>
-  <li>internal/proxy/dialect/ is the cross-kind SSE state machine (OpenAI ↔ Anthropic ↔ Gemini); internal/usage/ persists the token/cost ledger to ~/.routre/usage.json, and the loopback-only /ui dashboard is served from internal/proxy.</li></ul></div>
+            <div><ul class="deliverables">  <li>Every request walks the same seven steps: detect dialect, RTK compress, cache lookup, tiered route, candidateRunner retry, translate, relay.</li>
+  <li>Compression is bounded and fail-open: no filter may enlarge a payload, and the work stops at the scan window or the time budget rather than delaying the request.</li>
+  <li>Routing prefers the cheapest healthy provider: tiers are walked in config order (subscription, then cheap, then free) and a failure puts that provider on an exponential cooldown from 2s to 5m.</li>
+  <li>Failover is bounded, not open-ended: one transient retry, one auth refresh on 401/403, then the next candidate; timeouts.candidate_seconds defaults to 45s with one bounded 45s extension and a 120s header ceiling.</li>
+  <li>The ledger is derived from the path that bills: internal/usage/ records per-agent tokens and cost, including what RTK and the cache saved.</li>
+  <li>Savings are measured on tool-result tokens only - output tokens are never compressed - so the published percentage is a benchmark instrument, not a billing guarantee.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-routre.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
@@ -94,7 +133,7 @@
 
       <section class="section anchor reveal" id="flow">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> REQUEST PIPELINE</p>
+          <p class="kicker"><b>[ 06 ]</b> REQUEST PIPELINE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What happens to one request</h2>
           <div class="widget" data-widget="flow" id="flow">
@@ -160,7 +199,7 @@
 
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 07 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -176,7 +215,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 08 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -192,7 +231,7 @@
 
       <section class="section anchor reveal" id="get-started">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> QUICK START</p>
+          <p class="kicker"><b>[ 09 ]</b> QUICK START</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Get started in 3 steps</h2>
           <div class="widget" data-widget="checklist" id="get-started" data-storage-key="routre.get-started.v1">
@@ -223,7 +262,7 @@ open http://127.0.0.1:20128/ui</pre></div>
 
       <section class="section anchor reveal" id="results">
         <div class="container">
-          <p class="kicker"><b>[ 07 ]</b> NUMBERS</p>
+          <p class="kicker"><b>[ 10 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
           <div class="card-grid stagger">
@@ -257,7 +296,7 @@ open http://127.0.0.1:20128/ui</pre></div>
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 08 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 11 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -271,7 +310,7 @@ open http://127.0.0.1:20128/ui</pre></div>
 
       <section class="section anchor reveal" id="faq">
         <div class="container">
-          <p class="kicker"><b>[ 09 ]</b> PLAIN ANSWERS</p>
+          <p class="kicker"><b>[ 12 ]</b> PLAIN ANSWERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Questions people actually ask</h2>
           <div class="widget" data-widget="faq" id="faq">
@@ -306,7 +345,7 @@ open http://127.0.0.1:20128/ui</pre></div>
 
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 10 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 13 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
@@ -333,7 +372,7 @@ open http://127.0.0.1:20128/ui</pre></div>
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>

@@ -38,7 +38,7 @@
         <div class="container">
           <div class="hero-inner">
             <a class="crumb reveal" href="/work/">&larr; All work</a>
-            <p class="kicker reveal"><b>[ JavaScript ]</b> 6 of 6</p>
+            <p class="kicker reveal"><b>[ JavaScript ]</b> 6 of 7</p>
             <h1 class="hero-name reveal">t-notes</h1>
             <p class="hero-title reveal">Local-first notes and kanban in the browser - no cloud, no framework, no build step.</p>
             <div class="cmd-wrap"><pre class="cmd">python3 -m http.server 8000</pre></div>
@@ -70,18 +70,55 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">t-notes is the answer to using a board and a notes app for things that should never leave the laptop: no account, no sync service, no build step and no framework. All data stays in browser localStorage, and the board and the notes are one system - a note pinned to a list renders as a card in both views.</p>
+          <p class="prose">It also exists to show how small that can be: the entire UI is three static files, the Windows build is a 9.7 MiB Go exe that embeds them, and the Tauri shell adds one Rust command for large-corpus search.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>Vanilla HTML, CSS and JavaScript</dt><dd>web/index.html, styles.css and app.js are the entire UI - no framework, no bundler, no npm install; content-visibility: auto keeps long lists cheap and the three themes are plain CSS.</dd></div>
+            <div class="stack-row"><dt>localStorage</dt><dd>The only datastore: all state lives under the key t-notes-v1 and is written on every mutation, so there is no API client and no server-side session.</dd></div>
+            <div class="stack-row"><dt>Go with //go:embed</dt><dd>main.go embeds web/ and serves it from a local net/http server, opens the default browser, and self-installs or uninstalls from the same binary.</dd></div>
+            <div class="stack-row"><dt>Tauri v2 + Rust</dt><dd>The desktop shell: one Rust command (match_notes) for batch substring search with a JS fallback, and an NSIS installer with a launch-on-login plugin.</dd></div>
+            <div class="stack-row"><dt>Playwright</dt><dd>e2e/t-notes.spec.js (15 tests) runs against system Chromium with a mocked AI endpoint; build-windows.sh cross-compiles the Windows exe and setup exe from Linux.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>web/ - the entire front end: index.html, styles.css, app.js and logo.svg, with const K = t-notes-v1 at the top of app.js as the storage key for all state.</li>
+  <li>main.go - the Go host: //go:embed web/, the local net/http server, browser launch, and the setup/--install and --uninstall paths.</li>
+  <li>src-tauri/ - the desktop shell: src/main.rs exposes match_notes, and tauri.conf.json sets frontendDist to ../web and bundles the NSIS installer with tauri-plugin-autostart.</li>
+  <li>e2e/t-notes.spec.js - the Playwright suite, run against system Chromium with a mocked AI endpoint.</li>
+  <li>build-windows.sh + go.mod - cross-compile the Windows exe and setup exe from Linux.</li></ul>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="architecture">
         <div class="container">
-          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
-          <h2 class="section-title">How it is put together</h2>
+          <h2 class="section-title">How it works</h2>
           <div class="split">
-            <div><ul class="deliverables">  <li>web/ is the entire UI with no framework and no build step: index.html, styles.css and app.js, plus logo.svg - styles.css uses content-visibility: auto for list rendering and defines the light/dark/midnight themes.</li>
-  <li>All state lives in browser localStorage under the key t-notes-v1 (const K at the top of web/app.js) and is written on every mutation; notes pinned to a board list render as cards, so the board and Notes view are one system.</li>
-  <li>main.go embeds web/ with //go:embed and serves it from a local net/http server, opening the default browser; the same binary self-installs when its filename contains &#x27;setup&#x27; (or --install) and removes itself with --uninstall.</li>
-  <li>src-tauri/ is the Tauri v2 desktop shell: src/main.rs exposes one Rust command, match_notes (batch substring match for large-corpus search, with a JS fallback), and tauri.conf.json sets frontendDist to ../web and bundles an NSIS installer with the tauri-plugin-autostart plugin for the launch-on-login toggle.</li>
-  <li>e2e/t-notes.spec.js is the Playwright suite, run against system Chromium with a mocked AI endpoint; build-windows.sh cross-compiles the Windows exe and setup exe from Linux with GOOS=windows go build.</li>
-  <li>Two host paths share the same web/ frontend: the Go exe (a browser launcher, with an /api/startup fallback for the ⏻ toggle) and the Tauri app (own window, real installer).</li></ul></div>
+            <div><ul class="deliverables">  <li>One store, two views: notes pinned to a board list render as cards, so the board and the notes view are the same objects and an edit in either is the same write.</li>
+  <li>Two host paths share one front end: the Go exe acts as a browser launcher (with an /api/startup fallback for the power toggle) and the Tauri app opens its own window and installer.</li>
+  <li>State is local-first by construction: no sync layer, no account and no multi-device story - the only optional network call is the bring-your-own-key AI request.</li>
+  <li>The AI assistant keeps the key in the browser and never exports it; summaries, checklists, rewrites and ideas all run against the URL and key the user supplies.</li>
+  <li>Long lists stay cheap by capping what is rendered (a 50-item window) and letting content-visibility skip off-screen work.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-t-notes.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
@@ -91,7 +128,7 @@
 
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 06 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -106,7 +143,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 07 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -122,7 +159,7 @@
 
       <section class="section anchor reveal" id="results">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <p class="kicker"><b>[ 08 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
           <div class="card-grid stagger">
@@ -144,7 +181,7 @@
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 09 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -158,7 +195,7 @@
 
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 10 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
@@ -184,7 +221,7 @@
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>

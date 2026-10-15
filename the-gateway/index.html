@@ -38,7 +38,7 @@
         <div class="container">
           <div class="hero-inner">
             <a class="crumb reveal" href="/work/">&larr; All work</a>
-            <p class="kicker reveal"><b>[ Go ]</b> 2 of 6</p>
+            <p class="kicker reveal"><b>[ Go ]</b> 2 of 7</p>
             <h1 class="hero-name reveal">The Gateway</h1>
             <p class="hero-title reveal">Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side.</p>
             <div class="cmd-wrap"><pre class="cmd">cd project &amp;&amp; docker compose up -d postgres</pre></div>
@@ -70,18 +70,57 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">Every internal tool ends up with its own copy of the same upstream credentials. This repo is the counter-example: an upstream API is registered once - identifier, host, path, method, allowed headers and parameters - and every client calls the gateway instead of the upstream.</p>
+          <p class="prose">It is also a deliberate exercise in keeping a token out of the browser. Browser to Next.js BFF to Go service, with the JWT in an httpOnly cookie and the signing secret read per request from system_properties, so no JWT ever reaches browser JavaScript or localStorage.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>Next.js 15 + React 19 + TypeScript</dt><dd>BFF and console in one app: route handlers and server-side lib code mean the JWT never has to leave the server, and the console is plain app-router pages.</dd></div>
+            <div class="stack-row"><dt>Go (chi + pgx)</dt><dd>The gateway itself: a small router, one typed store file per entity over pgx, and forwarders with explicit dial and client timeouts.</dd></div>
+            <div class="stack-row"><dt>PostgreSQL</dt><dd>Users, store accounts, registered APIs, and the system_properties row that holds the signing secret - read per request rather than cached in the process.</dd></div>
+            <div class="stack-row"><dt>JWT + httpOnly cookie</dt><dd>Auth across the seam: login issues a JWT, the BFF keeps it in a SameSite=Lax httpOnly cookie, and a Bearer middleware in Go guards everything except /health and login.</dd></div>
+            <div class="stack-row"><dt>Kubernetes</dt><dd>The Go service ships with a Deployment (2 replicas, /health probes, 32Mi request / 64Mi limit) and an HPA that scales 2 to 10 pods on CPU 60% and memory 70%.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>frontend/src/app/gw/[...path]/route.ts - the catch-all BFF route; frontend/src/lib/gwRoutes.ts is the declarative route table and frontend/src/lib/bffGateway.ts owns session-to-401 mapping, the 20s AbortController, sanitization and envelope translation.</li>
+  <li>frontend/src/lib/session.ts and frontend/src/middleware.ts - the httpOnly cookie session and the guard over /home, /api/* and /store/*.</li>
+  <li>gateway-go/internal/handler/ - chi routes plus the Bearer-token middleware; only /health and /gateway/user/login stay public.</li>
+  <li>gateway-go/internal/store/ - one file per entity (user, account, api, postgres.go) over pgx.</li>
+  <li>gateway-go/internal/service/ - forward.go (typed ForwardRequest) and upstream.go (persisted header allowlist, single query encode, 5s dial / 30s client timeout).</li>
+  <li>k8s/gateway-go/ - deployment.yaml and hpa.yaml.</li></ul>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="architecture">
         <div class="container">
-          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
-          <h2 class="section-title">How it is put together</h2>
+          <h2 class="section-title">How it works</h2>
           <div class="split">
-            <div><ul class="deliverables">  <li>Browser to Next.js BFF: frontend/src/middleware.ts guards /home, /api/* and /store/*, and frontend/src/lib/session.ts keeps the JWT in an httpOnly, SameSite=Lax cookie.</li>
-  <li>frontend/src/app/gw/[...path]/route.ts dispatches the declarative route table in frontend/src/lib/gwRoutes.ts; frontend/src/lib/bffGateway.ts owns session to 401 mapping, the 20s AbortController, sanitization, and envelope to NextResponse translation.</li>
-  <li>Go surface: gateway-go/internal/handler/handler.go wires chi routes, leaving only /health and /gateway/user/login public; everything under /api/gateway and /api/store passes through the Bearer-token middleware in internal/handler/middleware.go.</li>
-  <li>Persistence: gateway-go/internal/store is split per entity (user, account, api, postgres.go) over pgx, and the signing secret is read per request from the system_properties table.</li>
-  <li>Forwarding: gateway-go/internal/service/forward.go takes a typed ForwardRequest and internal/service/upstream.go applies the persisted header allowlist, encodes the query once, and calls the upstream with a 5s dial and 30s client timeout.</li>
-  <li>Runtime: k8s/gateway-go/deployment.yaml runs 2 replicas with /health probes at 32Mi request / 64Mi limit, and hpa.yaml scales 2 to 10 pods on CPU 60% and memory 70%.</li></ul></div>
+            <div><ul class="deliverables">  <li>All backend calls are server-side: the browser only ever talks to the Next.js BFF, which attaches the JWT from the httpOnly cookie and translates upstream failures into NextResponse envelopes.</li>
+  <li>The route table is data, not code: gwRoutes.ts declares which gateway paths exist, so adding an upstream surface is an edit in one file - and the current table accepts only GET and POST.</li>
+  <li>Auth is two-layered: the BFF owns the session cookie, and the Go service re-checks the Bearer token on everything under /api/gateway and /api/store before a handler runs.</li>
+  <li>Forwarding is allowlisted: upstream.go applies the persisted header and parameter allowlist, encodes the query once, and bounds the call with a 5s dial and 30s client timeout.</li>
+  <li>Scale-out is declared rather than assumed: the HPA runs 2 to 10 pods, while login throttling is per-username and in memory, so it resets on restart and does not aggregate across replicas.</li>
+  <li>The Kubernetes manifests cover gateway-go only; the frontend and PostgreSQL run outside the cluster, and the repo publishes no load-test numbers.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-the-gateway.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
@@ -91,7 +130,7 @@
 
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 06 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -107,7 +146,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 07 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -122,7 +161,7 @@
 
       <section class="section anchor reveal" id="results">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <p class="kicker"><b>[ 08 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
           <div class="card-grid stagger">
@@ -148,7 +187,7 @@
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 09 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -162,7 +201,7 @@
 
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 10 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
@@ -187,7 +226,7 @@
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>

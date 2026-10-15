@@ -38,7 +38,7 @@
         <div class="container">
           <div class="hero-inner">
             <a class="crumb reveal" href="/work/">&larr; All work</a>
-            <p class="kicker reveal"><b>[ Go ]</b> 1 of 6</p>
+            <p class="kicker reveal"><b>[ Go ]</b> 1 of 7</p>
             <h1 class="hero-name reveal">Payment System</h1>
             <p class="hero-title reveal">Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds.</p>
             <div class="cmd-wrap"><pre class="cmd">cd project &amp;&amp; docker compose up --build</pre></div>
@@ -64,18 +64,57 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">Payment retries are where systems go wrong: a customer double-clicks, a partner callback arrives twice, a worker dies mid-flight. This repo keeps those paths in one place - a single TransactionLifecycle module that pairs the PostgreSQL transaction, the outbox row and the idempotency key - so there is exactly one way a payment changes state.</p>
+          <p class="prose">It was written as a reference implementation rather than a product: the unglamorous half of payments as code you can start with docker compose, break on purpose and read. HMAC-verified callbacks with a replay window, an outbox poller that ends poison messages in a DLQ, and a sweeper that keeps stale state honest.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>Go</dt><dd>The whole backend is one binary. Lifecycle, store and jobs are plain Go over database/sql with no ORM, so the transaction boundary and the idempotency insert stay visible in one function.</dd></div>
+            <div class="stack-row"><dt>PostgreSQL</dt><dd>System of record for the transaction and store schemas: one SQL transaction writes the state change, the outbox row and the idempotency key, which is what makes retries safe.</dd></div>
+            <div class="stack-row"><dt>Redis</dt><dd>Short-lived charge state for the partner stub (ms-paymentagr), so the fake provider can behave like one without a database of its own.</dd></div>
+            <div class="stack-row"><dt>Next.js 16 + TypeScript + Tailwind</dt><dd>The portal - login, catalog, checkout, status, refunds. Its server-side client (frontend/src/lib/gateway.ts) calls the monolith, so browser code never holds a partner key.</dd></div>
+            <div class="stack-row"><dt>Docker Compose</dt><dd>Five containers (postgres, redis, ms-paymentagr, monolith, frontend) from one command; pg-init-scripts seed schemas, demo users and products, so the lifecycle is runnable with no cloud account.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>monolith/lifecycle/ - the deep module: lifecycle.go holds the state chart (CREATED to READY to SUCCESS/FAILED/REFUND) plus idempotency, and pricing.go holds the discount math.</li>
+  <li>monolith/cmd/ - wiring and the endpoint table: routes.go, handlers.go for the new API, legacy.go for the ms-* compatible paths, http.go for envelopes plus partner and outbox transport.</li>
+  <li>monolith/store/ - the persistence seam: store.go types with pg.go for production and memory.go as the dev/test fake, over the transaction + store schemas.</li>
+  <li>monolith/jobs/, monolith/invoice/, monolith/invoiceworker/ - the background half: the outbox poller, the sweeper and the invoice worker that writes receipt files.</li>
+  <li>ms-paymentagr/ - the partner stub (Go/Gin + Redis): usecase/ drives charge, refund, the CheckoutUrl page and HMAC-SHA256 callbacks behind the api-key header.</li>
+  <li>frontend/ - the Next.js portal; frontend/src/lib/gateway.ts is the only place that talks to the monolith.</li></ul>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="architecture">
         <div class="container">
-          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
-          <h2 class="section-title">How it is put together</h2>
+          <h2 class="section-title">How it works</h2>
           <div class="split">
-            <div><ul class="deliverables">  <li>monolith/ - a single Go binary holding the TransactionLifecycle deep module: monolith/lifecycle/lifecycle.go for the state chart (CREATED to READY to SUCCESS/FAILED/REFUND) plus idempotency, and pricing.go for the discount math.</li>
-  <li>monolith/cmd/ - wiring and the endpoint table: routes.go, handlers.go for the new API, legacy.go for the ms-* compatible paths, http.go for envelopes, partner and outbox transport.</li>
-  <li>monolith/store/ - the persistence seam: store.go types with pg.go for production and memory.go for the dev/test fake, over PG transaction + store schemas.</li>
-  <li>monolith/jobs/ - the background half: outbox.go polls every 5s and routes rows (ms-notify-payment to an invoice, servicelogs kept queryable) with 3x backoff then a terminal dlq.* row; sweeper.go moves stale READY to FAILED after 5m and purges servicelogs past LOG_RETENTION_DAYS. The invoice worker (monolith/invoice/ + invoiceworker/) is the consumer: it writes receipt files to INVOICE_DIR/invoice_&lt;tx&gt;.json with the transaction id sanitized against path traversal.</li>
-  <li>ms-paymentagr/ - the partner stub (Go/Gin + Redis): charge, refund, a CheckoutUrl redirect page and HMAC-SHA256 signed callbacks, gated behind the api-key header and driven by ms-paymentagr/usecase/.</li>
-  <li>frontend/ - Next.js 16 + TypeScript + Tailwind portal (login, catalog, checkout, status, refunds) whose server-side client lives in frontend/src/lib/gateway.ts.</li></ul></div>
+            <div><ul class="deliverables">  <li>State only changes through the lifecycle module: the state change, the outbox row and the idempotency key are written in one PostgreSQL transaction, so a repeat of the same Idempotency-Key returns the original result instead of charging twice.</li>
+  <li>Callbacks are verified before they are trusted: HMAC-SHA256 over the body with a 300s replay window; a forged signature is rejected with 401 and never reaches the lifecycle.</li>
+  <li>Asynchronous work is a table, not a queue client: outbox.go polls every 5s, routes ms-notify-payment rows to the invoice worker and keeps servicelogs queryable, retries with 3x backoff and terminates poison messages in a dlq.* row.</li>
+  <li>The sweeper keeps stale state honest: READY transactions older than 5m move to FAILED, and servicelogs are purged past LOG_RETENTION_DAYS.</li>
+  <li>The invoice worker writes INVOICE_DIR/invoice_&lt;tx&gt;.json and sanitizes the transaction id against path traversal before it touches the filesystem.</li>
+  <li>The README publishes no benchmark numbers: splitting the monolith is explicitly deferred until a load measurement justifies it, which is why this repo shows a lifecycle rather than a throughput claim.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-payment-system.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
@@ -85,7 +124,7 @@
 
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 06 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -99,7 +138,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 07 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -115,7 +154,7 @@
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 08 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -129,7 +168,7 @@
 
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 09 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
@@ -155,7 +194,7 @@
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>

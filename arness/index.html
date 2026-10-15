@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>arness — Lean local AI coding harness: one binary, CLI + TUI, MCP/LSP, skills, extensions, optimizer.</title>
+    <meta name="description" content="arness: Lean local AI coding harness: one binary, CLI + TUI, MCP/LSP, skills, extensions, optimizer." />
+    <meta name="theme-color" content="#0a0a0b" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body>
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
+        <ul class="nav-links">
+          <li><a href="/work/" class="active">Work</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+      </div>
+    </header>
+
+    <div class="nav-menu">
+      <a href="/work/">Work</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
+    <main class="page">
+      <section class="hero hero-compact anchor" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <a class="crumb reveal" href="/work/">&larr; All work</a>
+            <p class="kicker reveal"><b>[ TypeScript ]</b> 7 of 7</p>
+            <h1 class="hero-name reveal">arness</h1>
+            <p class="hero-title reveal">Lean local AI coding harness: one binary, CLI + TUI, MCP/LSP, skills, extensions, optimizer.</p>
+            <div class="cmd-wrap"><pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/arness/master/install.sh | sh</pre></div>
+            <div class="actions" style="margin-top: 24px">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/arness" target="_blank" rel="noopener">Repository on GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#install">Install<span class="ext">&#8595;</span></a>
+            </div>
+            <ul class="tags" style="margin-top: 20px">
+              <li class="tag">TypeScript</li><li class="tag">CLI + TUI</li><li class="tag">MCP/LSP</li><li class="tag">extensions</li><li class="tag">single binary</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="what">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> WHAT IT IS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">In plain words</h2>
+          <p class="prose">arness is a coding agent that runs entirely on your machine as one binary: an interactive TUI and a print mode over the same turn loop, with tools (bash, filesystem, search), skills, an extension API, MCP and LSP capabilities, subagents, memory and a token optimizer.</p>
+          <p class="prose">It is built to stay small. TypeScript is compiled by bun into a single executable, Node 26 is a build-time requirement only, and the sole devDependency is the compiler used for tsc --noEmit.</p>
+          <p class="prose">State is plain files under your config and state directories - arness.json for configuration, one JSONL event log per session, and optimizer.jsonl with one savings row per provider call - so a session can be forked, switched, inspected or deleted with tools you already have.</p>
+          <p class="prose">It is for people who want a local harness they can read and extend: the spec of record lives in the repository (CONTEXT.md, PLAN.md), the suite runs on node --test against committed SSE captures, and every capability states its boundary - including the bash tool, which is not a sandbox.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">Most harnesses are a hosted runtime with a CLI attached. arness is the opposite: one local binary you own, where the turn loop, the tools, the provider adapter and the optimizer all live in a single TypeScript source tree, and nothing leaves the machine except the provider call you configured.</p>
+          <p class="prose">The optimizer exists because agent sessions are mostly repetition. Prefix ordering, compression, clamping, breakpoints and pruning are applied before the request, and every saving is appended to a ledger - so the number can be checked instead of claimed.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>TypeScript on Node 26</dt><dd>Erasable syntax only, checked with tsc --noEmit; TypeScript is the only devDependency, so the source carries no build-time framework.</dd></div>
+            <div class="stack-row"><dt>bun build --compile</dt><dd>One self-contained executable per platform; install.sh and install.ps1 drop it under the user data directory and link a shim onto PATH.</dd></div>
+            <div class="stack-row"><dt>node --test</dt><dd>The suite runs on the runtime&#x27;s own test runner with no framework; provider streams are parsed against committed SSE captures, so tests never touch the network.</dd></div>
+            <div class="stack-row"><dt>MCP + LSP</dt><dd>src/capabilities/ attaches MCP servers and a language server to the session, so context comes from real tools rather than from the loop guessing.</dd></div>
+            <div class="stack-row"><dt>JSONL event log + savings ledger</dt><dd>One event log per session under the state directory makes /fork and /switch cheap; optimizer.jsonl keeps one savings row per provider call.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>src/main.ts - entrypoint and mode selection: interactive TUI, or -p for one turn, print and exit.</li>
+  <li>src/core/ - config, events and session, the turn loop, system prompt and skills, token accounting and rendering (config.ts, events.ts, session.ts, loop.ts, system-prompt.ts, skills.ts, tokens.ts, render.ts, commands.ts, context.ts).</li>
+  <li>src/tools/ - the bash, filesystem and search tools plus the registry; src/ext/ - the extension loader, hooks, host and types.</li>
+  <li>src/capabilities/ - MCP, LSP, subagents, memory, review, search and todo guards.</li>
+  <li>src/optimizer/ - prefix order, compression, clamp, breakpoints and prune, with report.ts and rtk.ts; src/providers/openai.ts is the provider adapter.</li>
+  <li>src/tui/ - input, theme and the terminal UI; test/ - node --test suites with committed SSE fixtures; scripts/check-names.mjs guards against foreign harness references.</li></ul>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="architecture">
+        <div class="container">
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">How it works</h2>
+          <div class="split">
+            <div><ul class="deliverables">  <li>One loop, two front ends: the TUI and print mode drive the same turn loop, so a scripted run and an interactive session take an identical path through tools, capability hooks and the optimizer.</li>
+  <li>The optimizer runs before the request: it rewrites the outgoing payload and appends a savings row per provider call, which is what makes the ledger auditable.</li>
+  <li>Sessions are files: every event is appended to sessions/&lt;cwd-slug&gt;/&lt;iso&gt;_&lt;id&gt;.jsonl, so forking, switching and inspecting a session need no database.</li>
+  <li>Extensions hook the loop: src/ext/ exposes lifecycle hooks, and a tool_call hook can veto a call before it runs, so policy can be added without editing core.</li>
+  <li>Capabilities are attached, not baked in: MCP servers, a language server, subagents and memory are registered onto the session, which keeps the loop small and the surface testable.</li>
+  <li>Boundaries are stated rather than implied: the bash tool is unrestricted code execution with no isolation layer, and the extension hook is the intended place to add policy.</li></ul></div>
+            <div>
+              <img class="thumb" src="../assets/thumbs/thumb-arness.png" width="1200" height="630" loading="lazy" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="install">
+        <div class="container">
+          <p class="kicker"><b>[ 06 ]</b> INSTALL</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Set it up</h2>
+          <div class="cmd-wrap" style="max-width: 100%">
+            <pre class="cmd">curl -fsSL https://raw.githubusercontent.com/mariobgsp/arness/master/install.sh | sh</pre>
+            <pre class="cmd"># Windows (PowerShell): irm https://raw.githubusercontent.com/mariobgsp/arness/master/install.ps1 | iex</pre>
+            <pre class="cmd">arness</pre>
+            <pre class="cmd">arness -p &quot;explain src/main.ts&quot;</pre>
+            <pre class="cmd">arness -p &quot;...&quot; --dry-run</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="quickstart">
+        <div class="container">
+          <p class="kicker"><b>[ 07 ]</b> QUICKSTART</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">See it work</h2>
+          <ol class="deliverables">
+            <li>Install, then run arness with no arguments for an interactive TUI session; arness -p &quot;...&quot; runs one turn, prints the answer to stdout and exits.</li>
+            <li>Configuration is optional: every key in ~/.config/arness/arness.json has a default, and ARNESS_MODEL, ARNESS_BASE_URL and ARNESS_API_KEY override it for one shell.</li>
+            <li>Ask for the optimizer report before spending anything: --dry-run prints what would be sent and sends no request.</li>
+            <li>Read the state directory when a session surprises you: one JSONL event log per session plus optimizer.jsonl with one savings row per provider call.</li>
+            <li>Check the tree before trusting it: node --run check (no foreign harness references), node --run typecheck, node --run test, or node --run verify for all three in order.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="tradeoffs">
+        <div class="container">
+          <p class="kicker"><b>[ 08 ]</b> TRADEOFFS</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it does not do</h2>
+          <ol class="deliverables">
+            <li>The bash tool runs bash -lc on Linux/macOS and cmd /c on Windows: unrestricted code execution. This is a single-user local CLI, not a sandbox - there is no isolation layer and none is promised; the tool_call extension hook exists so an extension can veto a call before it runs.</li>
+            <li>Development needs Node 26 and bun for the compile step. Released binaries are self-contained, but the package version is still 0.0.0 and no benchmark numbers are published.</li>
+            <li>The repository carries plan documents (MCP-PLAN.md, LSP-PLAN.md, TUI-PLAN.md, EXT-PLAN.md); what is actually built is listed in the README notes, and not every planned item has shipped.</li>
+            <li>There is no cloud sync, no team surface and no remote execution: state is local files, so a session lives on one machine.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="repo">
+        <div class="container">
+          <p class="kicker"><b>[ 09 ]</b> SOURCE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Read the code</h2>
+          <p class="prose">The full implementation, tests and documentation live in the repository.</p>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/arness/releases/latest" target="_blank" rel="noopener">Releases<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/arness/blob/master/CONTEXT.md" target="_blank" rel="noopener">Spec of record (CONTEXT.md)<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-ghost" href="https://github.com/mariobgsp/arness/blob/master/PLAN.md" target="_blank" rel="noopener">Design and build sequence (PLAN.md)<span class="ext">&#8599;</span></a></div>
+          <div class="actions" style="margin-top: 20px"><a class="btn btn-primary" href="https://github.com/mariobgsp/arness" target="_blank" rel="noopener">github.com/mariobgsp/arness<span class="ext">&#8599;</span></a><a class="btn btn-ghost" href="/work/">Other projects<span class="ext">&#8594;</span></a></div>
+        </div>
+      </section>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Selected work</h3>
+            <a href="/work/">Every project, written up</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+
+    <script src="../assets/site.js"></script>
+  </body>
+</html>

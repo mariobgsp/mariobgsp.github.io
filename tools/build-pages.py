@@ -1,25 +1,39 @@
 #!/usr/bin/env python3
-"""Render /work/ (index) and one landing page per project from tools/projects.json.
+"""Render the home page article, /work/ (index) and one landing page per project
+from tools/projects.json.
 
-    python3 tools/build-pages.py            # write the pages
-    python3 tools/build-pages.py --check    # verify the JSON only, write nothing
+    python3 tools/build-thumbs.py <slug>    # a new project needs its thumbnail first
+    python3 tools/build-pages.py            # write every generated file
+    python3 tools/build-pages.py --check    # validate the data and report drift,
+                                            # writing nothing
 
 Every string on the generated pages comes from tools/projects.json, so a claim can
 only appear if it is in that file - and that file is only filled from the repos.
+
+On index.html this script owns one region: everything between ARTICLE_BEGIN and
+ARTICLE_END. The rest of the home page is hand-written and is never rewritten.
 """
 
 import html
 import itertools
 import json
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / "tools" / "projects.json"
+INDEX = ROOT / "index.html"
 UP = "../"  # every generated page sits one directory below the site root
 
 REPO_URL = "https://github.com/mariobgsp/{}"
 SITE = "https://mariobgsp.github.io"
+
+# The only part of the hand-written home page this script owns.
+ARTICLE_BEGIN = "<!-- article:begin -->"
+ARTICLE_END = "<!-- article:end -->"
+
+WORDS_PER_MINUTE = 200
 
 
 def e(value):
@@ -62,7 +76,7 @@ FOOTER = """<footer class="footer" id="contact">
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>
@@ -132,6 +146,64 @@ def stat_row(results):
         for r in results
     )
     return f'\n            <div class="stat-row">\n{stats}\n            </div>'
+
+
+def prose_blocks(items):
+    return "\n".join(f'          <p class="prose">{e(x)}</p>' for x in items)
+
+
+def stack_list(entries):
+    rows = "\n".join(
+        f'            <div class="stack-row"><dt>{e(s["name"])}</dt><dd>{e(s["role"])}</dd></div>'
+        for s in entries
+    )
+    return f'          <dl class="stack-list">\n{rows}\n          </dl>'
+
+
+def card_spans(count):
+    """Wide/narrow alternation that always fills the row: an odd last card takes
+    the full width instead of leaving a hole next to it."""
+    spans = ["span-7" if i % 2 == 0 else "span-5" for i in range(count)]
+    if count % 2:
+        spans[-1] = "span-12"
+    return spans
+
+
+def shape_problems(p):
+    """Problems with the article fields of one project."""
+    slug = p.get("slug", "?")
+    problems = []
+
+    def checked(key, low, high):
+        items = p.get(key)
+        if not isinstance(items, list) or not low <= len(items) <= high:
+            problems.append(f"{slug}: {key} must be a list of {low} to {high} items")
+            return False
+        return True
+
+    if checked("why", 1, 3):
+        for x in p["why"]:
+            if not isinstance(x, str) or not x.strip() or len(x) > 600:
+                problems.append(f"{slug}: each why paragraph must be text under 600 chars")
+                break
+    if checked("stack", 3, 6):
+        for s in p["stack"]:
+            if not isinstance(s, dict) or not s.get("name") or not s.get("role") or len(s["role"]) > 400:
+                problems.append(f"{slug}: each stack entry needs a name and a role under 400 chars")
+                break
+    if checked("structure", 3, 8):
+        for x in p["structure"]:
+            if not isinstance(x, str) or not x.strip():
+                problems.append(f"{slug}: structure entries must be non-empty strings")
+                break
+    if checked("architecture", 1, 8):
+        for x in p["architecture"]:
+            if not isinstance(x, str) or not x.strip():
+                problems.append(f"{slug}: architecture entries must be non-empty strings")
+                break
+    if "article_rank" in p and not isinstance(p["article_rank"], int):
+        problems.append(f"{slug}: article_rank must be an integer")
+    return problems
 
 
 def section(sec_id, num, kicker, title, body, extra_class=""):
@@ -313,12 +385,15 @@ def project_page(p, index, total):
             if w.get("after") == section_key:
                 parts.append(widget_section(w))
 
-    what = "\n".join(f'          <p class="prose">{e(x)}</p>' for x in p["what"])
-    parts.append(sec("what", "WHAT IT IS", "In plain words", what))
+    parts.append(sec("what", "WHAT IT IS", "In plain words", prose_blocks(p["what"])))
     append_widgets("what")
 
+    parts.append(sec("why", "PURPOSE", "Why it exists", prose_blocks(p["why"])))
+    parts.append(sec("stack", "TECH STACK", "What it is built on", stack_list(p["stack"])))
+    parts.append(sec("structure", "STRUCTURE", "Where the code lives", bullets(p["structure"])))
+
     parts.append(sec(
-        "architecture", "ARCHITECTURE", "How it is put together",
+        "architecture", "ARCHITECTURE", "How it works",
         f"""          <div class="split">
             <div>{bullets(p["architecture"])}</div>
             <div>
@@ -378,11 +453,11 @@ def project_page(p, index, total):
 # ------------------------------------------------------------------ index page
 
 def work_page(projects):
-    spans = ("span-7", "span-5", "span-5", "span-7", "span-7", "span-5")
+    spans = card_spans(len(projects))
     cards = []
     for i, p in enumerate(projects, 1):
         u = p["upwork"]
-        cards.append(f"""            <article class="card {spans[(i - 1) % len(spans)]}">
+        cards.append(f"""            <article class="card {spans[i - 1]}">
               <img class="thumb" src="{UP}assets/thumbs/thumb-{e(p['slug'])}.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">{e(u["title"])}</h3>
@@ -407,9 +482,9 @@ def work_page(projects):
 
     total_measured = sum(len(p["results"]) for p in projects)
     stats = [
-        ("6", "Projects written up"),
+        (f"{len(projects)}", "Projects written up"),
         (f"{total_measured}", "Measured facts cited"),
-        ("6", "Repos on GitHub"),
+        (f"{len(projects)}", "Repos on GitHub"),
         ("5+ yrs", "Production backend"),
     ]
     stat_html = "\n".join(
@@ -456,28 +531,173 @@ def work_page(projects):
 
     return shell(
         "Selected Work — Backend & API Engineering",
-        "Six production-style backend systems: payments with idempotency and outbox, "
-        "an API gateway, a Go LLM gateway, and market-data tooling. Stack, deliverables "
-        "and measured facts per project.",
+        f"{len(projects)} projects: payments with idempotency and outbox, an API gateway, "
+        "a Go LLM gateway, market-data tooling, a local AI harness and a local-first "
+        "notes app. Stack, deliverables and measured facts per project.",
         body, active="work")
+
+
+# --------------------------------------------------------------------- article
+#
+# The home page article is generated, not hand-written: its entries, jump list and
+# structured data all come from the same records as /work/ and the project pages,
+# so the article cannot describe something the rest of the site does not claim.
+
+def article_order(projects):
+    """Featured projects first, in article_rank order; the rest keep file order."""
+    ranked = sorted((p for p in projects if p.get("article_rank")),
+                    key=lambda p: p["article_rank"])
+    rest = [p for p in projects if not p.get("article_rank")]
+    return ranked + rest
+
+
+def article_stats(results, limit=3):
+    """The first few measured facts, in the readout style of a project page."""
+    if not results:
+        return ""
+    stats = "\n".join(
+        f'                <div class="stat"><b>{e(r["value"])}</b><span>{e(r["label"])}</span></div>'
+        for r in results[:limit]
+    )
+    return f'\n              <div class="stat-row">\n{stats}\n              </div>'
+
+
+def article_entry(p, index):
+    repo = REPO_URL.format(p["slug"])
+    tags = "".join(f'<li class="tag">{e(t)}</li>' for t in p["tags"])
+    stack = "\n".join(
+        f'                <div class="art-stack-row"><dt>{e(s["name"])}</dt><dd>{e(s["role"])}</dd></div>'
+        for s in p["stack"])
+    structure = "\n".join(f'                <li>{e(x)}</li>' for x in p["structure"])
+    design = "\n".join(f'                <li>{e(x)}</li>' for x in p["architecture"])
+    why = "\n".join(f'              <p class="prose">{e(x)}</p>' for x in p["why"])
+    return f"""        <article class="art-entry" id="art-{e(p['slug'])}">
+          <header class="art-head reveal">
+            <p class="art-index">{index:02d} &middot; {e(p['lang'])}</p>
+            <h3 class="art-name">{e(p['name'])}</h3>
+            <p class="art-strap">{e(p['strapline'])}</p>
+            <ul class="tags">{tags}</ul>
+          </header>
+          <div class="art-grid reveal">
+            <div class="art-side">
+              <img class="thumb" src="assets/thumbs/thumb-{e(p['slug'])}.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />{article_stats(p['results'])}
+            </div>
+            <div class="art-body">
+              <p class="prose art-lead">{e(p['what'][0])}</p>
+              <h4 class="art-label">Tech stack</h4>
+              <dl class="art-stack">
+{stack}
+              </dl>
+              <h4 class="art-label">Code structure</h4>
+              <ul class="deliverables">
+{structure}
+              </ul>
+              <h4 class="art-label">Architecture</h4>
+              <ul class="deliverables">
+{design}
+              </ul>
+              <h4 class="art-label">Why it exists</h4>
+{why}
+              <div class="art-tools">
+                <a class="btn btn-ghost" href="/{e(p['slug'])}/">Full write-up<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="{e(repo)}" target="_blank" rel="noopener" aria-label="{e(p['slug'])} repository on GitHub">Repository<span class="ext">&#8599;</span></a>
+              </div>
+            </div>
+          </div>
+        </article>"""
+
+
+def article_toc(projects):
+    items = "\n".join(
+        f'              <li><a href="#art-{e(p["slug"])}"><span class="art-toc-idx">{i:02d}</span>'
+        f'<span class="art-toc-name">{e(p["name"])}</span><span class="art-toc-lang">{e(p["lang"])}</span></a></li>'
+        for i, p in enumerate(projects, 1))
+    return f"""        <nav class="art-toc reveal" aria-label="Projects in this article">
+          <p class="art-toc-title">In this article</p>
+          <ol>
+{items}
+              <li><a href="/work/"><span class="art-toc-idx">&#8594;</span><span class="art-toc-name">Every write-up, page by page</span><span class="art-toc-lang">{len(projects)} pages</span></a></li>
+          </ol>
+        </nav>"""
+
+
+def article_jsonld(projects):
+    """Structured data: one node per project, built from the same records."""
+    items = []
+    for i, p in enumerate(projects, 1):
+        items.append({
+            "@type": "ListItem",
+            "position": i,
+            "item": {
+                "@type": "SoftwareSourceCode",
+                "name": p["name"],
+                "description": p["strapline"],
+                "url": f"{SITE}/{p['slug']}/",
+                "codeRepository": REPO_URL.format(p["slug"]),
+                "programmingLanguage": p["lang"],
+                "keywords": ", ".join(p["tags"]),
+            },
+        })
+    payload = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Things I built and still maintain",
+        "itemListElement": items,
+    }
+    return ('        <script type="application/ld+json">'
+            + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+            + "</script>")
+
+
+def article_entries(projects):
+    ordered = article_order(projects)
+    blocks = [article_toc(ordered)]
+    blocks += [article_entry(p, i) for i, p in enumerate(ordered, 1)]
+    blocks.append(article_jsonld(ordered))
+    return "\n\n".join(blocks) + "\n"
+
+
+def article_region(projects):
+    return f"{ARTICLE_BEGIN}\n{article_entries(projects)}{ARTICLE_END}"
+
+
+def article_words(projects):
+    text = re.sub(r"<[^>]+>", " ", article_entries(projects))
+    return len([w for w in html.unescape(text).split() if any(c.isalnum() for c in w)])
+
+
+def splice_article(index_text, region):
+    """Swap the marked region of index.html, leaving every other byte alone."""
+    if index_text.count(ARTICLE_BEGIN) != 1 or index_text.count(ARTICLE_END) != 1:
+        raise ValueError("index.html needs exactly one article:begin and one article:end marker")
+    start = index_text.index(ARTICLE_BEGIN)
+    end = index_text.index(ARTICLE_END, start) + len(ARTICLE_END)
+    return index_text[:start] + region + index_text[end:], index_text[start:end]
 
 
 # ------------------------------------------------------------------------ main
 
-def main():
-    try:
-        projects = json.loads(DATA.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as err:
-        print(f"CANNOT READ {DATA.relative_to(ROOT)}: {err}")
-        return 1
-    slugs = [p["slug"] for p in projects]
+REQUIRED = ("slug", "name", "strapline", "lang", "tags", "hero_cmd", "why", "what",
+            "stack", "structure", "architecture", "install", "quickstart",
+            "results", "tradeoffs", "links", "upwork")
 
+
+def data_problems(projects):
+    """Everything that would make a generated page claim something untrue."""
     problems = []
+    slugs = [p.get("slug") for p in projects]
+    if len(set(slugs)) != len(slugs):
+        problems.append("duplicate slugs in projects.json")
+    ranks = [p["article_rank"] for p in projects if "article_rank" in p]
+    if len(set(ranks)) != len(ranks):
+        problems.append("article_rank values must be unique")
+
     for p in projects:
-        for key in ("slug", "name", "strapline", "lang", "tags", "hero_cmd", "what",
-                    "architecture", "install", "quickstart", "results", "tradeoffs", "upwork"):
-            if key not in p:
-                problems.append(f"{p.get('slug','?')}: missing key {key}")
+        missing = [k for k in REQUIRED if k not in p]
+        for k in missing:
+            problems.append(f"{p.get('slug', '?')}: missing key {k}")
+        if missing:
+            continue
         u = p["upwork"]
         if len(u.get("skills", [])) != 5:
             problems.append(f"{p['slug']}: upwork.skills is not 5")
@@ -487,36 +707,85 @@ def main():
             problems.append(f"{p['slug']}: upwork field over its limit")
         if len(p["strapline"]) > 92:
             problems.append(f"{p['slug']}: strapline {len(p['strapline'])} chars")
-        if not pathlib.Path(ROOT / "assets" / "thumbs" / f"thumb-{p['slug']}.png").exists():
-            problems.append(f"{p['slug']}: thumbnail missing")
+        if not (ROOT / "assets" / "thumbs" / f"thumb-{p['slug']}.png").exists():
+            problems.append(f"{p['slug']}: thumbnail missing - python3 tools/build-thumbs.py {p['slug']}")
+        problems += shape_problems(p)
         problems += widget_problems(p)
+    return problems
 
+
+def main():
+    check_only = "--check" in sys.argv
+    try:
+        projects = json.loads(DATA.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as err:
+        print(f"CANNOT READ {DATA.relative_to(ROOT)}: {err}")
+        return 1
+    if not isinstance(projects, list) or not projects:
+        print("DATA PROBLEMS:\n  - tools/projects.json must be a non-empty list")
+        return 1
+
+    problems = data_problems(projects)
     if problems:
         print("DATA PROBLEMS:")
         for x in problems:
             print("  -", x)
-        if "--check" in sys.argv:
-            return 1
+        print("nothing written")
+        return 1
 
-    if "--check" in sys.argv:
-        print(f"JSON ok: {len(projects)} projects")
-        return 0
+    pages = {}
+    for i, p in enumerate(projects, 1):
+        pages[ROOT / p["slug"] / "index.html"] = project_page(p, i, len(projects))
+    pages[ROOT / "work" / "index.html"] = work_page(projects)
+
+    region = article_region(projects)
+    try:
+        index_text = INDEX.read_text(encoding="utf-8")
+        new_index, current_region = splice_article(index_text, region)
+    except (OSError, ValueError) as err:
+        print(f"CANNOT PATCH {INDEX.name}: {err}")
+        return 1
+
+    stale_pages = [path for path, text in pages.items()
+                   if not path.exists() or path.read_text(encoding="utf-8") != text]
+    stale_article = current_region != region
+    words = article_words(projects)
+    minutes = max(1, round(words / WORDS_PER_MINUTE))
+    print(f"article: {len(article_order(projects))} entries, {words} words, ~{minutes} min read")
+
+    byline = re.search(r'class="art-meta[^"]*"[^>]*>(.*?)</div>', index_text, re.S)
+    stated = re.search(r"~(\d+) min read", byline.group(1)) if byline else None
+    if stated and int(stated.group(1)) != minutes:
+        print(f"note: the index.html byline still says ~{stated.group(1)} min read")
+
+    if check_only:
+        if not stale_pages and not stale_article:
+            print(f"OK: {len(projects)} projects, {len(pages)} generated pages and the "
+                  f"article region all match tools/projects.json")
+            return 0
+        for path in stale_pages:
+            print(f"OUT OF DATE: {path.relative_to(ROOT)}")
+        if stale_article:
+            print("OUT OF DATE: index.html (article region)")
+        print("run: python3 tools/build-pages.py")
+        return 1
 
     written = []
-    for i, p in enumerate(projects, 1):
-        out = ROOT / p["slug"] / "index.html"
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(project_page(p, i, len(projects)), encoding="utf-8")
-        written.append(out.relative_to(ROOT))
+    for path in stale_pages:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(pages[path], encoding="utf-8")
+        written.append(path.relative_to(ROOT))
+    if stale_article:
+        INDEX.write_text(new_index, encoding="utf-8")
+        written.append(INDEX.relative_to(ROOT))
 
-    idx = ROOT / "work" / "index.html"
-    idx.write_text(work_page(projects), encoding="utf-8")
-    written.append(idx.relative_to(ROOT))
-
-    print(f"wrote {len(written)} pages:")
+    if not written:
+        print("every generated file is already up to date")
+        return 0
+    print(f"wrote {len(written)} files:")
     for w in written:
         print("  ", w)
-    assert set(slugs) == {p.parent.name for p in written if p.parent.name != "work"}, "slug/page mismatch"
+    assert set(p.get("slug") for p in projects) == {p.parent.name for p in pages if p.parent.name != "work"}, "slug/page mismatch"
     return 0
 
 

@@ -38,7 +38,7 @@
         <div class="container">
           <div class="hero-inner">
             <a class="crumb reveal" href="/work/">&larr; All work</a>
-            <p class="kicker reveal"><b>[ Python ]</b> 5 of 6</p>
+            <p class="kicker reveal"><b>[ Python ]</b> 5 of 7</p>
             <h1 class="hero-name reveal">Trading CLI</h1>
             <p class="hero-title reveal">Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</p>
             <div class="cmd-wrap"><pre class="cmd">trading-cli --period 1y --json &gt; /tmp/picks.json</pre></div>
@@ -72,18 +72,55 @@
         </div>
       </section>
 
+      <section class="section anchor reveal" id="why">
+        <div class="container">
+          <p class="kicker"><b>[ 02 ]</b> PURPOSE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Why it exists</h2>
+          <p class="prose">Most screeners answer with a list and no accounting for whether the list makes money. This one answers with a plan and an honest no-trade: roughly 900 IDX tickers screened each morning, then every qualifying pick backtested against 18 strategies with real fees and slippage, tagged with the market regime at entry and re-checked walk-forward out-of-sample.</p>
+          <p class="prose">The output is machine-readable JSON on purpose - picks, near_miss, leaderboard, regime_pooled, wf_regime - so a swing trader or an agent can run it before the open and sit out when the evidence is thin instead of forcing a recommendation.</p>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="stack">
+        <div class="container">
+          <p class="kicker"><b>[ 03 ]</b> TECH STACK</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">What it is built on</h2>
+          <dl class="stack-list">
+            <div class="stack-row"><dt>Python 3.11+ and pandas</dt><dd>The whole tool is one CLI (trading_cli/cli.py); indicators and scan math are pandas over daily bars - no server, no API keys, no database to run.</dd></div>
+            <div class="stack-row"><dt>yfinance + SQLite</dt><dd>The data path: a throttled 4-thread fetch with rate-limit backoff over a 12h-TTL WAL cache in the XDG cache directory, with stale-while-revalidate.</dd></div>
+            <div class="stack-row"><dt>Minervini Trend Template + VCP</dt><dd>The screen itself: 8 trend checks plus a volatility-contraction score, with relative strength measured against ^JKSE before any candidate is planned.</dd></div>
+            <div class="stack-row"><dt>Walk-forward validation</dt><dd>Rolling train-252 / step-60 windows: a threshold is kept only when it survives unseen data, which is why the README reports roughly 50% pooled win rate instead of a 70% sleeve.</dd></div>
+            <div class="stack-row"><dt>Expectancy + Wilson interval</dt><dd>Ranking is by expectancy p*avgWin + (1-p)*avgLoss and a 95% Wilson bound, not raw win rate, so a high win rate with 0.5R losers cannot top the leaderboard.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="structure">
+        <div class="container">
+          <p class="kicker"><b>[ 04 ]</b> STRUCTURE</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Where the code lives</h2>
+<ul class="deliverables">  <li>trading_cli/cli.py - the whole surface (the trading-cli script in pyproject.toml): flags, scan, expectancy ranking, qualifiers split from near_miss, JSON out.</li>
+  <li>trading_cli/scan.py, minervini.py, data.py, cache.py - universe fetch and throttling, trend template, VCP score and relative strength over the SQLite cache.</li>
+  <li>trading_cli/backtest.py + regime.py - the 18-entry STRATS table, next-open fills with fees and slippage, and the regime tags each trade carries.</li>
+  <li>trading_cli/validate.py + tune.py - walk-forward out-of-sample replay and the VCP threshold grid under the same gate.</li>
+  <li>trading_cli/entry.py + ml_filter.py - buy zone, tightest stop and T1/T2/T3 targets, plus the pooled-n and leakage guards that keep future ML work honest.</li></ul>
+        </div>
+      </section>
+
       <section class="section anchor reveal" id="architecture">
         <div class="container">
-          <p class="kicker"><b>[ 02 ]</b> ARCHITECTURE</p>
+          <p class="kicker"><b>[ 05 ]</b> ARCHITECTURE</p>
           <div class="section-rule"></div>
-          <h2 class="section-title">How it is put together</h2>
+          <h2 class="section-title">How it works</h2>
           <div class="split">
-            <div><ul class="deliverables">  <li>trading_cli/cli.py is the whole surface (exposed as the trading-cli script in pyproject.toml): it parses the flags, runs the scan, ranks by expectancy, splits qualifiers from near_miss, and prints the JSON that carries picks, near_miss, leaderboard, regime_pooled and wf_regime.</li>
-  <li>trading_cli/scan.py:scan_universe() fetches ^JKSE plus the tickers and calls trading_cli/minervini.py:trend_template(), vcp_score() and rs_vs_ihsg() before applying the regime gates (ADTV, ATR14, IHSG stage, cmf).</li>
-  <li>trading_cli/backtest.py holds the 18-entry STRATS table (_sig_vcp_breakout, _sig_scalp_ema_5 and so on) and backtest.run(), which fills at the next open with fees plus slippage and tags each trade through trading_cli/regime.py:tag_ihsg_stage(), tag_atr_regime() and regime_of().</li>
-  <li>trading_cli/validate.py:walk_forward() replays the strategies on rolling train-252 / step-60 windows for out-of-sample confirmation, while trading_cli/tune.py:tune_vcp() grids the VCP thresholds under the same gate.</li>
-  <li>trading_cli/entry.py:plan() converts the 20-day-high pivot into the buy zone, the tightest stop (20-day low, close minus 2 ATR, or -8%) and T1/T2/T3 targets; trading_cli/ml_filter.py:gate_pooled_n() and check_leakage() guard any future ML work.</li>
-  <li>Data path: trading_cli/data.py (yfinance fetch, throttle, rate-limit backoff, 4-thread batch) over trading_cli/cache.py (SQLite in WAL mode under the XDG cache dir, 12h history TTL, stale-while-revalidate).</li></ul></div>
+            <div><ul class="deliverables">  <li>One pass produces the answer: scan the universe, gate on regime (ADTV, ATR14, IHSG stage, CMF), rank survivors by expectancy, then split them into qualifiers and near_miss.</li>
+  <li>Every pick carries its evidence: the strategies that backtested it, the pooled win rate with a Wilson bound, and the regime tag at entry.</li>
+  <li>Thresholds are earned rather than chosen: validate.py replays strategies on rolling windows and tune.py grids VCP thresholds under the same out-of-sample gate.</li>
+  <li>The entry plan is derived from the pivot: the 20-day high becomes the buy zone, and the tightest of the 20-day low, close minus 2 ATR or -8% becomes the stop.</li>
+  <li>Data is daily and best-effort: yfinance with throttle and backoff, so coverage is only as good as that feed - reported in the README rather than hidden.</li></ul></div>
             <div>
               <img class="thumb" src="../assets/thumbs/thumb-trading-cli.png" width="1200" height="630" loading="lazy" alt="" />
             </div>
@@ -93,7 +130,7 @@
 
       <section class="section anchor reveal" id="install">
         <div class="container">
-          <p class="kicker"><b>[ 03 ]</b> INSTALL</p>
+          <p class="kicker"><b>[ 06 ]</b> INSTALL</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Set it up</h2>
           <div class="cmd-wrap" style="max-width: 100%">
@@ -108,7 +145,7 @@
 
       <section class="section anchor reveal" id="quickstart">
         <div class="container">
-          <p class="kicker"><b>[ 04 ]</b> QUICKSTART</p>
+          <p class="kicker"><b>[ 07 ]</b> QUICKSTART</p>
           <div class="section-rule"></div>
           <h2 class="section-title">See it work</h2>
           <ol class="deliverables">
@@ -123,7 +160,7 @@
 
       <section class="section anchor reveal" id="results">
         <div class="container">
-          <p class="kicker"><b>[ 05 ]</b> NUMBERS</p>
+          <p class="kicker"><b>[ 08 ]</b> NUMBERS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What the repo states</h2>
           <div class="card-grid stagger">
@@ -157,7 +194,7 @@
 
       <section class="section anchor reveal" id="tradeoffs">
         <div class="container">
-          <p class="kicker"><b>[ 06 ]</b> TRADEOFFS</p>
+          <p class="kicker"><b>[ 09 ]</b> TRADEOFFS</p>
           <div class="section-rule"></div>
           <h2 class="section-title">What it does not do</h2>
           <ol class="deliverables">
@@ -171,7 +208,7 @@
 
       <section class="section anchor reveal" id="repo">
         <div class="container">
-          <p class="kicker"><b>[ 07 ]</b> SOURCE</p>
+          <p class="kicker"><b>[ 10 ]</b> SOURCE</p>
           <div class="section-rule"></div>
           <h2 class="section-title">Read the code</h2>
           <p class="prose">The full implementation, tests and documentation live in the repository.</p>
@@ -196,7 +233,7 @@
           </div>
           <div class="footer-col">
             <h3>Selected work</h3>
-            <a href="/work/">All six projects</a>
+            <a href="/work/">Every project, written up</a>
           </div>
           <div class="footer-col">
             <h3>Availability</h3>
