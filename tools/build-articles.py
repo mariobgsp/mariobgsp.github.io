@@ -678,7 +678,6 @@ def home_index(articles):
     rows = "\n".join(
         f'''              <li>
                 <a class="art-index-row" href="/articles/{e(a.slug)}/">
-                  <span class="art-index-no">{i:02d}</span>
                   <span class="art-index-name">{e(a.slug)}</span>
                   <span class="art-index-lang">~{a.minutes} min</span>
                   <span class="art-index-go" aria-hidden="true">&#8594;</span>

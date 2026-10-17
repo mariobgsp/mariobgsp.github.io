@@ -77,9 +77,9 @@
 }
 
 /* One column dead centre: the copy hangs on a single alignment, left-aligned
-   inside a 6-column measure, and nothing sits beside it. No panel, no second
+   inside an 8-column measure, and nothing sits beside it. No panel, no second
    column - the empty half of the screen is the composition. */
-.hero-copy { grid-column: 4 / span 6; }
+.hero-copy { grid-column: 3 / span 8; }
 
 .hero-copy .hero-name { margin-top: 0; }
 
@@ -122,33 +122,6 @@
 
 /* ------------------------------------------------------------- about --- */
 
-.sheet-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 8px;
-}
-
-.fig-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.fig-label b { color: var(--violet); font-weight: 400; }
-
-.sheet-rule {
-  height: 1px;
-  margin: 34px 0 clamp(32px, 4vw, 56px);
-  background: linear-gradient(90deg, var(--line-strong), var(--line-soft) 45%, transparent);
-}
-
 .about-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -157,11 +130,9 @@
 }
 
 .about-text { color: var(--ink-2); max-width: 60ch; }
-.about-text strong { color: var(--ink); font-weight: 400; }
 
-/* Quiet figure lines: the figure right-aligned in its own track, the sentence
-   beside it, one clean channel of space down the middle. No panel, no box, no
-   mono captions - the numbers are set as type, not as a dashboard. */
+/* The measurements set as type, not as a dashboard: the figure at heading
+   scale, one sentence under it, and nothing boxed around either. */
 .spec-stats {
   display: grid;
   gap: 26px;
@@ -170,18 +141,16 @@
 
 .spec-row {
   display: grid;
-  grid-template-columns: 168px minmax(0, 1fr);
-  gap: 24px;
-  align-items: baseline;
+  gap: 8px;
 }
 
 .spec-value {
-  text-align: right;
-  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+  font-size: clamp(2rem, 3.2vw, 2.9rem);
   font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
+  letter-spacing: -0.045em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .spec-accent { color: var(--violet); }
@@ -205,69 +174,40 @@
   position: relative;
   margin-top: clamp(36px, 4vw, 56px);
   display: grid;
-  gap: 0;
-}
-
-.chain::before {
-  content: "";
-  position: absolute;
-  left: 167px;
-  top: 12px;
-  bottom: 12px;
-  width: 1px;
-  background: linear-gradient(180deg, var(--violet), var(--line-soft) 55%, transparent);
-  opacity: 0.55;
+  gap: clamp(26px, 3vw, 38px);
 }
 
 .chain-step {
   position: relative;
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 34px;
-  padding: 24px 0;
-  border-top: 1px solid var(--line-soft);
+  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 48px);
+  padding: 0;
+  border: 0;
 }
-
-.chain-step:last-child { border-bottom: 1px solid var(--line-soft); }
 
 .chain-when {
-  padding-top: 5px;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--violet);
+  font-size: 0.95rem;
+  color: var(--ink-3);
 }
 
-.chain-node {
-  position: absolute;
-  left: 167px;
-  top: 31px;
-  width: 11px;
-  height: 11px;
-  margin-left: -5px;
-  border-radius: 50%;
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
-}
+/* The dot that used to sit on the rule: the rule is gone, so is the dot. */
+.chain-node { display: none; }
 
 .chain-title {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px 14px;
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
   font-weight: 500;
   letter-spacing: -0.03em;
 }
 
 .chain-where {
-  font-family: var(--mono);
-  font-size: 0.64rem;
+  font-size: 0.86rem;
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-note);
+  color: var(--ink-3);
 }
 
 .chain-body p {
@@ -286,27 +226,62 @@
   color: var(--ink);
 }
 
-/* ------------------------------------------------------- experience --- */
+/* ------------------------------------------------------- evidence --- */
 
-.exp-list { margin-top: 42px; display: grid; gap: 16px; }
+.evidence { margin-top: clamp(36px, 4vw, 60px); }
 
-.exp-item {
+.evidence-grid {
   display: grid;
-  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
-  gap: clamp(20px, 4vw, 56px);
-  padding: 30px 32px;
-  border-radius: var(--r-lg);
-  background: var(--surface-1);
-  box-shadow: var(--shadow-rest);
-  transition: transform 800ms var(--ease), background-color 220ms var(--ease-out);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 34px);
 }
 
+.evidence figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.evidence img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface-1);
+}
+
+.evidence figcaption {
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+@media (max-width: 960px) {
+  .evidence-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ------------------------------------------------------- experience --- */
+
+.exp-list { margin-top: 42px; display: grid; gap: 0; }
+
+/* A ledger, not a card grid: the date sits on its own alignment, the role is
+   the largest thing in the row, and nothing is boxed. */
+.exp-item {
+  display: grid;
+  grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+  gap: clamp(20px, 3.6vw, 56px);
+  padding: clamp(30px, 3.4vw, 44px) 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.exp-item + .exp-item { padding-top: clamp(30px, 3.4vw, 44px); }
+
 .exp-date {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--violet);
+  font-size: 0.95rem;
+  color: var(--ink-3);
 }
 
 .exp-role {
@@ -326,10 +301,7 @@
 }
 
 .exp-loc {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.86rem;
   color: var(--ink-3);
 }
 
@@ -374,23 +346,15 @@
 .art-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 22px;
-  margin-top: 26px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-soft);
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  gap: 6px 26px;
+  margin-top: 32px;
+  font-size: 0.9rem;
   color: var(--ink-3);
 }
 
 .art-index {
-  margin-top: clamp(24px, 3vw, 36px);
-  border-top: 1px solid var(--line);
+  margin-top: clamp(28px, 3.4vw, 44px);
 }
-
-.art-index li + li { border-top: 1px solid var(--line-soft); }
 
 .art-index-row {
   display: grid;
@@ -399,20 +363,12 @@
     "no name lang go"
     ". strap strap .";
   align-items: baseline;
-  gap: 3px 18px;
-  padding: 18px 8px;
+  gap: 5px 18px;
+  padding: 20px 8px;
   transition: background-color 500ms var(--ease-out);
 }
 
 .art-index-row:hover { background: rgba(255, 255, 255, 0.03); }
-
-.art-index-no {
-  grid-area: no;
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  color: var(--ink-3);
-}
 
 .art-index-name {
   grid-area: name;
@@ -423,10 +379,7 @@
 
 .art-index-lang {
   grid-area: lang;
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.86rem;
   color: var(--ink-3);
   white-space: nowrap;
 }
@@ -455,10 +408,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 8px;
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.9rem;
   color: var(--ink-3);
   transition: color 500ms var(--ease);
 }
@@ -505,8 +455,7 @@
 
 .gh-handle,
 .gh-all {
-  font-family: var(--mono);
-  font-size: 0.74rem;
+  font-size: 0.86rem;
   color: var(--ink-3);
   transition: color var(--dur) var(--ease);
 }
@@ -521,9 +470,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 12px 30px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line-soft);
+  margin-top: 32px;
 }
 
 .gh-total {
@@ -535,18 +482,15 @@
 .gh-stat { display: grid; gap: 3px; }
 
 .gh-stat b {
-  font-family: var(--mono);
-  font-size: 0.92rem;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 400;
   color: var(--ink);
 }
 
 .gh-stat span,
 .gh-note {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.86rem;
   color: var(--ink-3);
 }
 
@@ -569,10 +513,7 @@
 }
 
 .gh-months span {
-  font-family: var(--mono);
-  font-size: 0.56rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
   color: var(--ink-3);
   white-space: nowrap;
 }
@@ -606,10 +547,7 @@
   align-items: center;
   gap: 8px;
   margin-top: 18px;
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.82rem;
   color: var(--ink-3);
 }
 
@@ -678,7 +616,7 @@
 
 .cert-panel {
   display: grid;
-  gap: 2px;
+  gap: 10px;
   margin-top: 22px;
   overflow: hidden;
 }
@@ -688,22 +626,18 @@
   grid-template-columns: 64px minmax(0, 1fr);
   gap: 18px;
   align-items: baseline;
-  padding: 16px clamp(20px, 2.2vw, 28px);
-  border-bottom: 1px solid var(--line-soft);
+  padding: 14px clamp(20px, 2.2vw, 28px);
   transition: background-color 700ms var(--ease);
 }
-
-.cert-item:last-child { border-bottom: 0; }
 
 .cert-item:hover {
   background: rgba(255, 255, 255, 0.022);
 }
 
 .cert-year {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  color: var(--violet);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
 }
 
 .cert-name { font-size: 0.94rem; color: var(--ink-2); }
@@ -711,11 +645,8 @@
 .cert-issuer {
   display: block;
   margin-top: 3px;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  font-size: 0.86rem;
+  color: var(--ink-3);
 }
 
 .edu-block { margin-top: 16px; padding: clamp(24px, 2.6vw, 32px); }
@@ -731,16 +662,12 @@
 
 .edu-date {
   margin-top: 14px;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 0.95rem;
   color: var(--ink-3);
 }
 
 .edu-facts {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line-soft);
+  margin-top: 26px;
   display: grid;
   gap: 16px;
 }
@@ -753,10 +680,7 @@
 }
 
 .edu-facts dt {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.93rem;
   color: var(--ink-3);
 }
 
@@ -785,17 +709,12 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(20px, 3vw, 40px);
-  margin-top: clamp(36px, 4vw, 64px);
-  padding-top: clamp(28px, 3vw, 44px);
-  border-top: 1px solid var(--line-soft);
+  margin-top: clamp(44px, 4.6vw, 72px);
 }
 
 .tb-label {
   display: block;
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.86rem;
   color: var(--ink-3);
 }
 
@@ -814,12 +733,8 @@ a.tb-value:hover { color: var(--violet); }
   border: 0;
   border-radius: var(--r-pill);
   background: var(--glass-2);
-  box-shadow: inset 0 0 0 1px var(--line);
   color: var(--ink-2);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.86rem;
   cursor: pointer;
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -881,8 +796,7 @@ a.tb-value:hover { color: var(--violet); }
 }
 
 @media (max-width: 720px) {
-  .spec-row { grid-template-columns: 124px minmax(0, 1fr); gap: 16px; }
-  .spec-value { font-size: 1.5rem; }
+  .spec-value { font-size: 1.9rem; }
   .scroll-cue { display: none; }
   .chain::before,
   .chain-node { display: none; }
@@ -903,12 +817,7 @@ a.tb-value:hover { color: var(--violet); }
 <nav id="navbar" class="topnav" aria-label="Primary">
   <div class="topnav-inner">
     <a class="nav-logo" href="#top">mario<span class="logo-dot">.</span>dev</a>
-    <div class="nav-status">
-      <span class="led led-green"></span>
-      <span>Open to work</span>
-      <span id="navClock">--:--:--</span>
-      <span class="nav-tz">WIB</span>
-    </div>
+    <span class="nav-status"><span class="led led-green" aria-hidden="true"></span>Open to work</span>
     <ul class="nav-links" id="navLinks">
       <li><a href="#about"><span class="link-idx">01</span>About</a></li>
       <li><a href="#method"><span class="link-idx">02</span>Method</a></li>
@@ -951,9 +860,7 @@ a.tb-value:hover { color: var(--violet); }
 
   <section id="about" class="section anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>01</b> About</p></div>
-      <div class="sheet-rule"></div>
-      <h2 class="section-title reveal">Five years of production backend work, measured in milliseconds and batch windows.</h2>
+      <h2 class="section-title reveal">Five years of backend work, measured.</h2>
       <div class="about-grid" style="margin-top: clamp(32px, 4vw, 56px);">
         <div class="about-text reveal">
           <p>Five years of Java/Spring and Go microservices for banking and telecom across regional <strong>ID, SG, MY, CHN and HKMO</strong> markets. Currently at OCBC Indonesia with a dual mandate &mdash; core backend engineer on the HKMO team and agentic AI engineer on the Innovation team; previously CIMB Niaga on the CCPL Octo Smart programme and XL Axiata on E-Payment.</p>
@@ -972,8 +879,6 @@ a.tb-value:hover { color: var(--violet); }
 
   <section id="method" class="section anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>02</b> Method</p></div>
-      <div class="sheet-rule"></div>
       <h2 class="section-title reveal">Same method, different sensors.</h2>
       <p class="method-lead reveal">I trained as an engineering physicist, so the habit came first: define the quantity, instrument it, measure it, and report the scope of the measurement. I now apply it to services instead of fields.</p>
 
@@ -1030,8 +935,6 @@ a.tb-value:hover { color: var(--violet); }
 
   <section id="experience" class="section anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>03</b> Experience</p></div>
-      <div class="sheet-rule"></div>
       <h2 class="section-title reveal">Where the work has been.</h2>
       <div class="stagger exp-list">
         <article class="exp-item">
@@ -1108,8 +1011,6 @@ a.tb-value:hover { color: var(--violet); }
 
   <section id="articles" class="section anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>04</b> Articles</p></div>
-      <div class="sheet-rule"></div>
 
       <article class="feature" aria-labelledby="feature-title">
         <h2 class="section-title reveal" id="feature-title">Things I built and still maintain.</h2>
@@ -1132,7 +1033,6 @@ a.tb-value:hover { color: var(--violet); }
         <ol class="art-index reveal">
               <li>
                 <a class="art-index-row" href="/articles/routre/">
-                  <span class="art-index-no">01</span>
                   <span class="art-index-name">routre</span>
                   <span class="art-index-lang">~8 min</span>
                   <span class="art-index-go" aria-hidden="true">&#8594;</span>
@@ -1141,7 +1041,6 @@ a.tb-value:hover { color: var(--violet); }
               </li>
               <li>
                 <a class="art-index-row" href="/articles/durable-agents/">
-                  <span class="art-index-no">02</span>
                   <span class="art-index-name">durable-agents</span>
                   <span class="art-index-lang">~10 min</span>
                   <span class="art-index-go" aria-hidden="true">&#8594;</span>
@@ -1150,7 +1049,6 @@ a.tb-value:hover { color: var(--violet); }
               </li>
               <li>
                 <a class="art-index-row" href="/articles/trading-suite/">
-                  <span class="art-index-no">03</span>
                   <span class="art-index-name">trading-suite</span>
                   <span class="art-index-lang">~10 min</span>
                   <span class="art-index-go" aria-hidden="true">&#8594;</span>
@@ -1159,7 +1057,6 @@ a.tb-value:hover { color: var(--violet); }
               </li>
               <li>
                 <a class="art-index-row" href="/articles/payment-system/">
-                  <span class="art-index-no">04</span>
                   <span class="art-index-name">payment-system</span>
                   <span class="art-index-lang">~10 min</span>
                   <span class="art-index-go" aria-hidden="true">&#8594;</span>
@@ -1168,7 +1065,6 @@ a.tb-value:hover { color: var(--violet); }
               </li>
               <li>
                 <a class="art-index-row" href="/articles/the-gateway/">
-                  <span class="art-index-no">05</span>
                   <span class="art-index-name">the-gateway</span>
                   <span class="art-index-lang">~8 min</span>
                   <span class="art-index-go" aria-hidden="true">&#8594;</span>
@@ -1190,6 +1086,27 @@ a.tb-value:hover { color: var(--violet); }
           <a href="/articles/">/articles/</a>, or take the source from
           <a href="https://github.com/mariobgsp/articles" target="_blank" rel="noopener">GitHub</a>.
         </p>
+
+        <div class="evidence reveal">
+          <div class="evidence-grid">
+            <figure>
+              <img src="assets/articles/payment-system-checkout-ready.png" alt="Checkout screen of the payment system, transaction created and ready to pay" width="2000" height="1101" loading="lazy">
+              <figcaption>payment-system &mdash; one transaction driven through CREATED, READY, SUCCESS and REFUND against the containerised stack.</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/articles/the-gateway-try-it.png" alt="Try-it panel of the API gateway returning a proxied response" width="1460" height="1040" loading="lazy">
+              <figcaption>the-gateway &mdash; the try-it panel calling a service through the gateway, cookie held server-side.</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/articles/trading-suite-screener.png" alt="Trading suite screener listing the saved studies it can run" width="2000" height="1255" loading="lazy">
+              <figcaption>trading-suite &mdash; the screener that refuses a run instead of inventing evidence.</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/articles/routre-dashboard.png" alt="Routre dashboard showing the token and cost saved by the local LLM gateway" width="2000" height="1417" loading="lazy">
+              <figcaption>routre &mdash; the gateway's own dashboard, reporting the tokens and dollars the cache saved.</figcaption>
+            </figure>
+          </div>
+        </div>
 
         <div class="gh-panel plate reveal">
           <div class="gh-head">
@@ -1237,8 +1154,6 @@ a.tb-value:hover { color: var(--violet); }
 
   <section id="skills" class="section anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>05</b> Skills &amp; credentials</p></div>
-      <div class="sheet-rule"></div>
       <h2 class="section-title reveal">The stack, and the certificates behind it.</h2>
 
       <div class="skills-layout">
@@ -1335,7 +1250,6 @@ a.tb-value:hover { color: var(--violet); }
 
   <footer id="contact" class="footer anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>06</b> Contact</p></div>
       <div class="title-block plate reveal">
         <div class="tb-name">Muhammad Ario<br>Bagus Prakusa</div>
         <div class="tb-grid">
@@ -1375,23 +1289,6 @@ a.tb-value:hover { color: var(--violet); }
   "use strict";
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* --------------------------------------------------------- clock --- */
-
-  function tickClock() {
-    var now = new Date();
-    var clock = document.getElementById("navClock");
-    if (!clock) return;
-    var parts = [now.getHours(), now.getMinutes(), now.getSeconds()].map(function (n) {
-      return String(n).padStart(2, "0");
-    });
-    clock.textContent = parts.join(":");
-  }
-
-  if (!reduced) {
-    tickClock();
-    setInterval(tickClock, 1000);
-  }
 
   /* -------------------------------------------------------- copy email --- */
 

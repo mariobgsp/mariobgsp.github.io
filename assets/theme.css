@@ -70,8 +70,8 @@
   --mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --fs-body: clamp(1rem, 0.97rem + 0.16vw, 1.125rem);
   --fs-lead: clamp(1.0625rem, 1rem + 0.5vw, 1.375rem);
-  --fs-h2: clamp(1.9rem, 1.35rem + 2.6vw, 3.25rem);
-  --fs-display: clamp(2.5rem, 1.2rem + 5.6vw, 4.75rem);
+  --fs-h2: clamp(2.15rem, 1.1rem + 3.5vw, 3.9rem);
+  --fs-display: clamp(2.75rem, 0.7rem + 6.2vw, 5.5rem);
 
   /* geometry */
   --r-xl: 20px;
@@ -295,17 +295,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .nav-status {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   margin-left: 6px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  background: var(--glass);
-  box-shadow: inset 0 0 0 1px var(--line-soft);
-  font-family: var(--mono);
-  font-size: 0.66rem;
+  font-size: 0.82rem;
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink-2);
   white-space: nowrap;
 }
@@ -342,7 +337,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   gap: 8px;
   padding: 9px 16px;
   border-radius: var(--r-pill);
-  font-size: 0.86rem;
+  font-size: 0.95rem;
   font-weight: 400;
   color: var(--ink-2);
   transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
@@ -356,16 +351,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .nav-links a.active {
   color: var(--ink);
   background: var(--glass-3);
-  box-shadow: inset 0 0 0 1px var(--line);
 }
 
-.link-idx {
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  color: var(--violet);
-  opacity: 0.8;
-}
+.link-idx { display: none; }
 
 /* hamburger */
 
@@ -456,10 +444,9 @@ body.lock .nav-menu a {
   border: 0;
   border-radius: var(--r-pill);
   background: var(--glass);
-  box-shadow: inset 0 0 0 1px var(--line);
   color: var(--ink);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1;
@@ -495,7 +482,6 @@ body.lock .nav-menu a {
 .btn-primary {
   background: var(--ink);
   color: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--ink);
 }
 
 .btn-primary .ext {
@@ -597,11 +583,8 @@ body.lock .nav-menu a {
 }
 
 .mono-tag {
-  font-family: var(--mono);
-  font-size: 0.66rem;
+  font-size: 0.86rem;
   font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
   color: var(--ink-3);
 }
 
@@ -723,8 +706,11 @@ html[data-freeze] *::after {
 .section-title {
   font-size: var(--fs-h2);
   font-weight: 500;
-  letter-spacing: -0.04em;
-  max-width: 20ch;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  max-width: 24ch;
+  margin-bottom: clamp(28px, 3.2vw, 52px);
+  text-wrap: balance;
 }
 
 .anchor { scroll-margin-top: calc(var(--nav-h) + 40px); }
@@ -1244,7 +1230,7 @@ html[data-freeze] *::after {
   background: var(--violet);
 }
 
-.sec-rail__idx { font-variant-numeric: tabular-nums; opacity: 0.7; }
+.sec-rail__idx { display: none; }
 
 .sec-rail__label {
   position: absolute;
@@ -1252,6 +1238,10 @@ html[data-freeze] *::after {
   white-space: nowrap;
   opacity: 0;
   transform: translateX(6px);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink-2);
   transition: opacity 320ms var(--ease), transform 320ms var(--ease);
 }
