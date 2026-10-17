@@ -334,9 +334,11 @@ def footer():
 
 
 def shell(title, description, body, up=UP, article_css=False, canonical=None,
-          og_type="article", body_class=""):
+          og_type="article", body_class="", og_image="assets/og.png"):
     extra = f'\n    <link rel="stylesheet" href="{up}assets/article.css" />' if article_css else ""
     canonical_tag = f'\n    <link rel="canonical" href="{e(canonical)}" />' if canonical else ""
+    og_url = f'\n    <meta property="og:url" content="{e(canonical)}" />' if canonical else ""
+    image_url = f"{SITE}/{og_image.lstrip('/')}"
     return f"""<!doctype html>
 <html lang="en">
   <head>
@@ -344,10 +346,23 @@ def shell(title, description, body, up=UP, article_css=False, canonical=None,
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{e(title)}</title>
     <meta name="description" content="{e(description)}" />
-    <meta name="theme-color" content="#0a0a0b" />
+    <meta name="author" content="Muhammad Ario Bagus Prakusa" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#0a0a0b" />{canonical_tag}
     <meta property="og:type" content="{e(og_type)}" />
+    <meta property="og:site_name" content="mario.dev" />
+    <meta property="og:locale" content="en" />{og_url}
     <meta property="og:title" content="{e(title)}" />
-    <meta property="og:description" content="{e(description)}" />{canonical_tag}
+    <meta property="og:description" content="{e(description)}" />
+    <meta property="og:image" content="{e(image_url)}" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="{e(title)}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{e(title)}" />
+    <meta name="twitter:description" content="{e(description)}" />
+    <meta name="twitter:image" content="{e(image_url)}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -560,7 +575,8 @@ def article_page(article, index, total, all_articles):
 
     return shell(article.title, plain(article.standfirst_md), body, up=DEEP,
                  article_css=True, canonical=f"{SITE}/articles/{article.slug}/",
-                 body_class="art-page")
+                 body_class="art-page",
+                 og_image=f"assets/articles/og-{article.slug}.png")
 
 
 def card_spans(count):
@@ -654,7 +670,8 @@ def hub_page(articles):
     return shell("Articles — Backend & API Engineering",
                  f"{len(articles)} backend engineering articles, each written from the "
                  "running system: architecture, measured facts and the defects found.",
-                 body, up=UP, canonical=f"{SITE}/articles/")
+                 body, up=UP, canonical=f"{SITE}/articles/",
+                 og_image="assets/articles/og-index.png")
 
 
 def home_index(articles):
@@ -753,7 +770,7 @@ def main():
         print(f"CANNOT LIST {IMG_DST}: {err}")
         return 1
     for name in existing:
-        if name not in needed:
+        if name not in needed and not name.startswith("og-"):
             (IMG_DST / name).unlink(missing_ok=True)
             written.append(f"removed assets/articles/{name}")
     for p in stale_pages:
