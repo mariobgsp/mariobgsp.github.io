@@ -480,9 +480,8 @@
     if (!hero) return;
 
     var root = document.documentElement;
-    var SEQ = ".crumb, .kicker, .hero-name, .hero-title, .hero-sub, .hero-method, " +
-              ".cmd-wrap, .stat-row, .actions, .tags, .hero-side, .hc-rows li, " +
-              ".hc-status, .scroll-cue";
+    var SEQ = ".crumb, .kicker, .hero-name, .hero-title, .hero-sub, " +
+              ".cmd-wrap, .stat-row, .actions, .tags, .scroll-cue";
     var STEP = 55;
     var CAP = 500;
 

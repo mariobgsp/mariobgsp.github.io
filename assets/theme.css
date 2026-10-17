@@ -626,9 +626,6 @@ body.lock .nav-menu a {
   .stat-row,
   .actions,
   .tags,
-  .hero-side,
-  .hc-rows li,
-  .hc-status,
   .scroll-cue
 ) { opacity: 0; }
 
@@ -650,9 +647,6 @@ body.lock .nav-menu a {
   .stat-row,
   .actions,
   .tags,
-  .hero-side,
-  .hc-rows li,
-  .hc-status,
   .scroll-cue
 ) {
   animation: hero-rise 620ms var(--ease-out) both;
