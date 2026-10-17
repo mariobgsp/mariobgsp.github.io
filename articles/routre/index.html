@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway</title>
+    <meta name="description" content="routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them." />
+    <meta name="theme-color" content="#0a0a0b" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway" />
+    <meta property="og:description" content="routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them." />
+    <link rel="canonical" href="https://mariobgsp.github.io/articles/routre/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/article.css" />
+  </head>
+  <body class="art-page">
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
+        <ul class="nav-links">
+          <li><a href="/articles/" class="active">Articles</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+      </div>
+    </header>
+
+    <div class="nav-menu">
+      <a href="/articles/">Articles</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
+    <main class="page">
+      <section class="art-hero anchor" id="top">
+        <div class="container">
+          <a class="crumb reveal" href="/articles/">&larr; All articles</a>
+          <p class="kicker reveal"><b>[ 01 / 05 ]</b> routre</p>
+          <h1 class="art-title reveal">Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway</h1>
+          <p class="art-standfirst reveal"><code>routre</code> is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them.</p>
+          <p class="art-byline reveal">
+            <span>Muhammad Ario Bagus Prakusa</span>
+            <span>17 October 2026</span>
+            <span>~8 min read</span>
+          </p>
+          <dl class="art-facts reveal">
+            <div class="art-fact">
+              <dt>Repository</dt>
+              <dd><a href="https://github.com/mariobgsp/routre">github.com/mariobgsp/routre</a></dd>
+            </div>
+            <div class="art-fact">
+              <dt>Role</dt>
+              <dd>Go backend &amp; systems engineering</dd>
+            </div>
+            <div class="art-fact">
+              <dt>Stack</dt>
+              <dd>Go 1.26, standard library only — no Node, Python, Postgres or Redis</dd>
+            </div>
+            <div class="art-fact">
+              <dt>Footprint</dt>
+              <dd>~10.6 MiB static binary, ~12.6 MiB idle RSS</dd>
+            </div>
+            <div class="art-fact">
+              <dt>Verified</dt>
+              <dd>Cloned, built and run locally (2026-10-17). Every screenshot and every number quoted as "observed" below comes from that run.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="art-block" id="at-a-glance">
+        <div class="container">
+          <article class="art-content">
+<h2>At a glance</h2>
+
+<ul>
+  <li><strong>What it is</strong> — a localhost reverse proxy for OpenAI/Anthropic-compatible AI APIs. Point <code>OPENAI_BASE_URL</code> or <code>ANTHROPIC_BASE_URL</code> at <code>127.0.0.1:20128</code> once, and every agent behind it gets failover, compression and caching for free.</li>
+  <li><strong>Who it's for</strong> — anyone running several coding agents (Claude Code, Codex, opencode, Cursor) who is paying per token and wants a per-agent ledger of where the money went.</li>
+  <li><strong>The interesting part</strong> — the gateway is a <em>pipeline</em>, not a load balancer. Seven ordered steps run on every request, and each one is bounded so it can never make the request slower than the provider would have been.</li>
+</ul>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="the-problem-agents-are-mostly-tool-output">
+        <div class="container">
+          <article class="art-content">
+<h2>The problem: agents are mostly tool output</h2>
+
+<p>An agent session is mostly not conversation. It is file reads, <code>grep</code> hits, test logs, <code>git diff</code> output and directory listings, sent back to the model over and over, largely the same shape every time. Three costs follow from that:</p>
+
+<ol>
+  <li><strong>You pay for repetition.</strong> The same test log is billed again on the next turn.</li>
+  <li><strong>You pay for duplication.</strong> Re-running a deterministic step resends a byte-identical request and buys a byte-identical answer a second time.</li>
+  <li><strong>You stop working when a provider does.</strong> One provider hiccup is a failed agent run, unless something else is willing to answer.</li>
+</ol>
+
+<p><code>routre</code> addresses all three in the request path, at the point where the tokens are actually billed, and it does it as a single local process rather than a hosted service.</p>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="what-it-does">
+        <div class="container">
+          <article class="art-content">
+<h2>What it does</h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Capability</th><th>How</th></tr></thead>
+<tbody><tr><td><strong>RTK token compression</strong></td><td>11 heuristic filters (git diff/log, grep, tree/ls/find, build output, smart truncate) applied to <code>tool_result</code> content before it is billed. Fail-open and <em>never</em> allowed to grow a payload.</td></tr><tr><td><strong>Response cache</strong></td><td>Exact match on the SHA-256 of the canonical JSON body <em>after</em> RTK. Streaming and non-streaming entries share a key space but never cross.</td></tr><tr><td><strong>Tiered failover</strong></td><td>Providers are grouped <code>subscription → cheap → free</code>; a failure moves to the next tier and puts the failed provider on an exponential cooldown (2 s → 5 min).</td></tr><tr><td><strong>Cross-dialect translation</strong></td><td>An OpenAI-shaped client can stream from an Anthropic provider and vice versa, via an in-flight SSE state machine.</td></tr><tr><td><strong>Token &amp; cost ledger</strong></td><td>Per-agent (by <code>User-Agent</code>) requests, tokens in/out, RTK savings, cache savings and estimated cost, persisted to <code>~/.routre/usage.json</code>.</td></tr><tr><td><strong>Loopback dashboard</strong></td><td><code>http://127.0.0.1:20128/ui</code> edits keys and the full config without hand-editing JSON.</td></tr><tr><td><strong>Key custody</strong></td><td>The gateway holds provider keys and injects them upstream; a client's <code>Authorization</code> header is a placeholder and is never forwarded.</td></tr></tbody>
+</table></div>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="why-this-stack">
+        <div class="container">
+          <article class="art-content">
+<h2>Why this stack</h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
+<tbody><tr><td>Language</td><td><strong>Go, standard library only</strong></td><td>The whole product is <em>one file you drop on a machine</em>, with no runtime to install and no dependency tree to audit. LiteLLM and one-api are the obvious alternatives, and both mean running Python or Node with a database next to your agent. <code>go.mod</code> here has no <code>require</code> block at all.</td></tr><tr><td>Compression</td><td><strong>Deterministic heuristics, no model</strong></td><td>Shrinking tool output with a local LLM would add latency, a GPU or an API call, and non-determinism into the request path. Regex-and-shape filters are instant, testable, and can be <em>proven</em> fail-open.</td></tr><tr><td>Cache key</td><td><strong>Exact SHA-256 of the post-RTK body</strong></td><td>A semantic cache trades correctness for hit rate: a near-miss can serve the wrong answer to a deterministic run. Exact-match is boring and trustworthy.</td></tr><tr><td>Routing</td><td><strong>Static tiers from config</strong></td><td>Cost order is a policy decision, not an inference problem. Tiers are readable in <code>config.json</code>, and the routing rule is one sentence.</td></tr><tr><td>Dialect handling</td><td><strong>In-flight SSE state machine</strong></td><td>Buffering whole responses to translate them would break streaming and blow up memory on long generations. Frames are translated as they arrive.</td></tr><tr><td>Cache persistence</td><td><strong>gzip+gob snapshot</strong></td><td>Keeping the cache warm across restarts is worth a file; it is not worth a database.</td></tr><tr><td>Dashboard</td><td><strong>Embedded in the binary</strong></td><td>Shipping the settings page with the gateway means there is no second thing to run or version.</td></tr></tbody>
+</table></div>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="architecture">
+        <div class="container">
+          <article class="art-content">
+<h2>Architecture</h2>
+
+<img src="/assets/articles/routre-architecture-dark.png" alt="routre architecture" loading="lazy" decoding="async" />
+
+<details>
+
+<summary>Mermaid source (<code>diagrams/routre.mmd</code>)</summary>
+
+<pre class="code-block" data-lang="mermaid"><code>flowchart TD
+  AG[&quot;Coding agents&lt;br/&gt;Claude Code · Codex · opencode · Cursor&lt;br/&gt;one base URL: 127.0.0.1:20128&quot;]
+
+  subgraph PIPE[&quot;routre — one static Go binary, 7 steps per request&quot;]
+    direction TB
+    S1[&quot;1–3 · Prepare&lt;br/&gt;detect dialect → RTK compress → cache lookup&quot;]
+    S2[&quot;4–5 · Decide&lt;br/&gt;tiered router → candidateRunner&quot;]
+    S3[&quot;6–7 · Answer&lt;br/&gt;translate dialect → relay&quot;]
+    S1 --&gt; S2 --&gt; S3
+  end
+
+  CACHE[(&quot;LRU cache&lt;br/&gt;+ disk snapshot&lt;br/&gt;warm across restarts&quot;)]
+  TIERS[&quot;Provider tiers, walked in order&lt;br/&gt;subscription → cheap → free&quot;]
+  CD[&quot;Exponential cooldown on failure&lt;br/&gt;2s → 5m, per provider · Retry-After honoured&quot;]
+  LEDGER[(&quot;~/.routre/usage.json&lt;br/&gt;tokens + cost per agent&quot;)]
+  OBS[&quot;Observability&lt;br/&gt;JSONL per-phase latency&lt;br/&gt;/metrics · /v1/status · /ui&quot;]
+
+  AG --&gt; S1
+  S1 &lt;--&gt; CACHE
+  S1 -. &quot;cache hit — replay, no upstream call&quot; .-&gt; S3
+  S2 --&gt; TIERS
+  TIERS --&gt; CD
+  CD -. &quot;failover to the next tier&quot; .-&gt; S2
+  S3 --&gt; LEDGER
+  S3 --&gt; OBS</code></pre>
+
+</details>
+
+<h3 id="component-walkthrough">Component walkthrough</h3>
+
+<ul>
+  <li><strong><code>internal/proxy/</code></strong> — the HTTP gateway and the seven-step pipeline. <code>runner.go</code> is the failover loop that decides when to retry, when to refresh a key, and when to give up.</li>
+  <li><strong><code>internal/proxy/dialect/</code></strong> — the cross-kind SSE state machine. This is what lets one address serve every OpenAI/Anthropic-compatible CLI.</li>
+  <li><strong><code>internal/rtk/</code></strong> — the 11 compression filters, each bounded by a 512 KiB scan window and a 150 ms budget.</li>
+  <li><strong><code>internal/cache/</code></strong> — the exact-match LRU plus the on-disk snapshot.</li>
+  <li><strong><code>internal/router/</code></strong> — tier walking, per-provider cooldown and model discovery.</li>
+  <li><strong><code>internal/usage/</code></strong> — the ledger that records what RTK and the cache saved.</li>
+  <li><strong><code>internal/config/</code></strong> — <code>config.json</code> + the <code>0600</code> <code>routre.env</code> for secrets, reloadable with <code>SIGHUP</code>.</li>
+</ul>
+
+<h3 id="one-request-end-to-end">One request, end to end</h3>
+
+<ol>
+  <li><strong>Detect dialect</strong> — probe the path and body to decide whether the caller speaks OpenAI, Anthropic or the Responses API, and normalise the request.</li>
+  <li><strong>RTK compress</strong> — shrink <code>tool_result</code> bodies. If a filter cannot help, the payload passes through unchanged; compression strictly never enlarges it, and work stops at the scan window or the time budget rather than delaying the call.</li>
+  <li><strong>Cache lookup</strong> — hash the canonical post-RTK JSON and look for the same request. A hit replays the stored response byte-for-byte with no upstream call, which is why the second request in my run returned in ~2 ms.</li>
+  <li><strong>Route</strong> — walk tiers in config order and pick the cheapest <em>healthy</em> provider. A provider that just failed is held back by a cooldown rather than retried forever.</li>
+  <li><strong>Retry / failover</strong> — one immediate connection-level retry, one free auth refresh on <code>401/403</code>, then move to the next candidate. Once a first byte has been emitted, failover is disabled — the gateway would rather fail than duplicate output into a stream your tool has already half-read.</li>
+  <li><strong>Translate dialect</strong> — rewrite the upstream event stream into the dialect the caller asked for. Tool-call ids round-trip unchanged so agent tool loops keep working across providers.</li>
+  <li><strong>Relay</strong> — stream the answer home, record per-phase latency and update the ledger.</li>
+</ol>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="architecture-decisions-worth-defending">
+        <div class="container">
+          <article class="art-content">
+<h2>Architecture decisions worth defending</h2>
+
+<p><strong>Bounded, fail-open compression instead of aggressive compression.</strong> Every filter must return something no larger than it received, and the whole stage stops at 150 ms. <em>Cost:</em> some payloads that a slower algorithm could compress are left alone. <em>Benefit:</em> compression can never be the reason a request fails or takes longer than the model itself.</p>
+
+<p><strong>Exact-match caching instead of semantic caching.</strong> <em>Cost:</em> the hit rate is lower than a fuzzy cache. <em>Benefit:</em> a hit is provably the same request, so a deterministic run cannot be poisoned by a near-miss. Streaming and non-streaming responses get separate entries even under the same key space, so a saved stream is never spliced into a JSON call.</p>
+
+<p><strong>Failover bounded by a budget, not by an attempt count.</strong> Each candidate gets a soft slice (45 s by default), bounded by the whole-request budget while providers remain, and one adaptive 45 s extension when the socket is demonstrably alive. <em>Cost:</em> a client can observe a request running past the soft slice. <em>Benefit:</em> a slow-but-healthy provider is no longer converted into a 503 at an arbitrary deadline — the repo explains that this exact case ("provider answered at 27 s, gateway gave up at 30 s") is why the extension exists.</p>
+
+<p><strong>Honest error identity.</strong> <code>model_not_found</code> is returned only when no configured provider can serve the model. When every provider that <em>could</em> serve it is cooling down, the answer is <code>providers_unavailable</code> with a <code>Retry-After</code> header, because the remedy is waiting, not editing config.</p>
+
+<p><strong>Loopback-first security.</strong> The gateway binds <code>127.0.0.1</code> and the dashboard rejects non-loopback <code>Host</code>/<code>Origin</code> headers (DNS-rebinding and CSRF mitigation). An optional shared secret covers shared machines. Keys live in a <code>0600</code> file, not in the JSON config.</p>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="running-it">
+        <div class="container">
+          <article class="art-content">
+<h2>Running it</h2>
+
+<pre class="code-block" data-lang="bash"><code># build from source (no dependencies to fetch)
+git clone https://github.com/mariobgsp/routre &amp;&amp; cd routre
+make build                      # or: CGO_ENABLED=0 go build -trimpath -ldflags &quot;-s -w&quot; -o routre .
+./routre version
+
+# configure and start
+./routre setup                  # writes config.json + routre.env (0600)
+./routre serve                  # gateway on 127.0.0.1:20128
+curl http://127.0.0.1:20128/healthz
+
+# point any agent at it
+export OPENAI_BASE_URL=http://127.0.0.1:20128
+export ANTHROPIC_BASE_URL=http://127.0.0.1:20128</code></pre>
+
+<p>To reproduce the screenshots below without spending money, <code>tools/capture/routre-demo.sh</code> in this repository builds the binary and the repo's own <code>cmd/mock-upstream</code>, wires two tiers (one unreachable, one mocked), sends a tool-heavy request twice, and prints the ledger.</p>
+
+<h3 id="what-i-observed">What I observed</h3>
+
+<p>The demo sends one request containing a realistic, highly repetitive <code>git diff</code> plus a test log (≈40 KB of tool output), then sends the identical request again:</p>
+
+<pre class="code-block" data-lang="text"><code>— request 1 (cache miss: tier-1 fails over, RTK compresses) —
+HTTP/1.1 200 OK
+X-Llrouter-Cache: miss
+X-Llrouter-Provider: openrouter-economy      ← tier 1 was unreachable, so it failed over
+
+— request 2 (identical: replayed from cache) —
+HTTP/1.1 200 OK
+X-Llrouter-Cache: hit</code></pre>
+
+<pre class="code-block" data-lang="text"><code>== live gateway ==
+  anthropic-primary up
+  openrouter-economy up
+
+== token &amp; cost ledger ==
+  opencode
+    requests: 2
+    consumed: 15 tokens (10 in + 5 out)
+    saved:    9643 tokens (rtk 9633 + cache 10)
+    cost:     $0.000009   saved: $0.002890</code></pre>
+
+<p>Two things are worth separating in that output:</p>
+
+<ul>
+  <li>The <strong>cache hit</strong> and the <strong>failover</strong> are architectural facts I can reproduce on demand: the second request never reached a provider, and the first one reached the <em>second</em> tier because the first one failed.</li>
+  <li>The <strong>99.8% saving on that run</strong> is a property of my deliberately repetitive fixture, not a general number. The figure that belongs in a headline is the one the repository gates in CI: <strong>94.8% aggregate / 93.3% worst-payload tool-token reduction</strong>, measured by <code>make bench</code> and <em>failing the build</em> below 90%. And it applies to tool-result tokens only — output tokens are never compressed.</li>
+</ul>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="screenshots">
+        <div class="container">
+          <article class="art-content">
+<h2>Screenshots</h2>
+
+<img src="/assets/articles/routre-dashboard.png" alt="routre dashboard" loading="lazy" decoding="async" />
+
+<p class="fig-caption">The embedded local dashboard: compression and cache state, the provider tier table, and key presence. Captured against the repo's mock upstream, so no real provider keys or spend are involved — the tier names are a plausible config, the traffic is local.</p>
+
+<p>The equivalent CLI view of the same state, one line per concern:</p>
+
+<pre class="code-block" data-lang="text"><code>== configured providers ==
+  [subscription] anthropic-primary   anthropic key ok  models=claude-sonnet-4      $3.0000/M in, $15.0000/M out
+  [cheap]        openrouter-economy  openai    key ok  models=deepseek/deepseek-chat $0.3000/M in, $1.2000/M out</code></pre>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="what-id-fix-next">
+        <div class="container">
+          <article class="art-content">
+<h2>What I'd fix next</h2>
+
+<ul>
+  <li><strong>Non-streaming <code>openai → anthropic</code> translation is missing.</strong> The streaming path handles all pairs, but a non-streaming Anthropic client routed to an OpenAI provider currently gets the raw OpenAI body. The repo knows: <code>tests/e2e_test.go</code> pins the gap so a fix is caught.</li>
+  <li><strong>Token estimates are approximations</strong> (≈4 bytes/token), which is fine for a benchmark instrument and wrong for billing. Real BPE counts already exist for payloads under 64 KiB; extending that would make the ledger exact.</li>
+  <li><strong>Windows self-update is deferred</strong> — <code>routre update</code> prints a re-install hint instead of replacing the running executable.</li>
+</ul>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="links">
+        <div class="container">
+          <article class="art-content">
+<h2>Links</h2>
+
+<ul>
+  <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/routre">github.com/mariobgsp/routre</a></li>
+  <li><strong>Internals:</strong> <a href="https://github.com/mariobgsp/routre/blob/main/docs/HOW-IT-WORKS.md"><code>docs/HOW-IT-WORKS.md</code></a></li>
+  <li><strong>Releases:</strong> <a href="https://github.com/mariobgsp/routre/releases/latest">latest</a></li>
+  <li><strong>Changelog:</strong> <a href="https://github.com/mariobgsp/routre/blob/main/CHANGELOG.md"><code>CHANGELOG.md</code></a></li>
+</ul>
+
+<hr />
+
+<p class="fig-caption">Article and images generated from the repository as it stands at commit <code>849ad95</code> (2026-10-10). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/routre.mmd"><code>diagrams/routre.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/routre-demo.sh"><code>tools/capture/routre-demo.sh</code></a>, <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/routre.mjs"><code>tools/capture/routre.mjs</code></a>.</p>
+          </article>
+        </div>
+      </section>
+
+      <nav class="art-next container" aria-label="More articles">
+<span></span>
+        <a class="art-next-all" href="/articles/">All articles</a>
+<a class="art-next-link art-next-link--right" href="/articles/durable-agents/"><span>Next</span><b>durable-agents</b></a>
+      </nav>
+
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway","description":"routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them.","url":"https://mariobgsp.github.io/articles/routre/","mainEntityOfPage":"https://mariobgsp.github.io/articles/routre/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Go 1.26, standard library only — no Node, Python, Postgres or Redis","image":"https://mariobgsp.github.io/assets/articles/routre-architecture-dark.png"}</script>
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Articles</h3>
+            <a href="/articles/">Every project, written up</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+
+    <script src="../../assets/site.js"></script>
+  </body>
+</html>

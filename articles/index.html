@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Articles — Backend &amp; API Engineering</title>
+    <meta name="description" content="5 backend engineering articles, each written from the running system: architecture, measured facts and the defects found." />
+    <meta name="theme-color" content="#0a0a0b" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Articles — Backend &amp; API Engineering" />
+    <meta property="og:description" content="5 backend engineering articles, each written from the running system: architecture, measured facts and the defects found." />
+    <link rel="canonical" href="https://mariobgsp.github.io/articles/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/theme.css" />
+  </head>
+  <body class="">
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
+        <ul class="nav-links">
+          <li><a href="/articles/" class="active">Articles</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+      </div>
+    </header>
+
+    <div class="nav-menu">
+      <a href="/articles/">Articles</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
+    <main class="page">
+      <section class="hero anchor" id="top">
+        <div class="container">
+          <div class="hero-inner">
+            <p class="kicker reveal"><b>[ ARTICLES ]</b> 5 written from the running systems</p>
+            <h1 class="hero-name reveal">Articles</h1>
+            <p class="hero-title reveal">Backend &amp; API engineering &mdash; payments, gateways, market data</p>
+            <p class="hero-sub reveal">
+              Each project got one article: what it is, the problem it prevents, why the stack
+              is what it is, how a request moves through it, what I measured, the defects I
+              found by running it, and what I would fix next.
+            </p>
+            <div class="actions reveal">
+              <a class="btn btn-primary" href="https://github.com/mariobgsp/articles" target="_blank" rel="noopener">Articles on GitHub<span class="ext">&#8599;</span></a>
+              <a class="btn btn-ghost" href="#articles">Browse the 5 articles<span class="ext">&#8595;</span></a>
+            </div>
+            <div class="stat-row reveal">
+              <div class="stat"><b>5</b><span>Articles</span></div>
+              <div class="stat"><b>22</b><span>Captured images</span></div>
+              <div class="stat"><b>46 min</b><span>Total reading time</span></div>
+              <div class="stat"><b>5+ yrs</b><span>Production backend</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section anchor reveal" id="articles">
+        <div class="container">
+          <p class="kicker"><b>[ 01 ]</b> THE ARTICLES</p>
+          <div class="section-rule"></div>
+          <h2 class="section-title">Pick one and read it end to end</h2>
+          <p class="prose prose-lead">
+            Every number is quoted from the repository or from a run I did myself. Where a
+            repository publishes nothing, the article says that too.
+          </p>
+
+          <div class="card-grid stagger">
+            <article class="card span-7">
+              <img class="thumb" src="/assets/articles/routre-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
+              <div class="card-head">
+                <h3 class="card-name">routre</h3>
+                <span class="card-index">01</span>
+              </div>
+              <p class="card-role">Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway</p>
+              <p class="card-desc">routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Go 1.26, standard library only — no Node, Python, Postgres or Redis</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~8 min &middot; 2 images</span></div>
+              <div class="card-tools">
+                <a class="btn btn-primary" href="/articles/routre/">Read the article<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener" aria-label="routre repository on GitHub">Repository<span class="ext">&#8599;</span></a>
+              </div>
+            </article>
+            <article class="card span-5">
+              <img class="thumb" src="/assets/articles/durable-agents-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
+              <div class="card-head">
+                <h3 class="card-name">durable-agents</h3>
+                <span class="card-index">02</span>
+              </div>
+              <p class="card-role">Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</p>
+              <p class="card-desc">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via @earendil-works/pi-durable 1.3.0</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~10 min &middot; 4 images</span></div>
+              <div class="card-tools">
+                <a class="btn btn-primary" href="/articles/durable-agents/">Read the article<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/durable-agents" target="_blank" rel="noopener" aria-label="durable-agents repository on GitHub">Repository<span class="ext">&#8599;</span></a>
+              </div>
+            </article>
+            <article class="card span-7">
+              <img class="thumb" src="/assets/articles/trading-suite-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
+              <div class="card-head">
+                <h3 class="card-name">trading-suite</h3>
+                <span class="card-index">03</span>
+              </div>
+              <p class="card-role">The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk</p>
+              <p class="card-desc">Most screeners answer &quot;here is a list&quot;. This one answers &quot;here is the list, the measured evidence behind it, and — often — no&quot;. Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Python 3 + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~10 min &middot; 4 images</span></div>
+              <div class="card-tools">
+                <a class="btn btn-primary" href="/articles/trading-suite/">Read the article<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener" aria-label="trading-suite repository on GitHub">Repository<span class="ext">&#8599;</span></a>
+              </div>
+            </article>
+            <article class="card span-5">
+              <img class="thumb" src="/assets/articles/payment-system-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
+              <div class="card-head">
+                <h3 class="card-name">payment-system</h3>
+                <span class="card-index">04</span>
+              </div>
+              <p class="card-role">Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka</p>
+              <p class="card-desc">This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Go (net/http stdlib) · PostgreSQL 15 · Redis 7 · Next.js 16 portal · Docker Compose</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~10 min &middot; 7 images</span></div>
+              <div class="card-tools">
+                <a class="btn btn-primary" href="/articles/payment-system/">Read the article<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener" aria-label="payment-system repository on GitHub">Repository<span class="ext">&#8599;</span></a>
+              </div>
+            </article>
+            <article class="card span-12">
+              <img class="thumb" src="/assets/articles/the-gateway-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
+              <div class="card-head">
+                <h3 class="card-name">the-gateway</h3>
+                <span class="card-index">05</span>
+              </div>
+              <p class="card-role">Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF</p>
+              <p class="card-desc">The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Next.js 15 (BFF) · Go 1.x + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~8 min &middot; 5 images</span></div>
+              <div class="card-tools">
+                <a class="btn btn-primary" href="/articles/the-gateway/">Read the article<span class="ext">&#8594;</span></a>
+                <a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener" aria-label="the-gateway repository on GitHub">Repository<span class="ext">&#8599;</span></a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Project articles","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"TechArticle","name":"Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway","url":"https://mariobgsp.github.io/articles/routre/","description":"routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them."}},{"@type":"ListItem","position":2,"item":{"@type":"TechArticle","name":"Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log","url":"https://mariobgsp.github.io/articles/durable-agents/","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own."}},{"@type":"ListItem","position":3,"item":{"@type":"TechArticle","name":"The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk","url":"https://mariobgsp.github.io/articles/trading-suite/","description":"Most screeners answer \"here is a list\". This one answers \"here is the list, the measured evidence behind it, and — often — no\". Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound."}},{"@type":"ListItem","position":4,"item":{"@type":"TechArticle","name":"Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka","url":"https://mariobgsp.github.io/articles/payment-system/","description":"This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command."}},{"@type":"ListItem","position":5,"item":{"@type":"TechArticle","name":"Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF","url":"https://mariobgsp.github.io/articles/the-gateway/","description":"The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript."}}]}</script>
+
+      <hr class="hairline" />
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Articles</h3>
+            <a href="/articles/">Every project, written up</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+
+    <script src="../assets/site.js"></script>
+  </body>
+</html>

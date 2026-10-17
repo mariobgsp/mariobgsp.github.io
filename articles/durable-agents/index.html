@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</title>
+    <meta name="description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own." />
+    <meta name="theme-color" content="#0a0a0b" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log" />
+    <meta property="og:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own." />
+    <link rel="canonical" href="https://mariobgsp.github.io/articles/durable-agents/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/article.css" />
+  </head>
+  <body class="art-page">
+    <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
+
+    <header class="topnav">
+      <div class="topnav-inner">
+        <a class="nav-logo" href="/">mario<span class="logo-dot">.</span>dev</a>
+        <span class="nav-status"><span class="led led-green" aria-hidden="true"></span> Backend &amp; API engineer</span>
+        <ul class="nav-links">
+          <li><a href="/articles/" class="active">Articles</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <button class="nav-hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+      </div>
+    </header>
+
+    <div class="nav-menu">
+      <a href="/articles/">Articles</a>
+      <a href="/">Home</a>
+      <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
+    <main class="page">
+      <section class="art-hero anchor" id="top">
+        <div class="container">
+          <a class="crumb reveal" href="/articles/">&larr; All articles</a>
+          <p class="kicker reveal"><b>[ 02 / 05 ]</b> durable-agents</p>
+          <h1 class="art-title reveal">Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</h1>
+          <p class="art-standfirst reveal">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.</p>
+          <p class="art-byline reveal">
+            <span>Muhammad Ario Bagus Prakusa</span>
+            <span>17 October 2026</span>
+            <span>~10 min read</span>
+          </p>
+          <dl class="art-facts reveal">
+            <div class="art-fact">
+              <dt>Repository</dt>
+              <dd><a href="https://github.com/mariobgsp/durable-agents">github.com/mariobgsp/durable-agents</a></dd>
+            </div>
+            <div class="art-fact">
+              <dt>Role</dt>
+              <dd>TypeScript / full-stack engineering, durable execution, streaming protocol design</dd>
+            </div>
+            <div class="art-fact">
+              <dt>Stack</dt>
+              <dd>Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via <code>@earendil-works/pi-durable</code> 1.3.0</dd>
+            </div>
+            <div class="art-fact">
+              <dt>Verified</dt>
+              <dd>App run locally, checks and E2E suite executed (2026-10-17). Verification numbers below are mine, not quoted from the README.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="art-block" id="at-a-glance">
+        <div class="container">
+          <article class="art-content">
+<h2>At a glance</h2>
+
+<ul>
+  <li><strong>What it is</strong> — a single-user web app for talking to AI agents: threads that survive restarts, agents defined by <code>AGENT.md</code> + <code>SOUL.md</code>, and group chats where several agents decide among themselves who answers.</li>
+  <li><strong>Who it's for</strong> — anyone who treats an agent session as work rather than a prompt: long threads, expensive generations, and a strong preference not to lose either because a socket dropped.</li>
+  <li><strong>The interesting part</strong> — the durability is not a save button. It is a <strong>durable task log</strong>: the harness owns progress, and the UI's job reduces to <em>rendering what the log says</em>, including re-attaching to a generation that was already running when you left.</li>
+</ul>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="the-problem-agent-chat-is-the-least-durable-part-of-the-stack">
+        <div class="container">
+          <article class="art-content">
+<h2>The problem: agent chat is the least durable part of the stack</h2>
+
+<p>Conventional chat UIs model a conversation as client state. That assumption breaks badly once each turn costs real money and takes minutes:</p>
+
+<ul>
+  <li><strong>A dropped socket loses the answer.</strong> The generation completes upstream, but nothing in the browser owns it, so the reply never lands.</li>
+  <li><strong>A reload forgets what was happening.</strong> There is no record that a turn was in flight, so a resume means re-asking and re-paying.</li>
+  <li><strong>"Still working?" has no answer.</strong> A spinner is a guess; it cannot distinguish a slow generation from a dead one, and in a group chat it cannot say <em>which</em> agent is mid-sentence.</li>
+</ul>
+
+<p>This project inverts the ownership: the harness writes durable tasks first, and the browser is a view onto that log.</p>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="what-it-does">
+        <div class="container">
+          <article class="art-content">
+<h2>What it does</h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Capability</th><th>How</th></tr></thead>
+<tbody><tr><td><strong>Durable threads</strong></td><td>Every message, tool call and generation is a durable task; <code>resume()</code> replays work that was interrupted.</td></tr><tr><td><strong>Live streaming</strong></td><td>Per-conversation WebSocket emitting <code>snapshot</code> → <code>entry</code> → <code>message-start</code> → <code>delta</code>… → <code>message-end</code>.</td></tr><tr><td><strong>Agents as files</strong></td><td><code>data/agents/&lt;slug&gt;/{agent.json,AGENT.md,SOUL.md}</code>. <code>SOUL.md</code> is who it is; <code>AGENT.md</code> is its working rules.</td></tr><tr><td><strong>Hot reload into live threads</strong></td><td>Saving an agent rebinds it into existing threads (<code>rebindAgent</code>) and reports how many threads took the new files.</td></tr><tr><td><strong>Group chat, three modes</strong></td><td><code>Nyahut</code> (agents claim a message by responsibility), <code>Moderator</code> (one designated member), <code>Silent</code> (<code>@mention</code> only).</td></tr><tr><td><strong>Live presence</strong></td><td>A presence socket says which sessions are generating, including ones you are not looking at.</td></tr><tr><td><strong>Per-agent models</strong></td><td>Each agent picks its own provider and model, with capability badges (image input, context window, cost, thinking levels).</td></tr><tr><td><strong>One identity system</strong></td><td>Colour + emoji per agent and per group, normalised in a single module.</td></tr></tbody>
+</table></div>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="why-this-stack">
+        <div class="container">
+          <article class="art-content">
+<h2>Why this stack</h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
+<tbody><tr><td>Durability</td><td><strong><code>pi-durable</code> on SQLite</strong></td><td>Durability is a property of the substrate, not of the UI. A single SQLite file in WAL mode means an interrupted generation is <em>resumable by construction</em>, with no queue, no worker fleet and no server-side session memory to rebuild.</td></tr><tr><td>Backend</td><td><strong>Fastify, bound to <code>127.0.0.1</code></strong></td><td>The server proxies model calls and reads agent files off disk; a small, explicit HTTP layer with a WebSocket upgrade is the whole surface.</td></tr><tr><td>Frontend</td><td><strong>Svelte 5 with runes</strong></td><td>Chat is a long-lived stream of small mutations. Runes give fine-grained reactivity without a virtual DOM or a state library, and the whole client ships at <strong>58.77 kB gzip</strong>.</td></tr><tr><td>Transport</td><td><strong>WebSocket with an explicit frame contract</strong></td><td>Streaming partials need push, not polling. The frame types are declared in <code>wire.ts</code> on the server and mirrored in <code>ws.ts</code> on the client, so the contract has exactly two files to check.</td></tr><tr><td>State</td><td><strong>One runes store</strong></td><td><code>state.svelte.ts</code> is the only place incoming frames mutate state. One writer makes "why does the sidebar disagree with the chat header" a non-question — a bug class this project explicitly tested for.</td></tr><tr><td>Testing</td><td><strong>E2E only, against a faux provider</strong></td><td>With <code>PI_E2E=1</code> every real provider is swapped for the harness's faux provider, making the whole stack deterministic: no network, no cost, no flakes.</td></tr><tr><td>Bundle</td><td><strong>A 100 kB gzip budget</strong></td><td>A local app still has to load before it feels local. The budget turns "add a dependency" into a deliberate decision.</td></tr></tbody>
+</table></div>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="architecture">
+        <div class="container">
+          <article class="art-content">
+<h2>Architecture</h2>
+
+<img src="/assets/articles/durable-agents-architecture-dark.png" alt="durable-agents architecture" loading="lazy" decoding="async" />
+
+<details>
+
+<summary>Mermaid source (<code>diagrams/durable-agents.mmd</code>)</summary>
+
+<pre class="code-block" data-lang="mermaid"><code>flowchart TD
+  U[&quot;Browser — Svelte 5 SPA&lt;br/&gt;Chat · Agents · Groups · Providers&quot;]
+
+  subgraph WEB[&quot;packages/web — the client&quot;]
+    ST[&quot;state.svelte.ts — one runes store&lt;br/&gt;the only place frames mutate state&quot;]
+    WS[&quot;ws.ts — a socket per conversation&lt;br/&gt;plus a presence socket&quot;]
+    ID[&quot;lib/identity.ts — one normaliser&lt;br/&gt;colour + emoji identity&quot;]
+  end
+
+  subgraph SRV[&quot;packages/server — Fastify, bound to 127.0.0.1&quot;]
+    AUTH[&quot;auth.ts&lt;br/&gt;X-PI-Token + Host allowlist&quot;]
+    ROOMS[&quot;rooms.ts · router.ts · nyahut.ts&lt;br/&gt;group orchestration&quot;]
+    STREAM[&quot;stream.ts&lt;br/&gt;watch() to wire frames,&lt;br/&gt;partials read from pi.live&quot;]
+    ACT[&quot;activity.ts&lt;br/&gt;who is generating right now&quot;]
+  end
+
+  subgraph DUR[&quot;pi-durable harness — pinned 1.3.0&quot;]
+    H[&quot;Harness&lt;br/&gt;conversations · submissions&lt;br/&gt;every step a durable task&quot;]
+    DB[(&quot;SQLite&lt;br/&gt;data/app.sqlite&quot;)]
+    H --&gt; DB
+  end
+
+  LLM[&quot;pi-ai providers&lt;br/&gt;opencode-go · deepseek-v4.1-flash&lt;br/&gt;faux provider when PI_E2E=1&quot;]
+
+  U --&gt; ST
+  ST --&gt; WS
+  WS &lt;--&gt;|&quot;HTTP + WebSocket · X-PI-Token&quot;| AUTH
+  AUTH --&gt; ROOMS
+  AUTH --&gt; STREAM
+  AUTH --&gt; ACT
+  ROOMS --&gt; H
+  STREAM --&gt; H
+  ID -.-&gt; ST
+  H --&gt; LLM</code></pre>
+
+</details>
+
+<h3 id="component-walkthrough">Component walkthrough</h3>
+
+<ul>
+  <li><strong><code>packages/server/src/sessions.ts</code></strong> — the session index (<code>data/sessions.json</code>), transcripts, <code>sendMessage</code> and <code>rebindAgent</code>.</li>
+  <li><strong><code>packages/server/src/stream.ts</code></strong> — turns <code>conversation.watch()</code> into wire frames, reading partials out of the durable <code>pi.live</code> document.</li>
+  <li><strong><code>packages/server/src/router.ts</code></strong> — <code>planTargets()</code>, a <strong>pure</strong> function that decides who answers one message. No network, no model, no file access, so group routing is testable without any of the machinery around it.</li>
+  <li><strong><code>packages/server/src/nyahut.ts</code></strong> — the claim and oversee passes as short, stateless calls.</li>
+  <li><strong><code>packages/server/src/activity.ts</code></strong> — an in-memory registry of which sessions are generating, pushed over the presence socket instead of polled.</li>
+  <li><strong><code>packages/web/src/state.svelte.ts</code></strong> — the single store; the only place frames mutate state.</li>
+  <li><strong><code>packages/web/src/lib/identity.ts</code></strong> — one normaliser for agent and group identity, so the sidebar, chat header and message bubbles cannot disagree.</li>
+</ul>
+
+<h3 id="one-message-end-to-end">One message, end to end</h3>
+
+<ol>
+  <li>You press Enter. The store sets <code>busy</code> immediately, so the input feels instant while nothing has been sent.</li>
+  <li><code>POST /api/sessions/:id/messages</code> submits an <code>input</code> event to the harness. It is <strong>already durable</strong> when the submission id comes back.</li>
+  <li>The server marks the session active and opens a presence broadcast, so every <em>other</em> tab learns this thread is generating.</li>
+  <li>The browser opens (or reuses) that conversation's socket; the harness starts the generation.</li>
+  <li>Partials are read out of the durable <code>pi.live</code> document and diffed, and the suffix is emitted as <code>delta</code> frames — roughly 80 ms apart in a real session.</li>
+  <li>On completion the committed entry is emitted as <code>entry</code>, the bubble closes with <code>message-end</code>, and <code>waitForIdle()</code> resolves so the session is marked idle again.</li>
+</ol>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="architecture-decisions-worth-defending">
+        <div class="container">
+          <article class="art-content">
+<h2>Architecture decisions worth defending</h2>
+
+<p><strong>Durability belongs to the harness, not the UI.</strong> <em>Decision:</em> progress lives in durable tasks in SQLite; the browser renders what the log says. <em>Cost:</em> the UI has to handle snapshots, re-attachment and out-of-order resumption rather than just appending to an array. <em>Benefit:</em> <code>resume()</code> replays interrupted work, so "reload during a long generation" is a supported path instead of a data-loss path.</p>
+
+<p><strong>Streaming reads the live document, because the provider does not emit updates.</strong> The repo states the reason without dressing it up: <code>message_update</code> is never emitted by <code>watchEvents</code> for its default provider, so translated view changes never arrive as partials. The server therefore reads the assistant message in flight directly out of the <code>pi.live</code> document and emits the <em>difference</em>:</p>
+
+<pre class="code-block" data-lang="text"><code>snapshot  { entries: [...] }      # durable transcript so far
+entry     { role: &quot;user&quot; }        # the message you just sent
+message-start                     # a bubble opens
+delta     { text: &quot;Ahoy, &quot; }
+delta     { text: &quot;I am the &quot; }
+entry     { role: &quot;assistant&quot; }   # the committed entry
+message-end</code></pre>
+
+<p><em>Cost:</em> an undocumented internal shape is now load-bearing, which is a real coupling to pay down. <em>Benefit:</em> live streaming works today, and the fallback degrades safely — only <code>pi.assistant</code> entries may close a bubble, so the start/end events that <em>do</em> fire for user entries cannot truncate an answer.</p>
+
+<p><strong>Presence is pushed, and cleared with an epoch guard.</strong> The server tracks generating sessions in memory and pushes changes, using the harness's own <code>waitForIdle()</code> rather than polling or scanning transcripts. The clear is epoch-guarded so a waiter that resolves late cannot wipe the mark of a generation that started in between, and a 10-minute watchdog stops a hung provider from pinning a spinner forever. <em>Cost:</em> a second socket and a little server state. <em>Benefit:</em> "who is replying" is correct across tabs, and a stuck provider becomes an idle thread instead of a permanent lie.</p>
+
+<p><strong>Group routing is a pure function; claiming is a separate, cheaper call.</strong> <code>planTargets()</code> decides <code>@mention</code> precedence and mode behaviour with no I/O, and <code>Nyahut</code> mode runs <em>claim</em> as a short stateless call per member before anyone answers. A user message therefore costs roughly <code>2N − R</code> short calls plus <code>R</code> full ones (<code>N</code> members, <code>R</code> responders) — an explicit cost model rather than an emergent one. <em>Cost:</em> the claim round adds latency to a group message. <em>Benefit:</em> the wrong agent does not spend a full generation on a message it has no business answering, and <code>one agent answers once per user message</code> is a rule, not a hope.</p>
+
+<p><strong>Identity has exactly one normaliser.</strong> Colour and emoji are resolved in <code>lib/identity.ts</code> for agents, groups and members. <em>Cost:</em> one more indirection when adding an identity field. <em>Benefit:</em> the same agent cannot show one colour in the sidebar and another in the bubble — and the E2E suite tests precisely that: a patch touching an unrelated field must not disturb identity, across a restart.</p>
+
+<p><strong>The app that runs <code>bash</code> gets a real security boundary.</strong> The server binds <code>127.0.0.1</code>, rejects any request without <code>X-PI-Token</code>, allowlists <code>Host</code>, ships no permissive CORS, and stores its 32-byte token with mode <code>600</code>. <em>Cost:</em> you must inject the token into the page (the dev script does it for you). <em>Benefit:</em> a foreign web page can neither read the app nor reach an API that runs commands — which matters a great deal for a tool whose <code>bash</code> tool is genuine code execution, and which the editor warns about.</p>
+
+<p><strong>E2E instead of unit tests, deliberately.</strong> <em>Decision:</em> no unit tests; four E2E scenarios each boot a throwaway server with its own port, data directory and token, against the faux provider. <em>Cost:</em> coarser failure localisation and slower feedback than a unit suite. <em>Benefit:</em> the thing under test is the real assembly — real sockets, real SQLite, real streaming — and it is deterministic. It has already earned its keep: the suite caught that an instant answer never streamed (the faux provider now streams at 12 tokens/second) and that announcing <code>content-type: application/json</code> on an empty body makes Fastify answer 400 — which made <code>DELETE</code> look broken.</p>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="running-it">
+        <div class="container">
+          <article class="art-content">
+<h2>Running it</h2>
+
+<pre class="code-block" data-lang="bash"><code>git clone https://github.com/mariobgsp/durable-agents &amp;&amp; cd durable-agents
+npm install
+npm run dev            # creates data/token (600), Fastify on 8787, Vite on 5173
+# → http://localhost:5173
+
+npm run build &amp;&amp; npm start   # one process serving UI + API + WS on 8787
+
+# checks
+npm run check          # tsc + svelte-check + the language lint
+npm run e2e            # four deterministic scenarios, faux provider
+npm run shots          # 8 routes × 5 viewports → docs/ui-review/&lt;date&gt;/
+npm run seed           # demo threads, no model calls</code></pre>
+
+<p>Credentials resolve in this order: <code>~/.pi/agent/auth.json</code> → <code>OPENCODE_API_KEY</code> → <code>data/credentials.json</code> (written by the <code>#/providers</code> screen).</p>
+
+<h3 id="what-i-observed">What I observed</h3>
+
+<p>I ran the project's own gates rather than trusting the status table:</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Check</th><th>My result</th></tr></thead>
+<tbody><tr><td><code>npm run check</code></td><td><code>svelte-check</code> <strong>0 errors</strong>, 2 warnings in 1 file; <code>tsc</code> clean; <code>check-language: clean</code></td></tr><tr><td><code>npm run e2e</code></td><td><strong>4 passed, 0 failed</strong> (<code>activity</code>, <code>identity</code>, <code>models</code>, <code>sessions</code>)</td></tr><tr><td><code>npm run build</code></td><td><code>index.js</code> <strong>58.77 kB gzip</strong>, <code>index.css</code> <strong>5.75 kB gzip</strong> — inside the 100 kB budget</td></tr></tbody>
+</table></div>
+
+<p>The E2E suite is the part worth dwelling on, because it asserts the design rather than the implementation. <code>identity</code> checks that an agent's colour and emoji survive a later patch that touches an unrelated field — the exact bug class the single normaliser exists to prevent. <code>activity</code> checks that an idle thread is <em>still</em> not active <strong>after a restart</strong>, which is what makes the presence registry trustworthy rather than merely optimistic.</p>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="screenshots">
+        <div class="container">
+          <article class="art-content">
+<h2>Screenshots</h2>
+
+<img src="/assets/articles/durable-agents-agent-list.png" alt="Agent list with identity" loading="lazy" decoding="async" />
+
+<p class="fig-caption">The agent list. Each card carries its identity (avatar, colour, <code>@handle</code>), its one-line <code>responsibility</code>, and its model. Note <code>Pirate</code>: "No responsibility yet — fill it in so Nyahut mode can judge." That single field is what the group claim pass reads, and the UI says so instead of letting an unprotected group fail silently.</p>
+
+<img src="/assets/articles/durable-agents-agent-editor.png" alt="Agent editor" loading="lazy" decoding="async" />
+
+<p class="fig-caption">Editing an agent is editing two markdown files: <code>SOUL.md</code> ("who it is, its temperament, what it owns") and <code>AGENT.md</code> ("working rules"). The right column is the identity and model panel — the palette and emoji grid that feed the single normaliser, and a model picker that reports the selected model's real capabilities (image input, a 1,000k context window, cost per Mtok, reasoning).</p>
+
+<img src="/assets/articles/durable-agents-group-thread.png" alt="Group thread — Nyahut orchestration" loading="lazy" decoding="async" />
+
+<p class="fig-caption">A group thread in <code>Nyahut</code> mode. The system notes are the visible part of the protocol: <code>Klaim: @robot (…)</code> shows the claim pass resolving a question to the agent whose stated responsibility covers it, and <code>No claim; @pirate answers (highest confidence)</code> shows the fallback when nobody claims. The mode switch (<code>Nyahut</code> / <code>Moderator</code> / <code>Silent</code>) is per-group, the sidebar shows member avatars and which threads are active, and the presence socket reports <code>connected</code>.</p>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="what-id-fix-next">
+        <div class="container">
+          <article class="art-content">
+<h2>What I'd fix next</h2>
+
+<p>The repository's own gap list is unusually specific, and it is accurate — worth repeating rather than rediscovering, in the order I would take them:</p>
+
+<ul>
+  <li><strong>Attachments do not exist.</strong> No image or file input in the composer yet, despite the model capability catalog already tracking which models can see images.</li>
+  <li><strong>The Tauri desktop shell has never been compiled</strong> (<code>tauri-plugin-single-instance</code> is not installed), so running the desktop app twice would point two servers at one <code>app.sqlite</code>.</li>
+  <li><strong>No system notifications</strong> on turn completion, and no real cost counter — the group cost model is an estimate shown in a tooltip.</li>
+  <li><strong>The streaming workaround is a coupling to pay down.</strong> Reading partials from the <code>pi.live</code> document works, but it depends on an internal shape; the clean fix is on the provider/harness side, where <code>message_update</code> should be emitted.</li>
+  <li><strong>Single-user by design.</strong> No remote deploy, no billing, no multi-user.</li>
+</ul>
+          </article>
+        </div>
+      </section>
+      <section class="art-block" id="links">
+        <div class="container">
+          <article class="art-content">
+<h2>Links</h2>
+
+<ul>
+  <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/durable-agents">github.com/mariobgsp/durable-agents</a></li>
+  <li><strong>Harness:</strong> <a href="https://www.npmjs.com/package/@earendil-works/pi-durable"><code>@earendil-works/pi-durable</code></a> (pinned 1.3.0)</li>
+  <li><strong>Plan of record:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/roadmap.md"><code>docs/roadmap.md</code></a></li>
+  <li><strong>UI review gallery:</strong> <a href="https://github.com/mariobgsp/durable-agents/tree/main/docs/ui-review"><code>docs/ui-review/</code></a></li>
+</ul>
+
+<hr />
+
+<p class="fig-caption">Verified against commit <code>19256b7</code> (README uses an English example transcript). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/durable-agents.mmd"><code>diagrams/durable-agents.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/durable-agents.mjs"><code>tools/capture/durable-agents.mjs</code></a>.</p>
+          </article>
+        </div>
+      </section>
+
+      <nav class="art-next container" aria-label="More articles">
+<a class="art-next-link" href="/articles/routre/"><span>Previous</span><b>routre</b></a>
+        <a class="art-next-all" href="/articles/">All articles</a>
+<a class="art-next-link art-next-link--right" href="/articles/trading-suite/"><span>Next</span><b>trading-suite</b></a>
+      </nav>
+
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.","url":"https://mariobgsp.github.io/articles/durable-agents/","mainEntityOfPage":"https://mariobgsp.github.io/articles/durable-agents/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via @earendil-works/pi-durable 1.3.0","image":"https://mariobgsp.github.io/assets/articles/durable-agents-architecture-dark.png"}</script>
+    </main>
+
+    <footer class="footer" id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h3>GitHub</h3>
+            <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">github.com/mariobgsp</a>
+          </div>
+          <div class="footer-col">
+            <h3>Focus</h3>
+            <span>Backend &amp; API engineering</span>
+          </div>
+          <div class="footer-col">
+            <h3>Articles</h3>
+            <a href="/articles/">Every project, written up</a>
+          </div>
+          <div class="footer-col">
+            <h3>Availability</h3>
+            <span><span class="led led-green" aria-hidden="true"></span> Open to new work</span>
+          </div>
+        </div>
+        <p class="mono-tag" style="margin-top: 22px">
+          Built from open repositories &mdash; no employer or client code reproduced.
+        </p>
+      </div>
+    </footer>
+
+    <script src="../../assets/site.js"></script>
+  </body>
+</html>

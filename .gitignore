@@ -3,3 +3,4 @@
 docs/superpowers/
 .pi/
 .shots/
+__pycache__/

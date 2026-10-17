@@ -479,11 +479,10 @@
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
-/* ------------------------------------------------------ the article ---
-   Section 04 reads as one piece: a jump list, then a plate per project with
-   the stack, the code structure, the architecture and the reason it exists.
-   The marked region inside the article belongs to tools/build-pages.py; the
-   rules below style it. */
+/* ------------------------------------------------------ articles index ---
+   Section 04 is only an index now: one row per article, each linking to its
+   own page at /articles/<slug>/. The marked region belongs to
+   tools/build-articles.py; the rules below style it. */
 
 .art-standfirst {
   margin-top: clamp(20px, 2.4vw, 30px);
@@ -507,143 +506,87 @@
   color: var(--ink-3);
 }
 
-.art-toc {
-  margin-top: clamp(32px, 4vw, 48px);
-  padding: clamp(22px, 2.4vw, 30px);
-  border-radius: var(--r-xl);
-  background: var(--surface-1);
-  box-shadow: var(--shadow-rest);
+.art-index {
+  margin-top: clamp(24px, 3vw, 36px);
+  border-top: 1px solid var(--line);
 }
 
-.art-toc-title {
+.art-index li + li { border-top: 1px solid var(--line-soft); }
+
+.art-index-row {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto 1.2rem;
+  grid-template-areas:
+    "no name lang go"
+    ". strap strap .";
+  align-items: baseline;
+  gap: 3px 18px;
+  padding: 18px 8px;
+  transition: background-color 500ms var(--ease-out);
+}
+
+.art-index-row:hover { background: rgba(255, 255, 255, 0.03); }
+
+.art-index-no {
+  grid-area: no;
   font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
   color: var(--ink-3);
 }
 
-.art-toc ol {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 26px;
-  margin-top: 14px;
+.art-index-name {
+  grid-area: name;
+  font-size: clamp(1.05rem, 1.6vw, 1.22rem);
+  letter-spacing: -0.025em;
+  color: var(--ink);
 }
 
-.art-toc a {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--line-soft);
-  color: var(--ink-2);
-  font-size: 0.94rem;
-  transition: color var(--dur) var(--ease);
-}
-
-.art-toc a:hover { color: var(--ink); }
-
-.art-toc-idx,
-.art-toc-lang {
+.art-index-lang {
+  grid-area: lang;
   font-family: var(--mono);
   font-size: 0.6rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
+  white-space: nowrap;
 }
 
-.art-toc-lang { white-space: nowrap; }
-
-.art-entry {
-  margin-top: clamp(24px, 3vw, 40px);
-  padding: clamp(24px, 2.8vw, 40px);
-  border-radius: var(--r-xl);
-  background: var(--surface-1);
-  box-shadow: var(--shadow-rest);
+.art-index-go {
+  grid-area: go;
+  justify-self: end;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+  transition: transform 500ms var(--ease), color 500ms var(--ease);
 }
 
-.art-index {
+.art-index-row:hover .art-index-go {
+  transform: translateX(3px);
+  color: var(--violet);
+}
+
+.art-index-strap {
+  grid-area: strap;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+}
+
+.art-index-all {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 8px;
   font-family: var(--mono);
   font-size: 0.64rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
+  transition: color 500ms var(--ease);
 }
 
-.art-name {
-  margin-top: 12px;
-  font-size: clamp(1.6rem, 3vw, 2.3rem);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-}
-
-.art-strap {
-  margin-top: 12px;
-  max-width: 58ch;
-  color: var(--ink-2);
-}
-
-.art-head .tags { margin-top: 18px; }
-
-.art-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr);
-  gap: clamp(24px, 3.4vw, 56px);
-  margin-top: clamp(24px, 3vw, 36px);
-}
-
-.art-lead { max-width: 62ch; font-size: 1.02rem; }
-
-.art-label {
-  margin-top: 34px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line-soft);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--violet);
-}
-
-.art-label + * { margin-top: 16px; }
-.art-body .prose + .art-label { margin-top: 34px; }
-
-.art-stack { display: grid; gap: 14px; }
-
-.art-stack-row {
-  display: grid;
-  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
-  gap: 4px 20px;
-  align-items: baseline;
-}
-
-.art-stack dt {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--ink);
-}
-
-.art-stack dd { margin: 0; font-size: 0.95rem; color: var(--ink-2); }
-
-.art-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 34px;
-}
-
-.art-side .stat-row { gap: 18px; margin: 22px 0 0; padding: 18px 0 0; }
-.art-side .stat b { font-size: 1.35rem; }
+.art-index-all:hover { color: var(--ink); }
 
 .art-close { margin-top: clamp(28px, 3.4vw, 44px); }
-
-@media (max-width: 960px) {
-  .art-grid { grid-template-columns: minmax(0, 1fr); }
-  .art-stack-row { grid-template-columns: minmax(0, 1fr); }
-  .art-toc ol { grid-template-columns: minmax(0, 1fr); }
-}
 
 /* --------------------------------------------- github contributions ---
    The graph is drawn by assets/contrib.js from the committed snapshot in
@@ -1065,7 +1008,7 @@ a.tb-value:hover { color: var(--violet); }
       <li><a href="#about"><span class="link-idx">01</span>About</a></li>
       <li><a href="#method"><span class="link-idx">02</span>Method</a></li>
       <li><a href="#experience"><span class="link-idx">03</span>Experience</a></li>
-      <li><a href="#projects"><span class="link-idx">04</span>Projects</a></li>
+      <li><a href="#articles"><span class="link-idx">04</span>Articles</a></li>
       <li><a href="#skills"><span class="link-idx">05</span>Skills</a></li>
       <li><a href="#contact"><span class="link-idx">06</span>Contact</a></li>
     </ul>
@@ -1077,7 +1020,7 @@ a.tb-value:hover { color: var(--violet); }
   <a href="#about">About</a>
   <a href="#method">Method</a>
   <a href="#experience">Experience</a>
-  <a href="#projects">Projects</a>
+  <a href="#articles">Articles</a>
   <a href="#skills">Skills</a>
   <a href="#contact">Contact</a>
 </div>
@@ -1293,418 +1236,89 @@ a.tb-value:hover { color: var(--violet); }
     </div>
   </section>
 
-  <section id="projects" class="section anchor">
+  <section id="articles" class="section anchor">
     <div class="container">
-      <div class="sheet-head"><p class="fig-label"><b>04</b> Projects</p></div>
+      <div class="sheet-head"><p class="fig-label"><b>04</b> Articles</p></div>
       <div class="sheet-rule"></div>
 
       <article class="feature" aria-labelledby="feature-title">
         <h2 class="section-title reveal" id="feature-title">Things I built and still maintain.</h2>
 
         <p class="art-standfirst reveal">
-          Seven projects, one habit: build the smallest thing that proves the idea, then measure it until
-          the claim is either true or gone. Each entry below says what the project is, what it is built
-          on, where the code lives, how it works and why it exists. Every figure is quoted from the
-          repository itself &mdash; where a README publishes nothing, the entry says that too.
+          Five articles, one habit: build the smallest thing that proves the idea, run it, and write down
+          what the run showed. Each one has its own page &mdash; the problem it prevents, why the stack is
+          what it is, how a request moves through it, the numbers I measured, the defects I found by
+          running it, and what I would fix next. Every figure is quoted from the code or from a run;
+          where the repository publishes nothing, the article says that too.
         </p>
 
         <div class="art-meta reveal">
           <span>Muhammad Ario Bagus Prakusa</span>
-          <span>Updated <time datetime="2026-10-15">15 October 2026</time></span>
-          <span>~21 min read</span>
+          <span>Updated <time datetime="2026-10-17">17 October 2026</time></span>
+          <span>One page per article</span>
         </div>
 
         <!-- article:begin -->
-        <nav class="art-toc reveal" aria-label="Projects in this article">
-          <p class="art-toc-title">In this article</p>
-          <ol>
-              <li><a href="#art-routre"><span class="art-toc-idx">01</span><span class="art-toc-name">routre</span><span class="art-toc-lang">Go</span></a></li>
-              <li><a href="#art-arness"><span class="art-toc-idx">02</span><span class="art-toc-name">arness</span><span class="art-toc-lang">TypeScript</span></a></li>
-              <li><a href="#art-t-notes"><span class="art-toc-idx">03</span><span class="art-toc-name">t-notes</span><span class="art-toc-lang">JavaScript</span></a></li>
-              <li><a href="#art-payment-system"><span class="art-toc-idx">04</span><span class="art-toc-name">Payment System</span><span class="art-toc-lang">Go</span></a></li>
-              <li><a href="#art-the-gateway"><span class="art-toc-idx">05</span><span class="art-toc-name">The Gateway</span><span class="art-toc-lang">Go</span></a></li>
-              <li><a href="#art-trading-suite"><span class="art-toc-idx">06</span><span class="art-toc-name">Trading Suite</span><span class="art-toc-lang">Python</span></a></li>
-              <li><a href="#art-trading-cli"><span class="art-toc-idx">07</span><span class="art-toc-name">Trading CLI</span><span class="art-toc-lang">Python</span></a></li>
-              <li><a href="/work/"><span class="art-toc-idx">&#8594;</span><span class="art-toc-name">Every write-up, page by page</span><span class="art-toc-lang">7 pages</span></a></li>
-          </ol>
-        </nav>
-
-        <article class="art-entry" id="art-routre">
-          <header class="art-head reveal">
-            <p class="art-index">01 &middot; Go</p>
-            <h3 class="art-name">routre</h3>
-            <p class="art-strap">One static Go binary that cuts AI token bills and fails over providers for any CLI.</p>
-            <ul class="tags"><li class="tag">Go</li><li class="tag">LLM gateway</li><li class="tag">OpenAI-compatible</li><li class="tag">token compression</li><li class="tag">failover</li><li class="tag">single binary</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-routre.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-              <div class="stat-row">
-                <div class="stat"><b>94.8%</b><span>RTK tool-token reduction</span></div>
-                <div class="stat"><b>93.3%</b><span>Worst per-payload reduction</span></div>
-                <div class="stat"><b>12.6 MiB</b><span>Idle RSS</span></div>
-              </div>
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">routre is a small local gateway that sits between your AI apps and AI providers on your own machine. Point a coding agent at http://127.0.0.1:20128 once and it keeps working while routre shrinks repetitive tool output before it is billed, replays identical requests from a cache, and switches to the next provider if one is busy or down.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>Go, standard library only</dt><dd>One static binary (10.9 MiB, ~12.6 MiB idle) with no Node, Python, Postgres or Redis; the proxy is net/http, so no framework sits between the reader and the request path.</dd></div>
-                <div class="art-stack-row"><dt>HTTP + SSE dialects</dt><dd>internal/proxy/dialect/ is a cross-kind SSE state machine (OpenAI to Anthropic to Gemini), which is what lets one address serve every OpenAI/Anthropic-compatible CLI.</dd></div>
-                <div class="art-stack-row"><dt>RTK compression</dt><dd>11 heuristic tool_result filters (git diff and log, grep, tree/ls/find dedup, build output, smart truncate) that never grow a payload and fail open; the shipped level measures 94.8% aggregate tool-token reduction.</dd></div>
-                <div class="art-stack-row"><dt>LRU response cache</dt><dd>Exact-match on the SHA-256 of the canonical body after RTK; streaming and non-streaming entries share a key space but never cross, and an on-disk snapshot keeps the cache warm across restarts.</dd></div>
-                <div class="art-stack-row"><dt>Local config + loopback dashboard</dt><dd>routre setup writes config.json and routre.env (0600), and the loopback-only /ui edits keys and routing without hand-editing JSON.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>main.go plus one file per command - setup.go, start.go, stop.go, list.go, models.go, bench.go, update.go; bench.go is the gate that fails on any RTK regression below the target.</li>
-                <li>internal/proxy/ - the pipeline with runner.go for retry and failover; internal/proxy/dialect/ holds the cross-kind SSE state machine.</li>
-                <li>internal/rtk/ - the 11 heuristic tool_result filters, each bounded by a 512 KiB scan window and a 150 ms budget.</li>
-                <li>internal/cache/ - the exact-match LRU keyed on the SHA-256 of the canonical post-RTK body, with its on-disk snapshot for warm restarts.</li>
-                <li>internal/router/ - tier walking and per-provider cooldown; internal/usage/ - the ~/.routre/usage.json token and cost ledger.</li>
-                <li>The loopback-only /ui dashboard is served from internal/proxy/, so the gateway and its settings page ship in the same binary.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>Every request walks the same seven steps: detect dialect, RTK compress, cache lookup, tiered route, candidateRunner retry, translate, relay.</li>
-                <li>Compression is bounded and fail-open: no filter may enlarge a payload, and the work stops at the scan window or the time budget rather than delaying the request.</li>
-                <li>Routing prefers the cheapest healthy provider: tiers are walked in config order (subscription, then cheap, then free) and a failure puts that provider on an exponential cooldown from 2s to 5m.</li>
-                <li>Failover is bounded, not open-ended: one transient retry, one auth refresh on 401/403, then the next candidate; timeouts.candidate_seconds defaults to 45s with one bounded 45s extension and a 120s header ceiling.</li>
-                <li>The ledger is derived from the path that bills: internal/usage/ records per-agent tokens and cost, including what RTK and the cache saved.</li>
-                <li>Savings are measured on tool-result tokens only - output tokens are never compressed - so the published percentage is a benchmark instrument, not a billing guarantee.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">Agent traffic is repetitive: the same diff, the same grep hits, the same build log are re-sent on every turn and billed again. routre sits on the loopback address between the app and the provider, shrinks that noise before it is billed, and answers identical requests from cache - so a session costs less without the agent changing.</p>
-              <p class="prose">The second motive is availability. Subscription providers get busy or rate-limited mid-task, so the gateway walks provider tiers and fails over instead of failing the request, and keeps a per-agent ledger because nobody could otherwise say what a session actually cost.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/routre/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener" aria-label="routre repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="art-entry" id="art-arness">
-          <header class="art-head reveal">
-            <p class="art-index">02 &middot; TypeScript</p>
-            <h3 class="art-name">arness</h3>
-            <p class="art-strap">Lean local AI coding harness: one binary, CLI + TUI, MCP/LSP, skills, extensions, optimizer.</p>
-            <ul class="tags"><li class="tag">TypeScript</li><li class="tag">CLI + TUI</li><li class="tag">MCP/LSP</li><li class="tag">extensions</li><li class="tag">single binary</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-arness.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">arness is a coding agent that runs entirely on your machine as one binary: an interactive TUI and a print mode over the same turn loop, with tools (bash, filesystem, search), skills, an extension API, MCP and LSP capabilities, subagents, memory and a token optimizer.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>TypeScript on Node 26</dt><dd>Erasable syntax only, checked with tsc --noEmit; TypeScript is the only devDependency, so the source carries no build-time framework.</dd></div>
-                <div class="art-stack-row"><dt>bun build --compile</dt><dd>One self-contained executable per platform; install.sh and install.ps1 drop it under the user data directory and link a shim onto PATH.</dd></div>
-                <div class="art-stack-row"><dt>node --test</dt><dd>The suite runs on the runtime&#x27;s own test runner with no framework; provider streams are parsed against committed SSE captures, so tests never touch the network.</dd></div>
-                <div class="art-stack-row"><dt>MCP + LSP</dt><dd>src/capabilities/ attaches MCP servers and a language server to the session, so context comes from real tools rather than from the loop guessing.</dd></div>
-                <div class="art-stack-row"><dt>JSONL event log + savings ledger</dt><dd>One event log per session under the state directory makes /fork and /switch cheap; optimizer.jsonl keeps one savings row per provider call.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>src/main.ts - entrypoint and mode selection: interactive TUI, or -p for one turn, print and exit.</li>
-                <li>src/core/ - config, events and session, the turn loop, system prompt and skills, token accounting and rendering (config.ts, events.ts, session.ts, loop.ts, system-prompt.ts, skills.ts, tokens.ts, render.ts, commands.ts, context.ts).</li>
-                <li>src/tools/ - the bash, filesystem and search tools plus the registry; src/ext/ - the extension loader, hooks, host and types.</li>
-                <li>src/capabilities/ - MCP, LSP, subagents, memory, review, search and todo guards.</li>
-                <li>src/optimizer/ - prefix order, compression, clamp, breakpoints and prune, with report.ts and rtk.ts; src/providers/openai.ts is the provider adapter.</li>
-                <li>src/tui/ - input, theme and the terminal UI; test/ - node --test suites with committed SSE fixtures; scripts/check-names.mjs guards against foreign harness references.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>One loop, two front ends: the TUI and print mode drive the same turn loop, so a scripted run and an interactive session take an identical path through tools, capability hooks and the optimizer.</li>
-                <li>The optimizer runs before the request: it rewrites the outgoing payload and appends a savings row per provider call, which is what makes the ledger auditable.</li>
-                <li>Sessions are files: every event is appended to sessions/&lt;cwd-slug&gt;/&lt;iso&gt;_&lt;id&gt;.jsonl, so forking, switching and inspecting a session need no database.</li>
-                <li>Extensions hook the loop: src/ext/ exposes lifecycle hooks, and a tool_call hook can veto a call before it runs, so policy can be added without editing core.</li>
-                <li>Capabilities are attached, not baked in: MCP servers, a language server, subagents and memory are registered onto the session, which keeps the loop small and the surface testable.</li>
-                <li>Boundaries are stated rather than implied: the bash tool is unrestricted code execution with no isolation layer, and the extension hook is the intended place to add policy.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">Most harnesses are a hosted runtime with a CLI attached. arness is the opposite: one local binary you own, where the turn loop, the tools, the provider adapter and the optimizer all live in a single TypeScript source tree, and nothing leaves the machine except the provider call you configured.</p>
-              <p class="prose">The optimizer exists because agent sessions are mostly repetition. Prefix ordering, compression, clamping, breakpoints and pruning are applied before the request, and every saving is appended to a ledger - so the number can be checked instead of claimed.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/arness/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/arness" target="_blank" rel="noopener" aria-label="arness repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="art-entry" id="art-t-notes">
-          <header class="art-head reveal">
-            <p class="art-index">03 &middot; JavaScript</p>
-            <h3 class="art-name">t-notes</h3>
-            <p class="art-strap">Local-first notes and kanban in the browser - no cloud, no framework, no build step.</p>
-            <ul class="tags"><li class="tag">local-first</li><li class="tag">kanban</li><li class="tag">vanilla JS</li><li class="tag">Go</li><li class="tag">Tauri</li><li class="tag">no dependencies</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-t-notes.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-              <div class="stat-row">
-                <div class="stat"><b>9.7 MiB</b><span>Windows exe size</span></div>
-                <div class="stat"><b>50 items</b><span>Notes list render window</span></div>
-                <div class="stat"><b>15</b><span>e2e tests (t-notes.spec.js)</span></div>
-              </div>
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">t-notes is a single-user notes app and a kanban board in one, with all data kept in your own browser - nothing is sent to a server, and there is no account or sync service.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>Vanilla HTML, CSS and JavaScript</dt><dd>web/index.html, styles.css and app.js are the entire UI - no framework, no bundler, no npm install; content-visibility: auto keeps long lists cheap and the three themes are plain CSS.</dd></div>
-                <div class="art-stack-row"><dt>localStorage</dt><dd>The only datastore: all state lives under the key t-notes-v1 and is written on every mutation, so there is no API client and no server-side session.</dd></div>
-                <div class="art-stack-row"><dt>Go with //go:embed</dt><dd>main.go embeds web/ and serves it from a local net/http server, opens the default browser, and self-installs or uninstalls from the same binary.</dd></div>
-                <div class="art-stack-row"><dt>Tauri v2 + Rust</dt><dd>The desktop shell: one Rust command (match_notes) for batch substring search with a JS fallback, and an NSIS installer with a launch-on-login plugin.</dd></div>
-                <div class="art-stack-row"><dt>Playwright</dt><dd>e2e/t-notes.spec.js (15 tests) runs against system Chromium with a mocked AI endpoint; build-windows.sh cross-compiles the Windows exe and setup exe from Linux.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>web/ - the entire front end: index.html, styles.css, app.js and logo.svg, with const K = t-notes-v1 at the top of app.js as the storage key for all state.</li>
-                <li>main.go - the Go host: //go:embed web/, the local net/http server, browser launch, and the setup/--install and --uninstall paths.</li>
-                <li>src-tauri/ - the desktop shell: src/main.rs exposes match_notes, and tauri.conf.json sets frontendDist to ../web and bundles the NSIS installer with tauri-plugin-autostart.</li>
-                <li>e2e/t-notes.spec.js - the Playwright suite, run against system Chromium with a mocked AI endpoint.</li>
-                <li>build-windows.sh + go.mod - cross-compile the Windows exe and setup exe from Linux.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>One store, two views: notes pinned to a board list render as cards, so the board and the notes view are the same objects and an edit in either is the same write.</li>
-                <li>Two host paths share one front end: the Go exe acts as a browser launcher (with an /api/startup fallback for the power toggle) and the Tauri app opens its own window and installer.</li>
-                <li>State is local-first by construction: no sync layer, no account and no multi-device story - the only optional network call is the bring-your-own-key AI request.</li>
-                <li>The AI assistant keeps the key in the browser and never exports it; summaries, checklists, rewrites and ideas all run against the URL and key the user supplies.</li>
-                <li>Long lists stay cheap by capping what is rendered (a 50-item window) and letting content-visibility skip off-screen work.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">t-notes is the answer to using a board and a notes app for things that should never leave the laptop: no account, no sync service, no build step and no framework. All data stays in browser localStorage, and the board and the notes are one system - a note pinned to a list renders as a card in both views.</p>
-              <p class="prose">It also exists to show how small that can be: the entire UI is three static files, the Windows build is a 9.7 MiB Go exe that embeds them, and the Tauri shell adds one Rust command for large-corpus search.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/t-notes/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/t-notes" target="_blank" rel="noopener" aria-label="t-notes repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="art-entry" id="art-payment-system">
-          <header class="art-head reveal">
-            <p class="art-index">04 &middot; Go</p>
-            <h3 class="art-name">Payment System</h3>
-            <p class="art-strap">Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds.</p>
-            <ul class="tags"><li class="tag">Go</li><li class="tag">PostgreSQL</li><li class="tag">Redis</li><li class="tag">Next.js</li><li class="tag">Docker Compose</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-payment-system.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">A working payment lifecycle built end to end: a customer signs in, picks a product, places an order, charges it, and refunds it. Every state change runs through one TransactionLifecycle module that pairs a PostgreSQL transaction with an outbox row and an idempotency key, so retries and duplicate clicks cannot double-charge.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>Go</dt><dd>The whole backend is one binary. Lifecycle, store and jobs are plain Go over database/sql with no ORM, so the transaction boundary and the idempotency insert stay visible in one function.</dd></div>
-                <div class="art-stack-row"><dt>PostgreSQL</dt><dd>System of record for the transaction and store schemas: one SQL transaction writes the state change, the outbox row and the idempotency key, which is what makes retries safe.</dd></div>
-                <div class="art-stack-row"><dt>Redis</dt><dd>Short-lived charge state for the partner stub (ms-paymentagr), so the fake provider can behave like one without a database of its own.</dd></div>
-                <div class="art-stack-row"><dt>Next.js 16 + TypeScript + Tailwind</dt><dd>The portal - login, catalog, checkout, status, refunds. Its server-side client (frontend/src/lib/gateway.ts) calls the monolith, so browser code never holds a partner key.</dd></div>
-                <div class="art-stack-row"><dt>Docker Compose</dt><dd>Five containers (postgres, redis, ms-paymentagr, monolith, frontend) from one command; pg-init-scripts seed schemas, demo users and products, so the lifecycle is runnable with no cloud account.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>monolith/lifecycle/ - the deep module: lifecycle.go holds the state chart (CREATED to READY to SUCCESS/FAILED/REFUND) plus idempotency, and pricing.go holds the discount math.</li>
-                <li>monolith/cmd/ - wiring and the endpoint table: routes.go, handlers.go for the new API, legacy.go for the ms-* compatible paths, http.go for envelopes plus partner and outbox transport.</li>
-                <li>monolith/store/ - the persistence seam: store.go types with pg.go for production and memory.go as the dev/test fake, over the transaction + store schemas.</li>
-                <li>monolith/jobs/, monolith/invoice/, monolith/invoiceworker/ - the background half: the outbox poller, the sweeper and the invoice worker that writes receipt files.</li>
-                <li>ms-paymentagr/ - the partner stub (Go/Gin + Redis): usecase/ drives charge, refund, the CheckoutUrl page and HMAC-SHA256 callbacks behind the api-key header.</li>
-                <li>frontend/ - the Next.js portal; frontend/src/lib/gateway.ts is the only place that talks to the monolith.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>State only changes through the lifecycle module: the state change, the outbox row and the idempotency key are written in one PostgreSQL transaction, so a repeat of the same Idempotency-Key returns the original result instead of charging twice.</li>
-                <li>Callbacks are verified before they are trusted: HMAC-SHA256 over the body with a 300s replay window; a forged signature is rejected with 401 and never reaches the lifecycle.</li>
-                <li>Asynchronous work is a table, not a queue client: outbox.go polls every 5s, routes ms-notify-payment rows to the invoice worker and keeps servicelogs queryable, retries with 3x backoff and terminates poison messages in a dlq.* row.</li>
-                <li>The sweeper keeps stale state honest: READY transactions older than 5m move to FAILED, and servicelogs are purged past LOG_RETENTION_DAYS.</li>
-                <li>The invoice worker writes INVOICE_DIR/invoice_&lt;tx&gt;.json and sanitizes the transaction id against path traversal before it touches the filesystem.</li>
-                <li>The README publishes no benchmark numbers: splitting the monolith is explicitly deferred until a load measurement justifies it, which is why this repo shows a lifecycle rather than a throughput claim.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">Payment retries are where systems go wrong: a customer double-clicks, a partner callback arrives twice, a worker dies mid-flight. This repo keeps those paths in one place - a single TransactionLifecycle module that pairs the PostgreSQL transaction, the outbox row and the idempotency key - so there is exactly one way a payment changes state.</p>
-              <p class="prose">It was written as a reference implementation rather than a product: the unglamorous half of payments as code you can start with docker compose, break on purpose and read. HMAC-verified callbacks with a replay window, an outbox poller that ends poison messages in a DLQ, and a sweeper that keeps stale state honest.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/payment-system/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener" aria-label="payment-system repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="art-entry" id="art-the-gateway">
-          <header class="art-head reveal">
-            <p class="art-index">05 &middot; Go</p>
-            <h3 class="art-name">The Gateway</h3>
-            <p class="art-strap">Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side.</p>
-            <ul class="tags"><li class="tag">Next.js 15</li><li class="tag">React 19</li><li class="tag">TypeScript</li><li class="tag">chi + pgx</li><li class="tag">PostgreSQL</li><li class="tag">Kubernetes</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-the-gateway.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-              <div class="stat-row">
-                <div class="stat"><b>5 fails / 10 min</b><span>Config: login throttle</span></div>
-                <div class="stat"><b>2 to 10</b><span>Config: HPA replica range</span></div>
-                <div class="stat"><b>30s (5s dial)</b><span>Config: upstream timeout</span></div>
-              </div>
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">It is a self-hosted API management console: you register an upstream API by giving it an identifier, host, path, method, and the headers or parameters it may pass through, then the gateway forwards those calls for you.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>Next.js 15 + React 19 + TypeScript</dt><dd>BFF and console in one app: route handlers and server-side lib code mean the JWT never has to leave the server, and the console is plain app-router pages.</dd></div>
-                <div class="art-stack-row"><dt>Go (chi + pgx)</dt><dd>The gateway itself: a small router, one typed store file per entity over pgx, and forwarders with explicit dial and client timeouts.</dd></div>
-                <div class="art-stack-row"><dt>PostgreSQL</dt><dd>Users, store accounts, registered APIs, and the system_properties row that holds the signing secret - read per request rather than cached in the process.</dd></div>
-                <div class="art-stack-row"><dt>JWT + httpOnly cookie</dt><dd>Auth across the seam: login issues a JWT, the BFF keeps it in a SameSite=Lax httpOnly cookie, and a Bearer middleware in Go guards everything except /health and login.</dd></div>
-                <div class="art-stack-row"><dt>Kubernetes</dt><dd>The Go service ships with a Deployment (2 replicas, /health probes, 32Mi request / 64Mi limit) and an HPA that scales 2 to 10 pods on CPU 60% and memory 70%.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>frontend/src/app/gw/[...path]/route.ts - the catch-all BFF route; frontend/src/lib/gwRoutes.ts is the declarative route table and frontend/src/lib/bffGateway.ts owns session-to-401 mapping, the 20s AbortController, sanitization and envelope translation.</li>
-                <li>frontend/src/lib/session.ts and frontend/src/middleware.ts - the httpOnly cookie session and the guard over /home, /api/* and /store/*.</li>
-                <li>gateway-go/internal/handler/ - chi routes plus the Bearer-token middleware; only /health and /gateway/user/login stay public.</li>
-                <li>gateway-go/internal/store/ - one file per entity (user, account, api, postgres.go) over pgx.</li>
-                <li>gateway-go/internal/service/ - forward.go (typed ForwardRequest) and upstream.go (persisted header allowlist, single query encode, 5s dial / 30s client timeout).</li>
-                <li>k8s/gateway-go/ - deployment.yaml and hpa.yaml.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>All backend calls are server-side: the browser only ever talks to the Next.js BFF, which attaches the JWT from the httpOnly cookie and translates upstream failures into NextResponse envelopes.</li>
-                <li>The route table is data, not code: gwRoutes.ts declares which gateway paths exist, so adding an upstream surface is an edit in one file - and the current table accepts only GET and POST.</li>
-                <li>Auth is two-layered: the BFF owns the session cookie, and the Go service re-checks the Bearer token on everything under /api/gateway and /api/store before a handler runs.</li>
-                <li>Forwarding is allowlisted: upstream.go applies the persisted header and parameter allowlist, encodes the query once, and bounds the call with a 5s dial and 30s client timeout.</li>
-                <li>Scale-out is declared rather than assumed: the HPA runs 2 to 10 pods, while login throttling is per-username and in memory, so it resets on restart and does not aggregate across replicas.</li>
-                <li>The Kubernetes manifests cover gateway-go only; the frontend and PostgreSQL run outside the cluster, and the repo publishes no load-test numbers.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">Every internal tool ends up with its own copy of the same upstream credentials. This repo is the counter-example: an upstream API is registered once - identifier, host, path, method, allowed headers and parameters - and every client calls the gateway instead of the upstream.</p>
-              <p class="prose">It is also a deliberate exercise in keeping a token out of the browser. Browser to Next.js BFF to Go service, with the JWT in an httpOnly cookie and the signing secret read per request from system_properties, so no JWT ever reaches browser JavaScript or localStorage.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/the-gateway/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener" aria-label="the-gateway repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="art-entry" id="art-trading-suite">
-          <header class="art-head reveal">
-            <p class="art-index">06 &middot; Python</p>
-            <h3 class="art-name">Trading Suite</h3>
-            <p class="art-strap">Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes.</p>
-            <ul class="tags"><li class="tag">Python</li><li class="tag">FastAPI</li><li class="tag">Next.js</li><li class="tag">TypeScript</li><li class="tag">SQLite</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-trading-suite.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-              <div class="stat-row">
-                <div class="stat"><b>39 passed</b><span>Backend test suite</span></div>
-                <div class="stat"><b>900+ tickers</b><span>IDX universe in config</span></div>
-                <div class="stat"><b>22 apps to 5</b><span>UI routes after lean pass</span></div>
-              </div>
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">A self-hosted desk for the Indonesian stock market (IDX). It pulls quotes, history, foreign flow and broker activity from public feeds, caches them, and turns them into five screens: an overview, a charting page with foreign-flow bars, a streaming screener, a per-ticker profiler, and calculators.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>Python + FastAPI</dt><dd>The backend: one router per domain (market, screener, validator, intel, analysis, regime, backtest, portfolio, summary, alerts, sentiment) with the analysis kept one level up in service modules.</dd></div>
-                <div class="art-stack-row"><dt>SQLite in WAL mode</dt><dd>The cache seam: per-feed TTLs with stale-while-revalidate in backend/data/cache.db, so a screen refresh does not hammer the public feeds.</dd></div>
-                <div class="art-stack-row"><dt>Server-Sent Events</dt><dd>The screener streams results from GET /api/screener/scan/stream and the client mirrors the same cache policy in src/lib/cache.ts (memory + sessionStorage).</dd></div>
-                <div class="art-stack-row"><dt>Next.js 16 + React + TypeScript</dt><dd>The five UI routes (overview, markets, screener, profiler, calculators) after a lean pass from 22 app routes; the nav is generated from one source in src/lib/apps.ts.</dd></div>
-                <div class="art-stack-row"><dt>curl_cffi + yfinance</dt><dd>The data path: an IDX summary endpoint and .JK history - cached copies of third-party feeds, not an exchange-grade tick store, and the repo says so.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>backend/app/main.py - wires the routers; backend/app/routers/ holds one router per domain and the services live one level up in backend/app/*.py.</li>
-                <li>backend/app/screener.py, idx.py, cache.py, db.py - the scan path: the suspended-ticker filter runs before the ThreadPool fan-out, then results stream over SSE from the SQLite WAL cache.</li>
-                <li>backend/app/validator.py - BandarmologyAnalyzer (phase, intent radar, flow metrics) behind GET /api/validator/{ticker} and inside the profiler page.</li>
-                <li>backend/app/_fifo.py + portfolio.py - the FIFO P/L engine and its JSON load/save; backend/app/backtest.py + routers/analysis.py - the pattern backtests. Both are API-only: next.config.ts redirects /portfolio and /backtest to /profiler.</li>
-                <li>frontend src/app/{overview,markets,screener,profiler,calculators} with src/lib/apps.ts as the single nav source, and backend/data/cache.db as the only datastore.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>Caching is the seam that makes it cheap: per-feed TTLs in a SQLite WAL file with stale-while-revalidate and _spawn_refresh dedupe, mirrored in the browser by src/lib/cache.ts.</li>
-                <li>A scan is filtered before it is fetched: the suspended-ticker filter runs in idx.py before the ThreadPool fans out, so excluded names never reach a feed.</li>
-                <li>The API is the product surface: routers stay thin and the analysis lives in service modules, so the profiler page, the validator endpoint and the backtest endpoint all read the same engine.</li>
-                <li>Nothing is stored in a company cloud: quotes live in backend/data/cache.db and the only outbound calls are to the public data sources.</li>
-                <li>AI summaries are no longer a feature: backend/app/ai.py is an explicit no-op stub that returns None and nothing imports it, so every caller falls back to deterministic text.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">This repo exists to answer one question once a session: which Indonesian stocks should be bought at the next open, and why. It is a self-hosted desk - your own FastAPI backend, your own cached copy of the market data - instead of another market-data subscription.</p>
-              <p class="prose">The strongest feature is bandarmology, Indonesian broker-flow analysis: phase, intent radar and flow metrics computed from broker activity, with a FIFO portfolio engine and a backtest surface behind the same API, so a number on screen can be traced back to the code that produced it.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/trading-suite/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener" aria-label="trading-suite repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="art-entry" id="art-trading-cli">
-          <header class="art-head reveal">
-            <p class="art-index">07 &middot; Python</p>
-            <h3 class="art-name">Trading CLI</h3>
-            <p class="art-strap">Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.</p>
-            <ul class="tags"><li class="tag">Python 3.11+</li><li class="tag">pandas</li><li class="tag">yfinance</li><li class="tag">IDX/IHSG</li><li class="tag">Backtesting</li><li class="tag">Walk-forward</li></ul>
-          </header>
-          <div class="art-grid reveal">
-            <div class="art-side">
-              <img class="thumb" src="assets/thumbs/thumb-trading-cli.png" width="1200" height="630" loading="lazy" decoding="async" alt="" />
-              <div class="stat-row">
-                <div class="stat"><b>~900 IDX tickers</b><span>Universe per scan</span></div>
-                <div class="stat"><b>~48% (n=110)</b><span>scalp_ema_5 pooled winrate</span></div>
-                <div class="stat"><b>50.8% to 12.5%</b><span>hr_pdl: pooled to OOS</span></div>
-              </div>
-            </div>
-            <div class="art-body">
-              <p class="prose art-lead">It screens roughly 900 IDX/IHSG tickers each morning against the Minervini Trend Template (8 checks) plus a VCP contraction score, then plans the entry zone, stop and targets for the ones that qualify.</p>
-              <h4 class="art-label">Tech stack</h4>
-              <dl class="art-stack">
-                <div class="art-stack-row"><dt>Python 3.11+ and pandas</dt><dd>The whole tool is one CLI (trading_cli/cli.py); indicators and scan math are pandas over daily bars - no server, no API keys, no database to run.</dd></div>
-                <div class="art-stack-row"><dt>yfinance + SQLite</dt><dd>The data path: a throttled 4-thread fetch with rate-limit backoff over a 12h-TTL WAL cache in the XDG cache directory, with stale-while-revalidate.</dd></div>
-                <div class="art-stack-row"><dt>Minervini Trend Template + VCP</dt><dd>The screen itself: 8 trend checks plus a volatility-contraction score, with relative strength measured against ^JKSE before any candidate is planned.</dd></div>
-                <div class="art-stack-row"><dt>Walk-forward validation</dt><dd>Rolling train-252 / step-60 windows: a threshold is kept only when it survives unseen data, which is why the README reports roughly 50% pooled win rate instead of a 70% sleeve.</dd></div>
-                <div class="art-stack-row"><dt>Expectancy + Wilson interval</dt><dd>Ranking is by expectancy p*avgWin + (1-p)*avgLoss and a 95% Wilson bound, not raw win rate, so a high win rate with 0.5R losers cannot top the leaderboard.</dd></div>
-              </dl>
-              <h4 class="art-label">Code structure</h4>
-              <ul class="deliverables">
-                <li>trading_cli/cli.py - the whole surface (the trading-cli script in pyproject.toml): flags, scan, expectancy ranking, qualifiers split from near_miss, JSON out.</li>
-                <li>trading_cli/scan.py, minervini.py, data.py, cache.py - universe fetch and throttling, trend template, VCP score and relative strength over the SQLite cache.</li>
-                <li>trading_cli/backtest.py + regime.py - the 18-entry STRATS table, next-open fills with fees and slippage, and the regime tags each trade carries.</li>
-                <li>trading_cli/validate.py + tune.py - walk-forward out-of-sample replay and the VCP threshold grid under the same gate.</li>
-                <li>trading_cli/entry.py + ml_filter.py - buy zone, tightest stop and T1/T2/T3 targets, plus the pooled-n and leakage guards that keep future ML work honest.</li>
-              </ul>
-              <h4 class="art-label">Architecture</h4>
-              <ul class="deliverables">
-                <li>One pass produces the answer: scan the universe, gate on regime (ADTV, ATR14, IHSG stage, CMF), rank survivors by expectancy, then split them into qualifiers and near_miss.</li>
-                <li>Every pick carries its evidence: the strategies that backtested it, the pooled win rate with a Wilson bound, and the regime tag at entry.</li>
-                <li>Thresholds are earned rather than chosen: validate.py replays strategies on rolling windows and tune.py grids VCP thresholds under the same out-of-sample gate.</li>
-                <li>The entry plan is derived from the pivot: the 20-day high becomes the buy zone, and the tightest of the 20-day low, close minus 2 ATR or -8% becomes the stop.</li>
-                <li>Data is daily and best-effort: yfinance with throttle and backoff, so coverage is only as good as that feed - reported in the README rather than hidden.</li>
-              </ul>
-              <h4 class="art-label">Why it exists</h4>
-              <p class="prose">Most screeners answer with a list and no accounting for whether the list makes money. This one answers with a plan and an honest no-trade: roughly 900 IDX tickers screened each morning, then every qualifying pick backtested against 18 strategies with real fees and slippage, tagged with the market regime at entry and re-checked walk-forward out-of-sample.</p>
-              <p class="prose">The output is machine-readable JSON on purpose - picks, near_miss, leaderboard, regime_pooled, wf_regime - so a swing trader or an agent can run it before the open and sit out when the evidence is thin instead of forcing a recommendation.</p>
-              <div class="art-tools">
-                <a class="btn btn-ghost" href="/trading-cli/">Full write-up<span class="ext">&#8594;</span></a>
-                <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-cli" target="_blank" rel="noopener" aria-label="trading-cli repository on GitHub">Repository<span class="ext">&#8599;</span></a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Things I built and still maintain","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"SoftwareSourceCode","name":"routre","description":"One static Go binary that cuts AI token bills and fails over providers for any CLI.","url":"https://mariobgsp.github.io/routre/","codeRepository":"https://github.com/mariobgsp/routre","programmingLanguage":"Go","keywords":"Go, LLM gateway, OpenAI-compatible, token compression, failover, single binary"}},{"@type":"ListItem","position":2,"item":{"@type":"SoftwareSourceCode","name":"arness","description":"Lean local AI coding harness: one binary, CLI + TUI, MCP/LSP, skills, extensions, optimizer.","url":"https://mariobgsp.github.io/arness/","codeRepository":"https://github.com/mariobgsp/arness","programmingLanguage":"TypeScript","keywords":"TypeScript, CLI + TUI, MCP/LSP, extensions, single binary"}},{"@type":"ListItem","position":3,"item":{"@type":"SoftwareSourceCode","name":"t-notes","description":"Local-first notes and kanban in the browser - no cloud, no framework, no build step.","url":"https://mariobgsp.github.io/t-notes/","codeRepository":"https://github.com/mariobgsp/t-notes","programmingLanguage":"JavaScript","keywords":"local-first, kanban, vanilla JS, Go, Tauri, no dependencies"}},{"@type":"ListItem","position":4,"item":{"@type":"SoftwareSourceCode","name":"Payment System","description":"Idempotent Go payment lifecycle: order, charge, HMAC callbacks, outbox, refunds.","url":"https://mariobgsp.github.io/payment-system/","codeRepository":"https://github.com/mariobgsp/payment-system","programmingLanguage":"Go","keywords":"Go, PostgreSQL, Redis, Next.js, Docker Compose"}},{"@type":"ListItem","position":5,"item":{"@type":"SoftwareSourceCode","name":"The Gateway","description":"Next.js BFF over a Go gateway: register upstream APIs, forward calls server-side.","url":"https://mariobgsp.github.io/the-gateway/","codeRepository":"https://github.com/mariobgsp/the-gateway","programmingLanguage":"Go","keywords":"Next.js 15, React 19, TypeScript, chi + pgx, PostgreSQL, Kubernetes"}},{"@type":"ListItem","position":6,"item":{"@type":"SoftwareSourceCode","name":"Trading Suite","description":"Self-hosted IDX market desk: FastAPI over a SQLite WAL cache, five UI routes.","url":"https://mariobgsp.github.io/trading-suite/","codeRepository":"https://github.com/mariobgsp/trading-suite","programmingLanguage":"Python","keywords":"Python, FastAPI, Next.js, TypeScript, SQLite"}},{"@type":"ListItem","position":7,"item":{"@type":"SoftwareSourceCode","name":"Trading CLI","description":"Minervini Stage 2 + VCP scanner for ~900 IDX tickers, with 18 backtests and OOS gates.","url":"https://mariobgsp.github.io/trading-cli/","codeRepository":"https://github.com/mariobgsp/trading-cli","programmingLanguage":"Python","keywords":"Python 3.11+, pandas, yfinance, IDX/IHSG, Backtesting, Walk-forward"}}]}</script>
+        <ol class="art-index reveal">
+              <li>
+                <a class="art-index-row" href="/articles/routre/">
+                  <span class="art-index-no">01</span>
+                  <span class="art-index-name">routre</span>
+                  <span class="art-index-lang">~8 min</span>
+                  <span class="art-index-go" aria-hidden="true">&#8594;</span>
+                  <span class="art-index-strap">Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway</span>
+                </a>
+              </li>
+              <li>
+                <a class="art-index-row" href="/articles/durable-agents/">
+                  <span class="art-index-no">02</span>
+                  <span class="art-index-name">durable-agents</span>
+                  <span class="art-index-lang">~10 min</span>
+                  <span class="art-index-go" aria-hidden="true">&#8594;</span>
+                  <span class="art-index-strap">Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</span>
+                </a>
+              </li>
+              <li>
+                <a class="art-index-row" href="/articles/trading-suite/">
+                  <span class="art-index-no">03</span>
+                  <span class="art-index-name">trading-suite</span>
+                  <span class="art-index-lang">~10 min</span>
+                  <span class="art-index-go" aria-hidden="true">&#8594;</span>
+                  <span class="art-index-strap">The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk</span>
+                </a>
+              </li>
+              <li>
+                <a class="art-index-row" href="/articles/payment-system/">
+                  <span class="art-index-no">04</span>
+                  <span class="art-index-name">payment-system</span>
+                  <span class="art-index-lang">~10 min</span>
+                  <span class="art-index-go" aria-hidden="true">&#8594;</span>
+                  <span class="art-index-strap">Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka</span>
+                </a>
+              </li>
+              <li>
+                <a class="art-index-row" href="/articles/the-gateway/">
+                  <span class="art-index-no">05</span>
+                  <span class="art-index-name">the-gateway</span>
+                  <span class="art-index-lang">~8 min</span>
+                  <span class="art-index-go" aria-hidden="true">&#8594;</span>
+                  <span class="art-index-strap">Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF</span>
+                </a>
+              </li>
+              <li class="art-index-more">
+                <a class="art-index-all" href="/articles/">
+                  <span>All 5 articles, page by page</span>
+                  <span aria-hidden="true">&#8594;</span>
+                </a>
+              </li>
+        </ol>
 <!-- article:end -->
 
         <p class="prose art-close reveal">
-          The same material, one page per project, with install commands, quickstart steps and the
-          tradeoffs each one carries: <a href="/work/">every write-up</a>. The code lives on
-          <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>.
+          Each page carries the full article: verified commands, the observed output, screenshots from
+          the running system and the defects the run exposed. Read them all at
+          <a href="/articles/">/articles/</a>, or take the source from
+          <a href="https://github.com/mariobgsp/articles" target="_blank" rel="noopener">GitHub</a>.
         </p>
 
         <div class="gh-panel plate reveal">

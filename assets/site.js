@@ -218,7 +218,7 @@
      and for reduced motion. */
 
   (function surfaces() {
-    var MAGNET = ".btn, .card, .art-entry, .gh-panel, .plate, .spec-cluster, .exp-item";
+    var MAGNET = ".btn, .card, .gh-panel, .plate, .spec-cluster, .exp-item";
     var held = null;
     var box = null;
     var point = { x: 0, y: 0 };
@@ -289,7 +289,7 @@
 
   var cursor = (function () {
     var HOVER = "a, button, [role='button'], summary, input, textarea, .btn, .card, " +
-                ".art-entry, .plate, .exp-item, .spec-cluster, .gh-panel, .tag, " +
+                ".plate, .exp-item, .spec-cluster, .gh-panel, .tag, " +
                 ".faq-q, .widget-toggle, .flow-step-btn, .copy-cmd, .checklist-head, " +
                 ".sec-rail__tick";
 
