@@ -246,7 +246,6 @@
   display: block;
   width: 100%;
   height: auto;
-  background: var(--surface-1);
 }
 
 .evidence figcaption {
@@ -259,6 +258,56 @@
 
 @media (max-width: 960px) {
   .evidence-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ------------------------------------------------------ what it printed --- */
+
+.runs { margin-top: clamp(44px, 5vw, 76px); }
+
+.runs-title {
+  font-size: clamp(1.3rem, 2vw, 1.7rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.runs-list {
+  margin-top: clamp(22px, 2.6vw, 32px);
+  display: grid;
+  gap: clamp(20px, 2.4vw, 30px);
+}
+
+.runs-list li {
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr) auto;
+  gap: 20px 26px;
+  align-items: baseline;
+}
+
+.runs-fig {
+  font-size: clamp(1.5rem, 2.3vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.runs-say { font-size: 1.05rem; line-height: 1.5; color: var(--ink-2); }
+
+.runs-list a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 5px;
+  white-space: nowrap;
+  transition: text-decoration-color var(--dur) var(--ease);
+}
+
+.runs-list a:hover { text-decoration-color: var(--violet); }
+
+@media (max-width: 720px) {
+  .runs-list li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
 
 /* ------------------------------------------------------- experience --- */
@@ -562,18 +611,16 @@
 .skills-layout {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(16px, 2vw, 24px);
+  gap: clamp(32px, 3.8vw, 56px) clamp(24px, 4vw, 64px);
   margin-top: clamp(36px, 4vw, 56px);
 }
 
 .skills-layout > * { grid-column: span 6; }
 
 .spec-cluster {
-  padding: clamp(24px, 2.6vw, 32px);
-  border-radius: var(--r-xl);
-  background: var(--surface-1);
-  box-shadow: var(--shadow-rest);
-  transition: transform 800ms var(--ease), background-color 220ms var(--ease-out);
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .cluster-title {
@@ -693,94 +740,73 @@
 
 /* ----------------------------------------------------------- contact --- */
 
-.title-block {
-  margin-top: clamp(32px, 4vw, 56px);
-  padding: clamp(30px, 4.5vw, 72px);
-}
+/* The close: one statement, the address, four plain links, then the name
+   again at the width of the page. No box, no scale bar, no footer sitemap. */
 
-.tb-name {
-  font-size: clamp(2.1rem, 1rem + 5.4vw, 4.4rem);
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 1;
-}
-
-.tb-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(20px, 3vw, 40px);
-  margin-top: clamp(44px, 4.6vw, 72px);
-}
-
-.tb-label {
-  display: block;
-  font-size: 0.86rem;
-  color: var(--ink-3);
-}
-
-.tb-value {
-  display: block;
-  margin-top: 10px;
-  font-size: 1rem;
+.close-lead {
+  max-width: 26ch;
+  font-size: clamp(1.5rem, 3vw, 2.35rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
   color: var(--ink);
 }
 
-a.tb-value:hover { color: var(--violet); }
-
-.copy-btn {
-  margin-top: 14px;
-  padding: 7px 16px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: var(--glass-2);
-  color: var(--ink-2);
-  font-size: 0.86rem;
-  cursor: pointer;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+.close-mail {
+  display: inline-block;
+  margin-top: clamp(24px, 3vw, 36px);
+  font-size: clamp(1.4rem, 3.4vw, 2.6rem);
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 8px;
+  transition: text-decoration-color var(--dur) var(--ease);
 }
 
-.copy-btn:hover { background: var(--glass-3); color: var(--ink); }
+.close-mail:hover { text-decoration-color: var(--violet); }
 
-.copy-btn.copied {
-  background: rgba(110, 231, 183, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.45);
-  color: var(--emerald);
-}
-
-.tb-foot {
+.close-links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 22px;
-  margin-top: clamp(30px, 3vw, 48px);
-  padding-top: 24px;
-  border-top: 1px solid var(--line-soft);
+  gap: 12px 30px;
+  margin-top: clamp(22px, 2.6vw, 32px);
+  font-size: 1.05rem;
 }
 
-.tb-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--emerald);
+.close-links a,
+.copy-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line-soft);
+  text-underline-offset: 5px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), text-decoration-color var(--dur) var(--ease);
 }
 
-/* The sheet's scale bar: the one instrument mark the footer prints. */
+.close-links a:hover,
+.copy-btn:hover { color: var(--ink); text-decoration-color: var(--ink); }
 
-.tb-sheet-num::before {
-  content: "";
-  display: inline-block;
-  width: 56px;
-  height: 5px;
-  margin-right: 12px;
-  border-bottom: 1px solid var(--line-strong);
-  background-image: repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 14px);
+.copy-btn.copied { color: var(--emerald); text-decoration-color: var(--emerald); }
+
+.close-name {
+  margin-top: clamp(56px, 8vw, 118px);
+  font-size: var(--fs-display);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  color: var(--ink);
 }
 
-.tb-sheet-num { margin-left: auto; }
+.close-meta {
+  margin-top: clamp(24px, 3vw, 36px);
+  font-size: 0.95rem;
+  color: var(--ink-3);
+}
 
 /* -------------------------------------------------------- responsive --- */
 
@@ -792,7 +818,6 @@ a.tb-value:hover { color: var(--violet); }
   .about-grid { grid-template-columns: minmax(0, 1fr); }
   .skills-layout > * { grid-column: span 12; }
   .exp-item { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-  .tb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
@@ -804,8 +829,7 @@ a.tb-value:hover { color: var(--violet); }
 }
 
 @media (max-width: 520px) {
-  .tb-grid { grid-template-columns: minmax(0, 1fr); }
-  .tb-sheet-num { margin-left: 0; }
+  .close-name { line-height: 0.94; }
 }
 </style>
 </head>
@@ -1108,6 +1132,32 @@ a.tb-value:hover { color: var(--violet); }
           </div>
         </div>
 
+        <div class="runs reveal">
+          <h3 class="runs-title">What the runs printed</h3>
+          <ul class="runs-list">
+            <li>
+              <span class="runs-fig">94%</span>
+              <span class="runs-say">fewer tokens on the same agent prompts, after the gateway compressed tool output and replayed what it had already seen.</span>
+              <a href="/articles/routre/">routre</a>
+            </li>
+            <li>
+              <span class="runs-fig">HTTP 202</span>
+              <span class="runs-say">answered by the real partner callback once the reference id was sent in the casing the monolith actually reads.</span>
+              <a href="/articles/payment-system/">payment-system</a>
+            </li>
+            <li>
+              <span class="runs-fig">6 checks</span>
+              <span class="runs-say">fail closed before any signal is read, so a missing session ends as <code>DATA_UNSAFE</code> instead of a made-up verdict.</span>
+              <a href="/articles/trading-suite/">trading-suite</a>
+            </li>
+            <li>
+              <span class="runs-fig">empty</span>
+              <span class="runs-say">is what <code>document.cookie</code> returns on the gateway's own page: the session token never reaches the browser.</span>
+              <a href="/articles/the-gateway/">the-gateway</a>
+            </li>
+          </ul>
+        </div>
+
         <div class="gh-panel plate reveal">
           <div class="gh-head">
             <img class="gh-avatar" src="https://github.com/mariobgsp.png?s=96" alt="" width="52" height="52" loading="lazy">
@@ -1208,7 +1258,7 @@ a.tb-value:hover { color: var(--violet); }
 
         <div class="reveal">
           <span class="mono-tag">Certifications</span>
-          <div class="cert-panel plate">
+          <div class="cert-panel">
             <div class="cert-item"><span class="cert-year">2026</span><span class="cert-name">AI Engineer Agentic Track: The Complete Agent &amp; MCP Course</span></div>
             <div class="cert-item"><span class="cert-year">2026</span><span class="cert-name">AI Engineer Core Track: LLM Engineering, RAG, QLoRA, Agents</span></div>
             <div class="cert-item"><span class="cert-year">2026</span><span class="cert-name">Software Architecture &amp; Technology of Large-Scale Systems<span class="cert-issuer">Udemy</span></span></div>
@@ -1224,7 +1274,7 @@ a.tb-value:hover { color: var(--violet); }
           </div>
         </div>
 
-        <div class="edu-block plate reveal">
+        <div class="edu-block reveal">
           <span class="mono-tag">Education</span>
           <div class="edu-degree">B.Eng, Engineering Physics</div>
           <div class="edu-school">Universitas Gadjah Mada</div>
@@ -1250,33 +1300,19 @@ a.tb-value:hover { color: var(--violet); }
 
   <footer id="contact" class="footer anchor">
     <div class="container">
-      <div class="title-block plate reveal">
-        <div class="tb-name">Muhammad Ario<br>Bagus Prakusa</div>
-        <div class="tb-grid">
-          <div>
-            <span class="tb-label">Email</span>
-            <a class="tb-value" href="mailto:mariobgsp@gmail.com">mariobgsp@gmail.com</a>
-            <button class="copy-btn" id="copyEmailBtn" type="button">Copy</button>
-          </div>
-          <div>
-            <span class="tb-label">GitHub</span>
-            <a class="tb-value" href="https://github.com/mariobgsp" target="_blank" rel="noopener">@mariobgsp &#8599;</a>
-          </div>
-          <div>
-            <span class="tb-label">LinkedIn</span>
-            <a class="tb-value" href="https://linkedin.com/in/mariobgsp" target="_blank" rel="noopener">in/mariobgsp &#8599;</a>
-          </div>
-          <div>
-            <span class="tb-label">Location</span>
-            <span class="tb-value">Tangerang Selatan, Indonesia</span>
-          </div>
-        </div>
-        <div class="tb-foot">
-          <span class="tb-status"><span class="led led-green"></span>System nominal</span>
-          <span class="mono-tag">&copy; 2026 Muhammad Ario Bagus Prakusa</span>
-          <span class="mono-tag tb-sheet-num">Scale 1:1 &mdash; all rights reserved</span>
-        </div>
+      <p class="close-lead reveal">Open to backend and agentic-AI work. If a service you own is timing out, that is the conversation I want.</p>
+
+      <a class="close-mail reveal" href="mailto:mariobgsp@gmail.com">mariobgsp@gmail.com</a>
+
+      <div class="close-links reveal">
+        <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://linkedin.com/in/mariobgsp" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="assets/muhammad-ario-bagus-prakusa-cv.pdf" target="_blank" rel="noopener" download>R&eacute;sum&eacute;</a>
+        <button class="copy-btn" id="copyEmailBtn" type="button">Copy email</button>
       </div>
+
+      <p class="close-name reveal">Muhammad Ario<br>Bagus Prakusa</p>
+      <p class="close-meta">Tangerang Selatan, Indonesia &middot; Replies within a day &middot; &copy; 2026 Muhammad Ario Bagus Prakusa</p>
     </div>
   </footer>
 
@@ -1301,7 +1337,7 @@ a.tb-value:hover { color: var(--violet); }
         copyBtn.textContent = "Copied";
         copyBtn.classList.add("copied");
         setTimeout(function () {
-          copyBtn.textContent = "Copy";
+          copyBtn.textContent = "Copy email";
           copyBtn.classList.remove("copied");
         }, 1600);
       };

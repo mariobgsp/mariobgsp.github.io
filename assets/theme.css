@@ -71,7 +71,7 @@
   --fs-body: clamp(1rem, 0.97rem + 0.16vw, 1.125rem);
   --fs-lead: clamp(1.0625rem, 1rem + 0.5vw, 1.375rem);
   --fs-h2: clamp(2.15rem, 1.1rem + 3.5vw, 3.9rem);
-  --fs-display: clamp(2.75rem, 0.7rem + 6.2vw, 5.5rem);
+  --fs-display: clamp(2.6rem, 0.7rem + 6.4vw, 6.25rem);
 
   /* geometry */
   --r-xl: 20px;
@@ -1055,8 +1055,7 @@ html[data-freeze] *::after {
 
 .footer {
   position: relative;
-  padding: var(--pad-section) 0 56px;
-  border-top: 1px solid var(--line-soft);
+  padding: var(--pad-section) 0 64px;
 }
 
 .footer-grid {
@@ -1088,13 +1087,6 @@ html[data-freeze] *::after {
   display: inline-block;
   margin-right: 8px;
   vertical-align: middle;
-}
-
-.footer .mono-tag {
-  margin-top: 56px;
-  padding-top: 26px;
-  border-top: 1px solid var(--line-soft);
-  display: block;
 }
 
 /* ---------------------------------------------------- motion primitives --- */
@@ -1232,19 +1224,9 @@ html[data-freeze] *::after {
 
 .sec-rail__idx { display: none; }
 
-.sec-rail__label {
-  position: absolute;
-  right: calc(100% + 12px);
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateX(6px);
-  font-family: var(--sans);
-  font-size: 0.8125rem;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-2);
-  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
-}
+/* The ticks jump; the section titles already say where you are, and a label
+   printed over the content collides with it. */
+.sec-rail__label { display: none; }
 
 .sec-rail__tick:hover .sec-rail__label,
 .sec-rail__tick:focus-visible .sec-rail__label,
