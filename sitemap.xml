@@ -16,7 +16,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mariobgsp.github.io/articles/payment-system/</loc>
+    <loc>https://mariobgsp.github.io/articles/durable-agents/</loc>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -26,12 +26,12 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mariobgsp.github.io/articles/the-gateway/</loc>
+    <loc>https://mariobgsp.github.io/articles/payment-system/</loc>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://mariobgsp.github.io/articles/durable-agents/</loc>
+    <loc>https://mariobgsp.github.io/articles/the-gateway/</loc>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>

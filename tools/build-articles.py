@@ -13,6 +13,11 @@ code, blockquotes, images, inline emphasis and raw <details> blocks).
 
 Every string on the generated pages comes from the Markdown itself. The only
 hand-written region is the home page index between ARTICLE_BEGIN and ARTICLE_END.
+
+The article set is discovered from the checkout, never listed: every root-level
+*.md that is not README.md is an article, and its reading position comes from an
+`Order` row in its own facts table. Publishing an article therefore means writing
+one file in the articles repository -- nothing here names it.
 """
 
 import html
@@ -33,12 +38,24 @@ UP = "../"          # /articles/index.html
 DEEP = "../../"     # /articles/<slug>/index.html
 
 SITE = "https://mariobgsp.github.io"
+AUTHOR = "Muhammad Ario Bagus Prakusa"
 ARTICLE_REPO = "https://github.com/mariobgsp/articles"
 REPO_URL = "https://github.com/mariobgsp/{}"
 WORDS_PER_MINUTE = 200
 
-# Reading order on the site (the repository README keeps its own order).
-SLUGS = ["routre", "durable-agents", "trading-suite", "payment-system", "the-gateway"]
+# The only hand-maintained name in this file, and it is a name to *exclude*: every
+# other root-level *.md in the checkout is an article. Adding an article never
+# touches a list.
+NON_ARTICLE = frozenset({"README.md"})
+
+# Facts rows that steer the build instead of appearing on the page. `Order` sets the
+# reading position; drop it from this set to make it visible in the facts panel.
+RESERVED_FACTS = frozenset({"order"})
+
+# Served by the site but not generated from an article. The sitemap is generated
+# too, so this is the only place the non-article URLs are written down.
+STATIC_ROUTES = [("/", "monthly", "1.0"), ("/articles/", "monthly", "0.8")]
+ARTICLE_ROUTE = ("yearly", "0.7")
 
 ARTICLE_BEGIN = "<!-- article:begin -->"
 ARTICLE_END = "<!-- article:end -->"
@@ -82,6 +99,15 @@ def slugify(text):
     text = re.sub(r"[^\w\s-]", "", text)
     text = re.sub(r"[\s_]+", "-", text).strip("-")
     return text or "section"
+
+
+class SourceError(Exception):
+    """The articles checkout cannot be turned into a page set.
+
+    Raised at the boundaries -- an unreadable checkout, a facts row that does not
+    parse, a construct whose text did not survive into the HTML -- so the run stops
+    before anything is written rather than publishing a partial page set.
+    """
 
 
 class Renderer:
@@ -400,6 +426,118 @@ def shell(title, description, body, up=UP, article_css=False, canonical=None,
 
 # --------------------------------------------------------------- articles
 
+def as_order(value, slug):
+    """The reading position from an `Order` facts cell."""
+    digits = re.search(r"\d+", plain(value))
+    if digits is None:
+        raise SourceError(f"{slug}.md: `Order` must be a number, got {value!r}")
+    return int(digits.group())
+
+
+def discover(src):
+    """Every article in the checkout: root-level *.md, minus NON_ARTICLE.
+
+    The set is the checkout. Subdirectories are ignored, so a notes/ folder cannot
+    become a page, and anything not named in NON_ARTICLE is published rather than
+    skipped -- silently skipping a half-written article is how an article
+    disappears from the site.
+    """
+    if not src.is_dir():
+        raise SourceError(f"no articles checkout at {src}")
+    files = sorted(p for p in src.glob("*.md")
+                   if p.name not in NON_ARTICLE and not p.name.startswith("."))
+    if not files:
+        raise SourceError(f"no *.md in {src}")
+    return files
+
+
+def ordered(articles, report):
+    """Reading order: `Order` ascending, then anything undeclared by slug.
+
+    Total and deterministic, and every input is in the output -- an article that
+    forgot its `Order` row is reported and appended, never dropped. Duplicate
+    positions fall back to slug, so the order is a function of the files alone and
+    `--check` can depend on it.
+    """
+    declared = sorted((a for a in articles if a.order is not None),
+                      key=lambda a: (a.order, a.slug))
+    undeclared = sorted((a for a in articles if a.order is None), key=lambda a: a.slug)
+
+    for article in undeclared:
+        report(f"  note: {article.slug}.md has no `Order` row; placed last")
+    seen = {}
+    for article in declared:
+        if article.order in seen:
+            report(f"  note: {article.slug}.md and {seen[article.order]}.md both claim "
+                   f"Order {article.order}; {article.slug} follows")
+        seen.setdefault(article.order, article.slug)
+    return declared + undeclared
+
+
+def og_image(article):
+    """A social card for the article that is on disk, always 1200x630.
+
+    The hand-made card when there is one, else the site default. Total: no caller
+    can emit an og:image URL that 404s, so a brand-new article needs no card of its
+    own and a five-second-old one cannot ship a broken link.
+    """
+    hand_made = IMG_DST / f"og-{article.slug}.png"
+    if hand_made.exists():
+        return f"assets/articles/{hand_made.name}"
+    if not (ROOT / "assets" / "og.png").exists():
+        raise SourceError(f"no card for {article.slug} and no fallback assets/og.png")
+    return "assets/og.png"
+
+
+def sitemap_xml(articles):
+    """Every live URL, in reading order, derived from the same list as the pages."""
+    rows = [(SITE + path, freq, priority) for path, freq, priority in STATIC_ROUTES]
+    rows += [(f"{SITE}/articles/{a.slug}/", *ARTICLE_ROUTE) for a in articles]
+    body = "\n".join(
+        f"  <url>\n    <loc>{e(url)}</loc>\n    <changefreq>{freq}</changefreq>\n"
+        f"    <priority>{priority}</priority>\n  </url>" for url, freq, priority in rows)
+    return ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+            f"{body}\n</urlset>\n")
+
+
+# A word as a reader sees it. Deliberately ASCII: it is a cheap guard against a
+# construct being swallowed, not a language model.
+WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9'’._/-]+")
+TABLE_RULE = re.compile(r"^\s*\|[-\s:|]+\|\s*$", re.M)
+FENCE_LINE = re.compile(r"^\s*```.*$", re.M)
+LIST_MARKER = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+", re.M)
+QUOTE_MARKER = re.compile(r"^\s*>\s?", re.M)
+
+
+def _words(text):
+    """The set of words in a fragment, after dropping tags and entities."""
+    return set(WORD.findall(html.unescape(re.sub(r"<[^>]+>", " ", text))))
+
+
+def assert_text_coverage(article):
+    """Every word written in the Markdown is visible in the rendered page.
+
+    Compares the source against the output rather than trusting the renderer's own
+    list of what it handles, so a construct that renders as *something* while
+    losing text fails the run. Syntax that becomes an attribute or a marker rather
+    than a word -- alt text, link targets, fence language tags, list markers -- is
+    excluded, because counting it would report a loss that is not one.
+    """
+    source = FENCE_LINE.sub(" ", article.body_md)          # ``` and its language tag
+    source = re.sub(r"!\[[^\]]*\]\([^)]+\)", " ", source)  # alt -> attribute
+    source = re.sub(r"\]\([^)]+\)", "] ", source)          # href -> attribute
+    source = TABLE_RULE.sub(" ", source)
+    source = LIST_MARKER.sub(" ", source)
+    source = QUOTE_MARKER.sub(" ", source)
+    source = source.replace("**", " ").replace("*", " ").replace("`", " ")
+    lost = sorted((_words(source) - _words(article.body)) - {""})
+    lost = [word for word in lost if len(word) > 1]
+    if lost:
+        raise SourceError(f"{article.slug}.md: {len(lost)} word(s) did not reach the "
+                          f"page, first: {', '.join(lost[:8])}")
+
+
 def plain(text):
     """Markdown inline -> readable text, for cards and meta tags."""
     text = re.sub(r"`([^`]+)`", r"\1", text)
@@ -436,7 +574,9 @@ class Article:
         text = (src / f"{slug}.md").read_text(encoding="utf-8")
         lines = text.splitlines()
 
-        title_at = next(i for i, line in enumerate(lines) if line.startswith("# "))
+        title_at = next((i for i, line in enumerate(lines) if line.startswith("# ")), None)
+        if title_at is None:
+            raise SourceError(f"{slug}.md has no `# title` line")
         self.title = lines[title_at][2:].strip()
 
         quote = []
@@ -448,7 +588,16 @@ class Article:
             i += 1
         self.standfirst_md = " ".join(quote).strip()
 
-        self.facts, after = find_facts(lines)
+        raw_facts, after = find_facts(lines)
+        self.order = None
+        self.facts = []
+        for label, value in raw_facts:
+            key = plain(label).strip().lower()
+            if key in RESERVED_FACTS:
+                if key == "order":
+                    self.order = as_order(value, slug)
+                continue
+            self.facts.append((label, value))
 
         self.images = set()
         renderer = renderer_cls(self.images, src / "images")
@@ -467,12 +616,14 @@ class Article:
             self.repo = REPO_URL.format(slug)
         self.stack = next((value for label, value in self.facts if "Stack" in label), "")
         verified = next((value for label, value in self.facts if "Verified" in label), "")
-        m = re.search(r"(\d{4})-(\d{2})-(\d{2})", verified)
         self.date_label = ""
+        self.verified_on = None
+        m = re.search(r"(\d{4})-(\d{2})-(\d{2})", verified)
         if m:
             try:
-                published = date(*map(int, m.groups()))
-                self.date_label = f"{published.day} {published.strftime('%B %Y')}"
+                self.verified_on = date(*map(int, m.groups()))
+                self.date_label = (f"{self.verified_on.day} "
+                                   f"{self.verified_on.strftime('%B %Y')}")
             except ValueError:
                 self.date_label = ""
 
@@ -530,7 +681,7 @@ def article_page(article, index, total, all_articles):
 
     stack_plain = plain(article.stack)
     image = article.first_image()
-    og_image = f"{SITE}/assets/articles/{image}" if image else None
+    card_url = f"{SITE}/assets/articles/{image}" if image else None
 
     ld = {
         "@context": "https://schema.org",
@@ -543,8 +694,8 @@ def article_page(article, index, total, all_articles):
                    "url": f"{SITE}/"},
         "keywords": stack_plain,
     }
-    if og_image:
-        ld["image"] = og_image
+    if card_url:
+        ld["image"] = card_url
 
     body = f"""      <section class="art-hero anchor" id="top">
         <div class="container">
@@ -575,8 +726,7 @@ def article_page(article, index, total, all_articles):
 
     return shell(article.title, plain(article.standfirst_md), body, up=DEEP,
                  article_css=True, canonical=f"{SITE}/articles/{article.slug}/",
-                 body_class="art-page",
-                 og_image=f"assets/articles/og-{article.slug}.png")
+                 body_class="art-page", og_image=og_image(article))
 
 
 def card_spans(count):
@@ -684,7 +834,16 @@ def home_index(articles):
                   <span class="art-index-strap">{e(a.title)}</span>
                 </a>
               </li>''' for i, a in enumerate(articles, 1))
-    return f"""        <ol class="art-index reveal">
+    newest = max((a.verified_on for a in articles if a.verified_on), default=None)
+    stamp = (f'<time datetime="{newest.isoformat()}">{newest.day} '
+             f'{newest.strftime("%B %Y")}</time>' if newest else "")
+    return f"""        <div class="art-meta reveal">
+          <span>{AUTHOR}</span>
+          <span>Updated {stamp}</span>
+          <span>One page per article</span>
+        </div>
+
+        <ol class="art-index reveal">
 {rows}
               <li class="art-index-more">
                 <a class="art-index-all" href="/articles/">
@@ -693,6 +852,21 @@ def home_index(articles):
                 </a>
               </li>
         </ol>"""
+
+
+ARTICLE_LINK = re.compile(r'href="/articles/([a-z0-9][a-z0-9-]*)/"')
+
+
+def assert_shell_links(index_text, live):
+    """Every internal /articles/<slug>/ link on the page points at a real article.
+
+    The home page keeps hand-written prose about specific runs, which is editorial
+    and stays hand-written; this makes its links a checked fact, so a renamed or
+    deleted article fails the build instead of 404ing on the served page.
+    """
+    dead = sorted({s for s in ARTICLE_LINK.findall(index_text) if s not in live})
+    if dead:
+        raise SourceError(f"index.html links to {', '.join(dead)}, which is not an article")
 
 
 def splice_article(index_text, region):
@@ -705,31 +879,58 @@ def splice_article(index_text, region):
 
 # --------------------------------------------------------------------- main
 
+def write_atomic(path, text):
+    """Write then rename, so a crash halfway leaves no half-file behind."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def stale_article_dirs(live):
+    """Generated page directories whose article is no longer in the checkout.
+
+    Without this a renamed or deleted article keeps serving a 200 forever: only
+    images were ever pruned, and --check only compared the pages it generated, so
+    the orphan never showed up as drift.
+    """
+    if not OUT.is_dir():
+        return []
+    return sorted(d for d in OUT.iterdir() if d.is_dir() and d.name not in live)
+
+
 def main():
     check = "--check" in sys.argv
     src = pathlib.Path(os.environ.get("ARTICLES_SRC", DEFAULT_SRC))
     if "--src" in sys.argv:
         src = pathlib.Path(sys.argv[sys.argv.index("--src") + 1])
-    if not (src / "images").is_dir():
-        print(f"CANNOT READ articles at {src} (run from the site repo, or pass --src)")
+
+    notes = []
+    try:
+        if not (src / "images").is_dir():
+            raise SourceError(f"{src} has no images/ (run from the site repo, or pass --src)")
+        articles = ordered([Article(src, p.stem, Renderer) for p in discover(src)],
+                           notes.append)
+        for article in articles:
+            assert_text_coverage(article)
+    except SourceError as err:
+        print(f"CANNOT BUILD from {src}: {err}")
         return 1
+    for note in notes:
+        print(note)
 
-    missing = [s for s in SLUGS if not (src / f"{s}.md").exists()]
-    if missing:
-        print("MISSING ARTICLE SOURCE:", ", ".join(missing))
-        return 1
-
-    articles = [Article(src, slug, Renderer) for slug in SLUGS]
-
-    pages = {OUT / a.slug / "index.html": article_page(a, i, len(articles), articles)
+    total = len(articles)
+    pages = {OUT / a.slug / "index.html": article_page(a, i, total, articles)
              for i, a in enumerate(articles, 1)}
     pages[OUT / "index.html"] = hub_page(articles)
+    pages[ROOT / "sitemap.xml"] = sitemap_xml(articles)
 
     region = f"{ARTICLE_BEGIN}\n{home_index(articles)}\n{ARTICLE_END}"
     try:
         index_text = INDEX.read_text(encoding="utf-8")
         new_index, current = splice_article(index_text, region)
-    except (OSError, ValueError) as err:
+        assert_shell_links(new_index, {a.slug for a in articles})
+    except (OSError, ValueError, SourceError) as err:
         print(f"CANNOT PATCH {INDEX.name}: {err}")
         return 1
 
@@ -744,9 +945,10 @@ def main():
     stale_images = [n for n in needed
                     if not (IMG_DST / n).exists()
                     or (IMG_DST / n).read_bytes() != (src / "images" / n).read_bytes()]
+    stale_dirs = stale_article_dirs({a.slug for a in articles})
 
     if check:
-        if not stale_pages and not stale_images and current == region:
+        if not stale_pages and not stale_images and not stale_dirs and current == region:
             print(f"OK: {len(articles)} articles, {len(pages)} pages, "
                   f"{len(needed)} images match the sources")
             return 0
@@ -754,6 +956,8 @@ def main():
             print(f"OUT OF DATE: {p.relative_to(ROOT)}")
         for n in stale_images:
             print(f"OUT OF DATE: assets/articles/{n}")
+        for d in stale_dirs:
+            print(f"OUT OF DATE: {d.relative_to(ROOT)}/ (no longer an article)")
         if current != region:
             print("OUT OF DATE: index.html (article index region)")
         return 1
@@ -773,11 +977,17 @@ def main():
             (IMG_DST / name).unlink(missing_ok=True)
             written.append(f"removed assets/articles/{name}")
     for p in stale_pages:
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(pages[p], encoding="utf-8")
+        write_atomic(p, pages[p])
         written.append(str(p.relative_to(ROOT)))
+    for d in stale_dirs:
+        try:
+            shutil.rmtree(d)
+        except OSError as err:
+            print(f"CANNOT REMOVE {d.relative_to(ROOT)}: {err}")
+            return 1
+        written.append(f"removed {d.relative_to(ROOT)}/")
     if current != region:
-        INDEX.write_text(new_index, encoding="utf-8")
+        write_atomic(INDEX, new_index)
         written.append("index.html")
 
     if not written:
