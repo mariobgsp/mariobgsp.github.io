@@ -686,7 +686,9 @@ body.lock .nav-menu a {
 }
 
 /* Dev harness: freeze every animation where ?t= left it, and settle every
-   transition so a capture shows a state rather than a moment. */
+   transition so a capture shows a state rather than a moment. The one
+   exception: a load-time entrance without the --t0 offset would freeze at
+   its first frame forever, so it is dismissed rather than paused. */
 html[data-freeze],
 html[data-freeze] *,
 html[data-freeze] *::before,
@@ -694,6 +696,10 @@ html[data-freeze] *::after {
   animation-play-state: paused !important;
   transition-duration: 0.01ms !important;
   transition-delay: 0ms !important;
+}
+
+html[data-freeze] .art-fold-body {
+  animation: none !important;
 }
 
 /* ------------------------------------------------------------ sections --- */
