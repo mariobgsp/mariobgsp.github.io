@@ -7,8 +7,9 @@
     <meta name="description" content="5 backend engineering articles, each written from the running system: architecture, measured facts and the defects found." />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#0a0a0b" />
+    <meta name="theme-color" content="#faf9f6" />
     <link rel="canonical" href="https://mariobgsp.github.io/articles/" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23faf9f6'/%3E%3Cpath d='M20 44 32 18l12 26' stroke='%232b5fce' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M25 36h14' stroke='%23171716' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />
@@ -92,7 +93,7 @@
               <img class="thumb" src="/assets/articles/routre-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">routre</h3>
-                <span class="card-index accent-1">01</span>
+                <span class="card-index">01</span>
               </div>
               <p class="card-role">Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway</p>
               <p class="card-desc">routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them.</p>
@@ -107,7 +108,7 @@
               <img class="thumb" src="/assets/articles/durable-agents-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">durable-agents</h3>
-                <span class="card-index accent-2">02</span>
+                <span class="card-index">02</span>
               </div>
               <p class="card-role">Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</p>
               <p class="card-desc">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.</p>
@@ -122,7 +123,7 @@
               <img class="thumb" src="/assets/articles/trading-suite-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">trading-suite</h3>
-                <span class="card-index accent-3">03</span>
+                <span class="card-index">03</span>
               </div>
               <p class="card-role">The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk</p>
               <p class="card-desc">Most screeners answer &quot;here is a list&quot;. This one answers &quot;here is the list, the measured evidence behind it, and — often — no&quot;. Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound.</p>
@@ -137,7 +138,7 @@
               <img class="thumb" src="/assets/articles/payment-system-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">payment-system</h3>
-                <span class="card-index accent-1">04</span>
+                <span class="card-index">04</span>
               </div>
               <p class="card-role">Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka</p>
               <p class="card-desc">This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command.</p>
@@ -152,7 +153,7 @@
               <img class="thumb" src="/assets/articles/the-gateway-architecture-dark.png" width="1200" height="630" loading="lazy" alt="" />
               <div class="card-head">
                 <h3 class="card-name">the-gateway</h3>
-                <span class="card-index accent-2">05</span>
+                <span class="card-index">05</span>
               </div>
               <p class="card-role">Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF</p>
               <p class="card-desc">The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript.</p>

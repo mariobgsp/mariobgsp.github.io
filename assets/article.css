@@ -4,8 +4,11 @@
    Loaded after theme.css by the article pages only.
    ================================================================ */
 
-/* Quieter backdrop while reading: the dither field stays, at a whisper. */
-body.art-page .bg-pixels { opacity: 0.28; }
+/* Quieter backdrop while reading: the ambient wash stays at a whisper. */
+body.art-page::before { opacity: 0.55; }
+
+/* A reading column has its own progress bar; the per-section rail is noise. */
+body.art-page .sec-rail { display: none; }
 
 /* -------------------------------------------------------- the column --- */
 
@@ -104,7 +107,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   text-underline-offset: 3px;
 }
 
-.art-fact a:hover { color: var(--violet); }
+.art-fact a:hover { color: var(--accent-hover); }
 
 /* ------------------------------------------------------------ body --- */
 
@@ -176,14 +179,14 @@ body.art-page .bg-pixels { opacity: 0.28; }
 }
 
 .art-content a:hover {
-  color: var(--violet);
-  text-decoration-color: var(--violet);
+  color: var(--accent);
+  text-decoration-color: var(--accent);
 }
 
 .art-content blockquote {
   margin: 32px 0;
   padding: 2px 0 2px 22px;
-  border-left: 2px solid var(--violet);
+  border-left: 2px solid var(--accent);
 }
 
 .art-content blockquote p {
@@ -218,8 +221,8 @@ body.art-page .bg-pixels { opacity: 0.28; }
   margin: 26px 0;
   padding: 18px;
   border-radius: var(--r-md);
-  background: var(--surface-1);
-  box-shadow: var(--shadow-rest);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
   overflow-x: auto;
   font-size: 0.78rem;
   line-height: 1.62;
@@ -377,7 +380,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   color: var(--ink);
 }
 
-.art-next-link:hover b { color: var(--violet); }
+.art-next-link:hover b { color: var(--accent-hover); }
 
 .art-next-link--right {
   justify-self: end;
@@ -424,7 +427,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   content: "";
   width: 16px;
   height: 1px;
-  background: var(--violet);
+  background: var(--accent);
 }
 
 .art-glance .art-content ul {
@@ -449,7 +452,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   width: 6px;
   height: 6px;
   border-radius: 2px;
-  background: var(--violet);
+  background: var(--accent);
 }
 
 .art-glance .art-content li strong { color: var(--ink); }
@@ -472,7 +475,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   border-radius: var(--r-sm);
   font-size: 0.9rem;
   color: var(--ink-2);
-  transition: background-color 300ms var(--ease-out), color 300ms var(--ease-out);
+  transition: background-color 220ms var(--ease-out), color 220ms var(--ease-out);
 }
 
 .art-jump a span {
@@ -487,7 +490,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   color: var(--ink);
 }
 
-.art-jump a:hover span { color: var(--violet); }
+.art-jump a:hover span { color: var(--accent-hover); }
 
 
 /* ----------------------------------------------------- pull-quotes ---
@@ -497,7 +500,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
 .pull-quote {
   margin: 26px 0 !important;
   padding: 2px 0 2px 20px !important;
-  border-left: 2px solid var(--violet) !important;
+  border-left: 2px solid var(--accent) !important;
   font-size: 1.18rem !important;
   line-height: 1.5 !important;
   color: var(--ink) !important;
@@ -514,11 +517,11 @@ body.art-page .bg-pixels { opacity: 0.28; }
   top: 0;
   width: 34px;
   height: 2px;
-  background: var(--violet);
+  background: var(--accent);
   transform: scaleX(0);
   transform-origin: 0 50%;
-  transition: transform 600ms var(--ease-out);
-  transition-delay: 120ms;
+  transition: transform 320ms var(--ease-out);
+  transition-delay: 80ms;
 }
 
 .js .art-block.is-seen .art-content h2::before,
@@ -528,25 +531,22 @@ body.art-page .bg-pixels { opacity: 0.28; }
 .js .art-content pre.code-block,
 .js .art-content .code-block { transition: none; }
 
-.art-content .code-block { transition: box-shadow 300ms var(--ease-out); }
+.art-content .code-block { transition: box-shadow 220ms var(--ease-out); }
 .art-content .code-block:hover { box-shadow: var(--shadow-lift); }
 
-.art-content img { transition: transform 500ms var(--ease-out), box-shadow 500ms var(--ease-out); }
+.art-content img { transition: transform 320ms var(--ease-out), box-shadow 320ms var(--ease-out); }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .art-content img:hover { transform: scale(1.015); box-shadow: var(--shadow-lift); }
+  .art-content img:hover { transform: scale(1.005); box-shadow: var(--shadow-lift); }
 }
 
 /* facts panel: instrument rows, staggered like every other point */
 .art-facts { gap: 0; }
 
 /* prev / next: the arrows move, the cards lift */
-.art-next-link b { transition: color var(--dur-fast) var(--ease-out), transform 420ms var(--ease-out); display: inline-block; }
-.art-next-link:hover b { color: var(--violet); transform: translate3d(3px, 0, 0); }
+.art-next-link b { transition: color var(--dur-fast) var(--ease-out), transform 220ms var(--ease-out); display: inline-block; }
+.art-next-link:hover b { color: var(--accent-hover); transform: translate3d(3px, 0, 0); }
 .art-next-link--right:hover b { transform: translate3d(-3px, 0, 0); }
-
-/* a touch more field: the ambient layer stays a whisper but reads alive */
-body.art-page .bg-pixels { opacity: 0.4; }
 
 /* --------------------------------------------------- reduced motion --- */
 @media (prefers-reduced-motion: reduce) {

@@ -374,7 +374,8 @@ def shell(title, description, body, up=UP, article_css=False, canonical=None,
     <meta name="description" content="{e(description)}" />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#0a0a0b" />{canonical_tag}
+    <meta name="theme-color" content="#faf9f6" />{canonical_tag}
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23faf9f6'/%3E%3Cpath d='M20 44 32 18l12 26' stroke='%232b5fce' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M25 36h14' stroke='%23171716' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" />
     <meta property="og:type" content="{e(og_type)}" />
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />{og_url}
@@ -814,7 +815,7 @@ def hub_page(articles):
               {thumb}
               <div class="card-head">
                 <h3 class="card-name">{e(a.slug)}</h3>
-                <span class="card-index accent-{(i - 1) % 3 + 1}">{i:02d}</span>
+                <span class="card-index">{i:02d}</span>
               </div>
               <p class="card-role">{e(a.title)}</p>
               <p class="card-desc">{e(plain(a.standfirst_md))}</p>
