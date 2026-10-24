@@ -197,7 +197,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
   margin: clamp(36px, 4.4vw, 52px) 0;
   border: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+  background: var(--line-soft);
 }
 
 /* inline code */
@@ -288,7 +288,7 @@ body.art-page .bg-pixels { opacity: 0.28; }
 }
 
 .art-content tbody tr:first-child td { border-top: 0; }
-.art-content tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
+.art-content tbody tr:hover { background: var(--tint); }
 
 .art-content td code,
 .art-content th code { font-size: 0.8em; }
@@ -395,6 +395,293 @@ body.art-page .bg-pixels { opacity: 0.28; }
 
 .art-next-all:hover { color: var(--ink); }
 
+/* ------------------------------------------------------ at a glance ---
+   The summary the source already wrote, set as the instrument panel it
+   always claimed to be: a solid plate, the point list read like outputs,
+   and the jump nav beneath it as the table of contents. */
+
+.art-glance {
+  margin-top: clamp(34px, 4vw, 48px);
+  padding: clamp(22px, 2.6vw, 32px) clamp(22px, 2.6vw, 34px);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-rest);
+}
+
+.art-glance .art-content h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 18px;
+}
+
+.art-glance .art-content h2::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--violet);
+}
+
+.art-glance .art-content ul {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.art-glance .art-content li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.art-glance .art-content li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.66em;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--violet);
+}
+
+.art-glance .art-content li strong { color: var(--ink); }
+
+/* jump nav: one row per section, a numbered channel list */
+.art-jump {
+  display: grid;
+  gap: 1px;
+  margin-top: 22px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.art-jump a {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  font-size: 0.9rem;
+  color: var(--ink-2);
+  transition: background-color 300ms var(--ease-out), color 300ms var(--ease-out);
+}
+
+.art-jump a span {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+
+.art-jump a:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+
+.art-jump a:hover span { color: var(--violet); }
+
+.fold-toggle {
+  justify-self: start;
+  margin-top: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  background: none;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.fold-toggle:hover { color: var(--ink); border-color: var(--line-strong); }
+
+/* ----------------------------------------------------------- the folds ---
+   The simplification layer: heading and teaser stay visible, the full body
+   folds. The mark is a flat plus that turns into a cross (45 degrees) when
+   open - no arrow, no rotation ambiguity. The fold ships open; JS closes
+   it, so a no-JS reader never loses a word. */
+
+.art-fold { border: 0; background: none; box-shadow: none; padding: 0; margin: 0; }
+
+.art-fold-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  gap: 6px 14px;
+  align-items: baseline;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--line-soft);
+  cursor: pointer;
+  list-style: none;
+}
+
+.art-fold-head::-webkit-details-marker { display: none; }
+
+.art-fold-head h2 {
+  margin: 22px 0 0;
+  /* the summary face is a mono label; the heading must keep the body face */
+  font-family: var(--sans) !important;
+  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 1.95rem) !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: -0.03em !important;
+  color: var(--ink) !important;
+  transition: color 300ms var(--ease-out);
+}
+
+.art-fold-head:hover h2 { color: var(--violet); }
+
+.art-fold-teaser {
+  grid-column: 1;
+  margin: 10px 0 0;
+  /* same: opt out of the summary label face */
+  font-family: var(--sans) !important;
+  font-weight: 400 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+  color: var(--ink-3) !important;
+}
+
+.art-fold-mark {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: background-color 300ms var(--ease-out), box-shadow 300ms var(--ease-out),
+              scale 420ms var(--ease-pop), transform 420ms var(--ease-out);
+}
+
+.art-fold-mark::before,
+.art-fold-mark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--ink-2);
+  transition: background-color 300ms var(--ease-out);
+}
+
+.art-fold-mark::before { transform: translate(-50%, -50%); }
+.art-fold-mark::after { transform: translate(-50%, -50%) rotate(90deg); }
+
+.art-fold[open] .art-fold-mark {
+  background: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+  transform: rotate(45deg);
+}
+
+.art-fold[open] .art-fold-mark::before,
+.art-fold[open] .art-fold-mark::after { background: var(--bg); }
+
+.art-fold-head:hover .art-fold-mark { box-shadow: inset 0 0 0 1px var(--line-strong); }
+
+.art-fold[open] .art-fold-head { padding-bottom: 8px; }
+
+.art-fold-body { animation: fold-open 560ms var(--ease-out) both; }
+
+@keyframes fold-open {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.art-fold-body > :first-child { margin-top: 14px; }
+
+/* ----------------------------------------------------- pull-quotes ---
+   A paragraph short enough to be the point, set louder: accent bar, larger
+   type, the sheet reads it even while skimming. */
+
+.pull-quote {
+  margin: 26px 0 !important;
+  padding: 2px 0 2px 20px !important;
+  border-left: 2px solid var(--violet) !important;
+  font-size: 1.18rem !important;
+  line-height: 1.5 !important;
+  color: var(--ink) !important;
+}
+
+/* ------------------------------------------------- animated reading --- */
+
+.art-content h2 { position: relative; padding-top: 18px; }
+
+.art-content h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 34px;
+  height: 2px;
+  background: var(--violet);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 600ms var(--ease-out);
+  transition-delay: 120ms;
+}
+
+.js .art-block.is-seen .art-content h2::before,
+.js .art-glance.is-seen .art-content h2::before { transform: scaleX(1); }
+
+/* code blocks and figures get their own flat entrance */
+.js .art-content pre.code-block,
+.js .art-content .code-block { transition: none; }
+
+.art-content .code-block { transition: box-shadow 300ms var(--ease-out); }
+.art-content .code-block:hover { box-shadow: var(--shadow-lift); }
+
+.art-content img { transition: transform 500ms var(--ease-out), box-shadow 500ms var(--ease-out); }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .art-content img:hover { transform: scale(1.015); box-shadow: var(--shadow-lift); }
+}
+
+/* facts panel: instrument rows, staggered like every other point */
+.art-facts { gap: 0; }
+
+/* prev / next: the arrows move, the cards lift */
+.art-next-link b { transition: color var(--dur-fast) var(--ease-out), transform 420ms var(--ease-out); display: inline-block; }
+.art-next-link:hover b { color: var(--violet); transform: translate3d(3px, 0, 0); }
+.art-next-link--right:hover b { transform: translate3d(-3px, 0, 0); }
+
+/* a touch more field: the ambient layer stays a whisper but reads alive */
+body.art-page .bg-pixels { opacity: 0.4; }
+
+/* --------------------------------------------------- reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .art-fold-body { animation: none !important; }
+  .art-content h2::before { transform: none !important; transition: none !important; }
+  .art-content img:hover { transform: none !important; }
+  .art-next-link b { transform: none !important; }
+  .art-fold-mark { transition: none !important; }
+}
+
+/* ---------------------------------------------------------- print --- */
+@media print {
+  .art-fold-body { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .art-fold { display: block !important; }
+  .art-fold-head { cursor: auto; }
+  .art-fold-mark { display: none !important; }
+  .art-jump, .fold-toggle { display: none !important; }
+  .art-glance { box-shadow: none !important; background: none !important; }
+}
+
 /* ------------------------------------------------------- responsive --- */
 
 @media (max-width: 720px) {
@@ -409,4 +696,8 @@ body.art-page .bg-pixels { opacity: 0.28; }
   .art-next-link,
   .art-next-link--right { justify-self: start; text-align: left; }
   .art-next-all { order: -1; }
+  .art-glance { padding: 18px 16px; }
+  .art-jump a { padding: 8px 6px; }
+  .art-fold-head { grid-template-columns: minmax(0, 1fr) 30px; }
+  .pull-quote { font-size: 1.08rem !important; }
 }

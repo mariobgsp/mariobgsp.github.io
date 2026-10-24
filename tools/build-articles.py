@@ -659,14 +659,109 @@ def article_page(article, index, total, all_articles):
     if current:
         sections.append((current_id, "\n\n".join(current)))
 
-    body_sections = "\n".join(
-        f'''      <section class="art-block" id="{e(ident or f"part-{i + 1}")}">
+    # A paragraph short enough to carry the point on its own (12 words or
+    # fewer) is set as a pull-quote: same words, louder frame.
+    def mark_pullquotes(html_text):
+        out = []
+        for block in html_text.split("\n\n"):
+            m = re.match(r"^<p>(.*?)</p>$", block, re.S)
+            if m:
+                words = [w for w in plain(m.group(1)).split()
+                         if any(c.isalnum() for c in w)]
+                if 0 < len(words) <= 12:
+                    block = '<p class="pull-quote">' + m.group(1) + "</p>"
+            out.append(block)
+        return "\n\n".join(out)
+
+    # Every identified section (h2) becomes a fold: the heading and a one-line
+    # teaser stay visible, the full body sits one click away. The folds ship
+    # open - assets/site.js is the only thing that ever closes one, so a
+    # no-JS reader gets the whole article. The "at-a-glance" section is the
+    # summary the source already wrote; it never folds, and it carries the
+    # jump navigation to the other sections.
+    def teaser_for(blocks):
+        for block in blocks:
+            m = re.match(r"<p>(.*?)</p>", block, re.S)
+            if m:
+                text = html.unescape(plain(re.sub(r"<[^>]+>", " ", m.group(1)))).strip()
+                sentence = re.split(r"(?<=[.!?])\s", text, maxsplit=1)[0]
+                if len(sentence) > 140:
+                    sentence = sentence[:137].rstrip() + "..."
+                return sentence
+        return ""
+
+    parsed = []
+    for i, (ident, text) in enumerate(sections):
+        title_html = ""
+        title_text = ""
+        rest = text
+        if ident:
+            blocks = text.split("\n\n")
+            m = re.match(r'<h2 id="[^"]+">(.*?)</h2>', blocks[0], re.S)
+            if m:
+                title_html = m.group(1)
+                title_text = html.unescape(plain(re.sub(r"<[^>]+>", "", title_html)))
+                rest = "\n\n".join(blocks[1:])
+        parsed.append({
+            "i": i,
+            "ident": ident,
+            "title_html": title_html,
+            "title_text": title_text,
+            "rest": rest,
+            "text": text,
+        })
+
+    jump = [p for p in parsed if p["ident"] and p["ident"] != "at-a-glance"]
+    jump_links = "\n".join(
+        f'<a href="#{e(p["ident"])}"><span>{p["i"] + 1:02d}</span>{e(p["title_text"])}</a>'
+        for p in jump)
+
+    def render_section(p):
+        ident = p["ident"]
+        if not ident:
+            return f'''      <section class="art-block" id="part-{p["i"] + 1}">
         <div class="container">
           <article class="art-content">
-{re.sub(r'<h2 id="[^"]+">', '<h2>', text, count=1) if ident else text}
+{p["text"]}
           </article>
         </div>
-      </section>''' for i, (ident, text) in enumerate(sections))
+      </section>'''
+
+        if ident == "at-a-glance":
+            nav = (f'''            <nav class="art-jump" aria-label="Article sections">
+{jump_links}
+              <button class="fold-toggle" id="foldToggle" type="button">Collapse all</button>
+            </nav>''' if jump_links else "")
+            return f'''      <section class="art-block art-glance" id="{e(ident)}">
+        <div class="container">
+          <article class="art-content">
+            <h2>{p["title_html"]}</h2>
+{mark_pullquotes(p["rest"])}
+{nav}
+          </article>
+        </div>
+      </section>'''
+
+        teaser = teaser_for(p["rest"].split("\n\n")) if p["rest"] else ""
+        teaser_html = (f'<p class="art-fold-teaser">{e(teaser)}</p>' if teaser else "")
+        return f'''      <section class="art-block" id="{e(ident)}">
+        <div class="container">
+          <article class="art-content">
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>{p["title_html"]}</h2>
+                {teaser_html}
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
+{mark_pullquotes(p["rest"])}
+              </div>
+            </details>
+          </article>
+        </div>
+      </section>'''
+
+    body_sections = "\n".join(render_section(p) for p in parsed)
 
     facts = "\n".join(
         f'''            <div class="art-fact">
@@ -747,7 +842,7 @@ def hub_page(articles):
               {thumb}
               <div class="card-head">
                 <h3 class="card-name">{e(a.slug)}</h3>
-                <span class="card-index">{i:02d}</span>
+                <span class="card-index accent-{(i - 1) % 3 + 1}">{i:02d}</span>
               </div>
               <p class="card-role">{e(a.title)}</p>
               <p class="card-desc">{e(plain(a.standfirst_md))}</p>
@@ -843,7 +938,7 @@ def home_index(articles):
           <span>One page per article</span>
         </div>
 
-        <ol class="art-index reveal">
+        <ol class="art-index stagger">
 {rows}
               <li class="art-index-more">
                 <a class="art-index-all" href="/articles/">

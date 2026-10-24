@@ -85,24 +85,40 @@
         </div>
       </section>
 
-      <section class="art-block" id="at-a-glance">
+      <section class="art-block art-glance" id="at-a-glance">
         <div class="container">
           <article class="art-content">
-<h2>At a glance</h2>
-
+            <h2>At a glance</h2>
 <ul>
   <li><strong>What it is</strong> — a payment lifecycle for a storefront: order → charge → signed callback → invoice → refund, with idempotency, authorization, pricing and audit logging on the same path.</li>
   <li><strong>Who it's for</strong> — teams paying the operational tax of microservices they do not need: four deployables, a broker and two databases for one business process.</li>
   <li><strong>The interesting part</strong> — the <strong>outbox pattern replaced Kafka without replacing Kafka's guarantees</strong>: atomic writes, at-least-once delivery, retry with backoff, and a terminal dead-letter table that is never redelivered. Plus a documented, measured trigger for splitting the monolith again.</li>
 </ul>
+            <nav class="art-jump" aria-label="Article sections">
+<a href="#the-problem-a-broker-for-a-two-schema-system"><span>02</span>The problem: a broker for a two-schema system</a>
+<a href="#what-it-does"><span>03</span>What it does</a>
+<a href="#why-this-stack"><span>04</span>Why this stack</a>
+<a href="#architecture"><span>05</span>Architecture</a>
+<a href="#architecture-decisions-worth-defending"><span>06</span>Architecture decisions worth defending</a>
+<a href="#running-it"><span>07</span>Running it</a>
+<a href="#screenshots"><span>08</span>Screenshots</a>
+<a href="#what-id-fix-next"><span>09</span>What I&#x27;d fix next</a>
+<a href="#links"><span>10</span>Links</a>
+              <button class="fold-toggle" id="foldToggle" type="button">Collapse all</button>
+            </nav>
           </article>
         </div>
       </section>
       <section class="art-block" id="the-problem-a-broker-for-a-two-schema-system">
         <div class="container">
           <article class="art-content">
-<h2>The problem: a broker for a two-schema system</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>The problem: a broker for a two-schema system</h2>
+                <p class="art-fold-teaser">The original design split the payment lifecycle across ms-order , ms-payment , ms-invoice and ms-logger , wired through Kafka, Mongo and...</p>
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <p>The original design split the payment lifecycle across <code>ms-order</code>, <code>ms-payment</code>, <code>ms-invoice</code> and <code>ms-logger</code>, wired through Kafka, Mongo and Zookeeper. That architecture has real advantages — independent scaling, independent deploys, blast-radius isolation — and none of them were being used here:</p>
 
 <ul>
@@ -112,38 +128,59 @@
 </ul>
 
 <p>The rewrite keeps the guarantees and removes the moving parts: five containers, one Go binary for the domain, one database with two schemas.</p>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="what-it-does">
         <div class="container">
           <article class="art-content">
-<h2>What it does</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>What it does</h2>
+                
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <div class="table-wrap"><table>
 <thead><tr><th>Capability</th><th>How</th></tr></thead>
 <tbody><tr><td><strong>Transaction lifecycle</strong></td><td>One <code>TransactionLifecycle</code> module owns the status chart: <code>CREATED → READY → SUCCESS → PUBLISHED</code>, plus <code>SUCCESS → REFUND</code> and <code>READY → FAILED</code>.</td></tr><tr><td><strong>Idempotency</strong></td><td><code>Idempotency-Key</code> on order creation, <code>transactionId</code> as the natural key for charge and refund. The key insert and the transaction insert share one database transaction.</td></tr><tr><td><strong>Atomic outbox</strong></td><td><code>product_trx</code>, the outbox row and the idempotency record are written in a single transaction, so a state change can never exist without its event.</td></tr><tr><td><strong>Signed callbacks</strong></td><td>Partner callbacks carry <code>x-callback-signature</code> (HMAC-SHA256) and <code>x-callback-timestamp</code>; the monolith verifies both against a 300-second replay window, and returns 401 for a forgery.</td></tr><tr><td><strong>Retry and dead-lettering</strong></td><td>A 5-second poller retries 3× with backoff, then writes to <code>dlq.*</code> and never redelivers.</td></tr><tr><td><strong>Stale-state sweeping</strong></td><td>A 60-second sweeper moves <code>READY → FAILED</code> after 5 minutes and purges processed logs past their retention window.</td></tr><tr><td><strong>Invoice provisioning</strong></td><td>The outbox poller emits a receipt file per settled transaction.</td></tr><tr><td><strong>Audit query</strong></td><td><code>GET /v1/logs?limit=</code> serves the log rows with retention.</td></tr><tr><td><strong>Session identity</strong></td><td>Short-lived opaque session tokens with a 60-second eviction ticker, plus login rate limiting (10 attempts / 15 minutes).</td></tr></tbody>
 </table></div>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="why-this-stack">
         <div class="container">
           <article class="art-content">
-<h2>Why this stack</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>Why this stack</h2>
+                
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <div class="table-wrap"><table>
 <thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
 <tbody><tr><td>Domain language</td><td><strong>Go monolith, <code>net/http</code> standard library</strong></td><td>One binary to build, ship and reason about. The routing table is a Go slice, so the endpoint list is readable in one file. A framework would add a middleware order to learn before you can read your own request path.</td></tr><tr><td>Consistency</td><td><strong>Postgres outbox in one transaction</strong></td><td>The alternative is a broker plus a saga. Here the state change and the event are <em>the same commit</em>, so "the payment succeeded but nothing was notified" is not a reachable state.</td></tr><tr><td>Delivery</td><td><strong>Polling worker with backoff and a DLQ</strong></td><td>At-least-once with an explicit terminal state, without a broker to operate. The trade is latency (a 5-second poll) for one fewer system.</td></tr><tr><td>Persistence</td><td><strong>Two schemas in one database</strong></td><td><code>transaction</code> and <code>store</code> in a single DSN keeps joins and transactions possible. Separate databases would reintroduce distributed consistency at the storage layer — the exact problem being removed.</td></tr><tr><td>Cache</td><td><strong>Redis for sessions and partner TTLs</strong></td><td>Ephemeral, TTL-shaped data. Deliberately <em>not</em> used for anything the lifecycle depends on, so a Redis restart cannot corrupt a payment.</td></tr><tr><td>Portal</td><td><strong>Next.js 16 App Router</strong></td><td>The portal is a client of the monolith through BFF routes; no business rule lives in the frontend.</td></tr><tr><td>Legacy compatibility</td><td><strong><code>/ms/api/v1/*</code> routes on the same monolith</strong></td><td>The old frontend contract keeps working while the new <code>/v1/*</code> API grows, so the migration did not require a flag day.</td></tr></tbody>
 </table></div>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="architecture">
         <div class="container">
           <article class="art-content">
-<h2>Architecture</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>Architecture</h2>
+                
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <img src="/assets/articles/payment-system-architecture-dark.png" alt="payment-system architecture" loading="lazy" decoding="async" />
 
 <details>
@@ -199,14 +236,21 @@
   <li><strong>Invoice</strong> — the outbox poller writes a receipt file for the settled transaction.</li>
   <li><strong>Refund</strong> — <code>SUCCESS → REFUND</code>; a second refund is a 409, not a double refund.</li>
 </ol>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="architecture-decisions-worth-defending">
         <div class="container">
           <article class="art-content">
-<h2>Architecture decisions worth defending</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>Architecture decisions worth defending</h2>
+                <p class="art-fold-teaser">Write the event in the same transaction as the state change.</p>
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <p><strong>Write the event in the same transaction as the state change.</strong> <em>Cost:</em> outbox rows live in the hot database and need retention management. <em>Benefit:</em> the classic "the payment committed but the notification vanished" window does not exist, because there is no window — it is one commit. This is the decision that made a message broker unnecessary.</p>
 
 <p><strong>A terminal dead-letter state instead of infinite retry.</strong> Poison rows get 3 attempts with backoff, then land in <code>dlq.*</code> and are <strong>never redelivered</strong>. <em>Cost:</em> someone has to look at the DLQ, and there is no automatic recovery. <em>Benefit:</em> a malformed event cannot pin a worker forever, and the failure is visible as data instead of as noise in a log.</p>
@@ -216,14 +260,21 @@
 <p><strong>Fail closed on the partner call.</strong> When <code>PARTNER_CHARGE_URL</code> is set and the partner errors, the monolith returns a 502 rather than optimistically marking the payment <code>READY</code>. <em>Cost:</em> a partner outage stops new payments. <em>Benefit:</em> no customer is sent to a checkout page for a charge the system never registered.</p>
 
 <p><strong>Serve two API generations from one binary.</strong> <code>/v1/*</code> is the new contract; <code>/ms/api/v1/*</code> keeps the old frontend working. <em>Cost:</em> two surfaces to maintain, and the legacy path is where the older weak authorization lived (the repo documents that as an accepted exception with a retirement plan). <em>Benefit:</em> the migration shipped incrementally instead of as a cutover.</p>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="running-it">
         <div class="container">
           <article class="art-content">
-<h2>Running it</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>Running it</h2>
+                <p class="art-fold-teaser">Seeded demo users come from project/pg-init-scripts/sql/20-store-schema.sql (for example klhomme0 / user1Pass!</p>
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <pre class="code-block" data-lang="bash"><code>cd project
 cp .env.example .env          # change every secret
 docker compose up --build     # postgres + redis + ms-paymentagr + monolith + frontend
@@ -237,7 +288,7 @@ cd monolith &amp;&amp; go vet ./... &amp;&amp; go test ./... -count=1
 cd ms-paymentagr &amp;&amp; go vet ./... &amp;&amp; go build ./...
 cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 
-<p>Seeded demo users come from <code>project/pg-init-scripts/sql/20-store-schema.sql</code> (for example <code>klhomme0</code> / <code>user1Pass!</code>).</p>
+<p class="pull-quote">Seeded demo users come from <code>project/pg-init-scripts/sql/20-store-schema.sql</code> (for example <code>klhomme0</code> / <code>user1Pass!</code>).</p>
 
 <h3 id="what-i-observed">What I observed</h3>
 
@@ -255,14 +306,21 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 }</code></pre>
 
 <p>I found two real defects by driving the stack instead of reading it. Both are described in <a href="#what-id-fix-next">What I'd fix next</a> with the exact code paths, because they are the most useful thing a run can produce.</p>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="screenshots">
         <div class="container">
           <article class="art-content">
-<h2>Screenshots</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>Screenshots</h2>
+                
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <img src="/assets/articles/payment-system-catalog.png" alt="Product catalog" loading="lazy" decoding="async" />
 
 <p class="fig-caption">The portal after sign-in. Prices and discount availability come from <code>store.product</code> through the monolith; the frontend holds no pricing logic.</p>
@@ -286,14 +344,21 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 <img src="/assets/articles/payment-system-partner-checkout.png" alt="The partner&#x27;s checkout endpoint" loading="lazy" decoding="async" />
 
 <p class="fig-caption">The simulated partner's side of the flow: <code>GET /payments/redirect/{trxid}</code> mints the payment session and fires the signed callback in the background. This screen is where the callback defect in <a href="#what-id-fix-next">What I'd fix next</a> becomes visible — the partner reports success while the monolith stays at <code>READY</code>, because the event it sends cannot be matched to a transaction.</p>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="what-id-fix-next">
         <div class="container">
           <article class="art-content">
-<h2>What I'd fix next</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>What I'd fix next</h2>
+                <p class="art-fold-teaser">1 — The legacy compat endpoint answers in snake_case , and the new checkout screen reads camelCase , so the page crashes.</p>
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <p><strong>1 — The legacy compat endpoint answers in <code>snake_case</code>, and the new checkout screen reads <code>camelCase</code>, so the page crashes.</strong> The monolith exposes two generations of the same query: <code>/v1/*</code> returns <code>transactionId</code>, <code>priceCharge</code>, <code>orderStatus</code>; the legacy <code>/ms/api/v1/*</code> route returns <code>transaction_id</code>, <code>price_charge</code>, <code>order_status</code>. The checkout page's <code>ProductTrx</code> type describes the camelCase shape, so:</p>
 
 <pre class="code-block" data-lang="text"><code>PAGEERROR: Cannot read properties of undefined (reading &#x27;toLocaleString&#x27;)</code></pre>
@@ -308,14 +373,21 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 <p>The signature verification is correct on both sides — the HMAC covers <code>timestamp + body</code> identically — so this is purely a field-name mismatch, and it fails silently from the partner's perspective: the poller's 3 retries expire, the payment sits at <code>READY</code> forever, and neither service logs a contract error. Mapping the payload in one shared place, or asserting the callback shape in the partner's own test suite, is the fix.</p>
 
 <p><strong>3 — Smaller items.</strong> The Compose file pins Postgres to <code>15-alpine3.17</code>, which is unmaintained; the seeded demo users ship with real BCrypt hashes in the init SQL, which is convenient locally and a habit worth breaking; and <code>payment_date</code> is populated at <code>READY</code> rather than at settlement, which reads oddly in the UI before the callback lands.</p>
+              </div>
+            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="links">
         <div class="container">
           <article class="art-content">
-<h2>Links</h2>
-
+            <details class="art-fold" open>
+              <summary class="art-fold-head">
+                <h2>Links</h2>
+                
+                <span class="art-fold-mark" aria-hidden="true"></span>
+              </summary>
+              <div class="art-fold-body">
 <ul>
   <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/payment-system">github.com/mariobgsp/payment-system</a></li>
   <li><strong>Domain language:</strong> <a href="https://github.com/mariobgsp/payment-system/blob/main/specs/tech-architecture/tech-stack.md"><code>specs/tech-architecture/tech-stack.md</code></a></li>
@@ -326,6 +398,8 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 <hr />
 
 <p class="fig-caption">Verified against commit <code>6db1fe0</code> (2026-09-18). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/payment-system.mmd"><code>diagrams/payment-system.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/payment-system.mjs"><code>tools/capture/payment-system.mjs</code></a>.</p>
+              </div>
+            </details>
           </article>
         </div>
       </section>
