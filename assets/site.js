@@ -59,7 +59,7 @@
      All of them are inert when absent. */
 
   var HARNESS = { t: null, scroll: null, focus: null, at: null, hover: null, freeze: false,
-                  cursor: null, cursorState: null, click: false, fps: false };
+                  cursor: null, cursorState: null, click: false, fps: false, open: false };
 
   if (window.URLSearchParams) {
     try {
@@ -82,6 +82,7 @@
       HARNESS.cursorState = query.get("cursorstate");
       HARNESS.click = query.get("click") === "1";
       HARNESS.fps = query.get("fps") === "1";
+      HARNESS.open = query.get("open") === "1";
     } catch (err) { /* malformed query string: run without the harness */ }
   }
 
@@ -176,11 +177,139 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
+  /* --------------------------------------------------------- point motion ---
+     Three small helpers every page shares, all of them additive markup-wise:
+     splitWords      wraps a heading words in mask spans for the word rise
+     indexStaggers   writes --i on every .stagger child, for the capped delay
+     countUp         runs a figure from 0 to its own honest value, never past it */
+
+  function splitWords(el) {
+    if (!el || el.getAttribute("data-words") !== null) return;
+    if (el.children.length) return;
+    var text = (el.textContent || "").replace(/\s+/g, " ").trim();
+    if (!text) return;
+
+    var frag = document.createDocumentFragment();
+    text.split(" ").forEach(function (word, i) {
+      if (i) frag.appendChild(document.createTextNode(" "));
+      var w = document.createElement("span");
+      w.className = "w";
+      w.style.setProperty("--wi", String(i));
+      var inner = document.createElement("span");
+      inner.className = "w-in";
+      inner.textContent = word;
+      w.appendChild(inner);
+      frag.appendChild(w);
+    });
+
+    el.textContent = "";
+    el.appendChild(frag);
+    el.setAttribute("data-words", "1");
+  }
+
+  function indexStaggers() {
+    [].slice.call(document.querySelectorAll(".stagger")).forEach(function (list) {
+      [].slice.call(list.children).forEach(function (child, i) {
+        child.style.setProperty("--i", String(i));
+      });
+    });
+  }
+
+  var FIGURES = ".spec-value, .runs-fig, .stat b";
+
+  function countUp(el) {
+    var raw = (el.textContent || "").trim();
+    if (!/^\d+(?:[.,]\d+)?\s*[%+]?$/.test(raw)) return;
+
+    var suffix = raw.replace(/^[\d.,\s]+/, "");
+    var numText = raw.replace(/[%+\s]+$/, "");
+    var num = parseFloat(numText.replace(/,/g, ""));
+    if (!isFinite(num) || num === 0) return;
+
+    var decimals = numText.indexOf(".") > -1 ? numText.length - numText.indexOf(".") - 1 : 0;
+    var dur = 900;
+    var start = null;
+
+    el.classList.add("counting");
+    requestAnimationFrame(function step(now) {
+      if (start === null) start = now;
+      var t = Math.min(1, (now - start) / dur);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = (num * eased).toFixed(decimals) + suffix;
+      if (t < 1) requestAnimationFrame(step);
+      else el.classList.remove("counting");
+    });
+  }
+
+  function countFigures(scope) {
+    if (reduced.matches || HARNESS.freeze || HARNESS.t !== null) return;
+    if (scope.matches && scope.matches(FIGURES)) countUp(scope);
+    [].slice.call(scope.querySelectorAll(FIGURES)).forEach(countUp);
+  }
+
+  /* Article pages wire their reading column at runtime, so the generated
+     markup never carries a behaviour class: each section and its heading join
+     the reveal set, the column becomes a stagger list, and the folds
+     (details/summary, open by default) close only when JS is actually running. */
+
+  (function wireArticle() {
+    if (!document.body.classList.contains("art-page")) return;
+
+    [].slice.call(document.querySelectorAll(".art-block")).forEach(function (block) {
+      block.classList.add("reveal");
+      [].slice.call(block.querySelectorAll(".art-fold-head h2")).forEach(function (h2) {
+        splitWords(h2);
+        h2.classList.add("reveal");
+      });
+      var content = block.querySelector(".art-content");
+      if (content) content.classList.add("stagger");
+    });
+
+    /* The folds ship open for a no-JS reader; JS is the only thing that ever
+       closes one - and ?open=1 keeps them open for a capture. */
+    if (!HARNESS.open) {
+      [].slice.call(document.querySelectorAll("details.art-fold")).forEach(function (fold) {
+        fold.open = false;
+      });
+    }
+
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest ? event.target.closest('a[href^="#"]') : null;
+      if (!link) return;
+      var id = (link.getAttribute("href") || "").slice(1);
+      if (!id) return;
+      var target = document.getElementById(id);
+      if (!target) return;
+      var fold = target.querySelector("details.art-fold");
+      if (fold) fold.open = true;
+    });
+
+    var toggle = document.getElementById("foldToggle");
+    if (toggle) {
+      var folds = [].slice.call(document.querySelectorAll("details.art-fold"));
+      if (!folds.length) {
+        toggle.parentNode.removeChild(toggle);
+        return;
+      }
+      toggle.addEventListener("click", function () {
+        var open = !(folds[0] && folds[0].open);
+        folds.forEach(function (fold) { fold.open = open; });
+        toggle.textContent = open ? "Collapse all" : "Expand all";
+      });
+    }
+  })();
+
+  /* Section titles split into words on every page: the spans carry the
+     word-rise mask, and a no-JS reader keeps the plain text. */
+  [].slice.call(document.querySelectorAll(".section-title")).forEach(splitWords);
+
   /* -------------------------------------------------------------- reveals --- */
 
+  indexStaggers();
   var revealables = document.querySelectorAll(".reveal, .stagger");
 
   function showAll() {
+    indexStaggers();
     [].slice.call(revealables).forEach(function (el) { el.classList.add("visible"); });
     [].slice.call(document.querySelectorAll("main section[id], footer[id]")).forEach(function (el) {
       el.classList.add("is-seen");
@@ -577,9 +706,16 @@
     var baseB = null;   /* static value-noise per cell, coarse grain */
     var baseC = null;   /* static value-noise per cell, broad veil */
     var thr = null;     /* Bayer threshold per cell */
+    var diag = null;    /* x + y per cell, for the wavefront band */
+    var dotMask = null; /* 1 on the sparse lattice points */
+    var dotPhase = null;/* deterministic phase per lattice point */
     var pitch = 8;
     var driftA = 16;    /* layer periods in seconds, from --pixel-drift* */
     var driftB = 6;
+    var WAVE_PERIOD = 9;  /* seconds between wavefront sweeps */
+    var WAVE_BAND = 22;   /* half-width of the band, in cells */
+    var DOT_GAP = 13;     /* lattice spacing, in cells (odd, avoids moiré) */
+    var DOT_PERIOD = 7;   /* seconds per lattice pulse */
     var time = 0;
     var raf = 0;
     var running = false;
@@ -661,6 +797,9 @@
       baseB = new Float32Array(n);
       baseC = new Float32Array(n);
       thr = new Float32Array(n);
+      diag = new Float32Array(n);
+      dotMask = new Uint8Array(n);
+      dotPhase = new Float32Array(n);
 
       for (var y = 0; y < CH; y++) {
         for (var x = 0; x < CW; x++) {
@@ -669,6 +808,14 @@
           baseB[i] = gridB[((y & GRID_MASK) << 9) | (x & GRID_MASK)];
           baseC[i] = gridC[((y & GRID_MASK) << 9) | (x & GRID_MASK)];
           thr[i] = BAYER[(y & 7) * 8 + (x & 7)] / 64;
+          diag[i] = x + y;
+
+          /* The dot lattice: every DOT_GAP cells in both axes, phased by a
+             hash so neighbouring points never pulse in step. */
+          if (x % DOT_GAP === 0 && y % DOT_GAP === 0) {
+            dotMask[i] = 1;
+            dotPhase[i] = Math.floor(hash2(x, y) * 512);
+          }
         }
       }
 
@@ -694,7 +841,33 @@
       var morph = 0.5 + 0.5 * SIN[Math.round(t * turn(driftA)) & 511];
       var veil = SIN[Math.round(t * turn(driftB)) & 511] * 0.19 + 0.19;
 
+      /* The livelier layers, both flat per-cell fills: a wavefront band that
+         crosses the sheet on a diagonal every WAVE_PERIOD seconds, and the
+         lattice points pulsing on their own phases. Both skip entirely when
+         the reader asked for reduced motion, and both freeze honestly under
+         the ?t= harness because they read the same t as the dither. */
+      var live = !motionReduced();
+      var wavePos = -WAVE_BAND - 1;
+      var dotTurn = 0;
+      if (live) {
+        var travel = CW + CH + WAVE_BAND * 2;
+        wavePos = ((t / WAVE_PERIOD) % 1) * travel - WAVE_BAND;
+        dotTurn = t * turn(DOT_PERIOD);
+      }
+
       for (var i = 0; i < n; i++) {
+        /* Lattice points paint over the dither: they are the field's own
+           instruments, so they never hide under its noise. */
+        if (live && dotMask[i]) {
+          var pulse = 0.5 + 0.5 * SIN[(Math.round(dotPhase[i] + dotTurn)) & 511];
+          data[k] = 167;
+          data[k + 1] = 139;
+          data[k + 2] = 250;
+          data[k + 3] = Math.round((0.07 + 0.13 * pulse) * 255);
+          k += 4;
+          continue;
+        }
+
         var v = baseA[i] + (baseB[i] - baseA[i]) * morph + baseC[i] * veil;
         var edge = thr[i];
 
@@ -705,10 +878,28 @@
         }
 
         var d = v - edge;
-        data[k] = 245;
-        data[k + 1] = 245;
-        data[k + 2] = 247;
-        data[k + 3] = Math.round((d > 0.34 ? 0.10 : 0.055) * 255);
+        var a = d > 0.34 ? 0.10 : 0.055;
+        var r = 245, g = 245, bch = 247;
+
+        /* The band lifts lit cells it crosses toward the violet accent, with
+           a linear falloff, and lights cells just under their threshold so
+           the front edge of the sweep reads as a moving line. */
+        if (live) {
+          var dist = diag[i] - wavePos;
+          if (dist < 0) dist = -dist;
+          if (dist < WAVE_BAND) {
+            var boost = 1 - dist / WAVE_BAND;
+            a += (0.20 - a) * boost;
+            r += (167 - r) * boost;
+            g += (139 - g) * boost;
+            bch += (250 - bch) * boost;
+          }
+        }
+
+        data[k] = Math.round(r);
+        data[k + 1] = Math.round(g);
+        data[k + 2] = Math.round(bch);
+        data[k + 3] = Math.round(a * 255);
         k += 4;
       }
 
@@ -1398,6 +1589,15 @@
     /* The axis draws and the measured values settle when a section first
        comes into view - not when it becomes "current", so a rule is never
        missing above a title that is already on screen. */
+    /* A section being seen now owns three events, not one: the axis draw
+       (is-seen), the honest count-up of its figures, and one scan sweep -
+       the same line an anchor jump already fires. */
+    function seen(section) {
+      section.classList.add("is-seen");
+      countFigures(section);
+      sweep(section.id);
+    }
+
     function watch() {
       if (!("IntersectionObserver" in window) || motionReduced()) {
         railSections.forEach(function (section) { section.classList.add("is-seen"); });
@@ -1407,7 +1607,7 @@
       var observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
           if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-seen");
+          seen(entry.target);
           observer.unobserve(entry.target);
         });
       }, { threshold: 0.04, rootMargin: "0px 0px -6% 0px" });
