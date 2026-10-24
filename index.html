@@ -417,7 +417,7 @@
   transition: background-color 500ms var(--ease-out);
 }
 
-.art-index-row:hover { background: rgba(255, 255, 255, 0.03); }
+.art-index-row:hover { background: var(--tint); }
 
 .art-index-name {
   grid-area: name;
@@ -678,7 +678,7 @@
 }
 
 .cert-item:hover {
-  background: rgba(255, 255, 255, 0.022);
+  background: var(--tint);
 }
 
 .cert-year {
@@ -808,6 +808,45 @@
   color: var(--ink-3);
 }
 
+/* ----------------------------------------------------- point hovers ---
+   One visible answer per point, all flat: a solid tint, an accent bar, or
+   an accent ink. Nothing moves layout; the indent is a paint-only inset. */
+
+.exp-item {
+  border-radius: var(--r-md);
+  transition: background-color 400ms var(--ease-out), box-shadow 400ms var(--ease-out);
+}
+
+.exp-item:hover {
+  background: var(--tint);
+  box-shadow: inset 2px 0 0 0 var(--violet);
+}
+
+.exp-item .exp-role,
+.exp-item .exp-date { transition: color 400ms var(--ease-out); }
+
+.exp-item:hover .exp-role { color: var(--ink); }
+.exp-item:hover .exp-date { color: var(--ink-2); }
+
+.exp-body li::before { transition: background-color 400ms var(--ease-out), box-shadow 400ms var(--ease-out); }
+.exp-item:hover .exp-body li::before { background: var(--violet); box-shadow: none; }
+
+.cluster-item { transition: color 300ms var(--ease-out); }
+.cluster-item:hover { color: var(--ink); }
+.js .stagger.visible .cluster-item:hover .check { scale: 1.25; }
+
+.cert-item .cert-year { transition: color 400ms var(--ease-out); }
+.cert-item:hover .cert-year { color: var(--violet); }
+
+.runs-list li .runs-fig { transition: color 400ms var(--ease-out); }
+.runs-list li:hover .runs-fig { color: var(--violet); }
+
+.spec-row .spec-value { transition: color 400ms var(--ease-out); }
+.spec-row:hover .spec-value { color: var(--violet); }
+
+.art-index-name { display: inline-block; transition: transform 400ms var(--ease-out); }
+.art-index-row:hover .art-index-name { transform: translate3d(4px, 0, 0); }
+
 /* -------------------------------------------------------- responsive --- */
 
 @media (max-width: 1180px) {
@@ -886,12 +925,12 @@
     <div class="container">
       <h2 class="section-title reveal">Five years of backend work, measured.</h2>
       <div class="about-grid" style="margin-top: clamp(32px, 4vw, 56px);">
-        <div class="about-text reveal">
+        <div class="about-text stagger">
           <p>Five years of Java/Spring and Go microservices for banking and telecom across regional <strong>ID, SG, MY, CHN and HKMO</strong> markets. Currently at OCBC Indonesia with a dual mandate &mdash; core backend engineer on the HKMO team and agentic AI engineer on the Innovation team; previously CIMB Niaga on the CCPL Octo Smart programme and XL Axiata on E-Payment.</p>
           <p>Day to day that means <strong>backend delivery for the HKMO market</strong>, agentic AI development and Model Context Protocol (MCP) integrations, reusable agent skills, a reusable SOA migration workflow, API design with technical architects, rapid prototyping, and cross-border Scrum across South East Asia and China.</p>
           <p>The change I am proudest of: a request path from <strong>20 seconds down to ~1.5 seconds</strong> by collapsing nested loops into a single pass, which removed the occasional timeouts under concurrent calls &mdash; and a <strong>1M-record batch job from ~6 hours down to ~20 minutes</strong>. Before that, a B.Eng in Engineering Physics at UGM, where my thesis was emotion identification from thermal-camera CNNs.</p>
         </div>
-        <div class="spec-stats reveal">
+        <div class="spec-stats stagger">
           <div class="spec-row"><span class="spec-value">5+</span><span class="spec-label">years building backend systems, since 2021</span></div>
           <div class="spec-row"><span class="spec-value spec-accent">20s &rarr; 1.5s</span><span class="spec-label">request path, nested loops collapsed into a single pass</span></div>
           <div class="spec-row"><span class="spec-value">6h &rarr; 20m</span><span class="spec-label">1M-record batch job, 94% faster</span></div>
@@ -966,7 +1005,7 @@
           <div class="exp-body">
             <h3 class="exp-role">Software Engineer</h3>
             <p class="exp-company">OCBC Indonesia <span class="exp-loc">BSD City, Greater Jakarta &middot; On-site</span></p>
-            <ul>
+            <ul class="stagger">
               <li>Hold a dual mandate across two tracks &mdash; core backend engineer on the HKMO team (primary squad) and agentic AI engineer on the Innovation team.</li>
               <li>Delivered backend services for the HKMO market, collaborating across markets with the ID, SG, MY and CHN teams and partnering closely with front-end engineers in Agile/Scrum.</li>
               <li>Built agentic AI development workflows and integrated the <strong>Model Context Protocol (MCP)</strong> on the Innovation team, accelerating coding, debugging and automated tasks with architectural consistency.</li>
@@ -985,7 +1024,7 @@
           <div class="exp-body">
             <h3 class="exp-role">Software Engineer</h3>
             <p class="exp-company">PT. Bank CIMB Niaga <span class="exp-loc">Tangerang Selatan &middot; Hybrid</span></p>
-            <ul>
+            <ul class="stagger">
               <li>Java 17, Spring, MySQL and Git, with an emphasis on clean code.</li>
               <li>CCPL Octo Smart delivery alongside frontend and QA engineers.</li>
               <li>1M-record batch processing reduced from ~6h to ~20min.</li>
@@ -998,7 +1037,7 @@
           <div class="exp-body">
             <h3 class="exp-role">Software Engineer</h3>
             <p class="exp-company">PT. XL Axiata Tbk. <span class="exp-loc">Yogyakarta &middot; Remote</span></p>
-            <ul>
+            <ul class="stagger">
               <li>Java 17, Spring, Go, Echo, Solace, Oracle, PostgreSQL, Elasticsearch, Kubernetes, GCP.</li>
               <li>E-Payment and Oracle Exit teams working in Jira Agile with PO, SM and TL.</li>
               <li>APIs published to the API Gateway.</li>
@@ -1013,7 +1052,7 @@
           <div class="exp-body">
             <h3 class="exp-role">Java Programmer Bootcamp Trainee</h3>
             <p class="exp-company">PT. Xsis Mitra Utama <span class="exp-loc">Yogyakarta &middot; On-site</span></p>
-            <ul>
+            <ul class="stagger">
               <li>Intensive, project-based OOP bootcamp building backend apps with Java, Spring, Docker, RabbitMQ and Git.</li>
             </ul>
           </div>
@@ -1024,7 +1063,7 @@
           <div class="exp-body">
             <h3 class="exp-role">Student Laboratory Assistant</h3>
             <p class="exp-company">Universitas Gadjah Mada <span class="exp-loc">Sensor and Telecontrol System Laboratory, Dept of Nuclear Engineering and Engineering Physics</span></p>
-            <ul>
+            <ul class="stagger">
               <li>Laboratory support for the sensor and telecontrol systems course.</li>
             </ul>
           </div>
@@ -1111,8 +1150,8 @@
           <a href="https://github.com/mariobgsp/articles" target="_blank" rel="noopener">GitHub</a>.
         </p>
 
-        <div class="evidence reveal">
-          <div class="evidence-grid">
+        <div class="evidence">
+          <div class="evidence-grid stagger">
             <figure>
               <img src="assets/articles/payment-system-checkout-ready.png" alt="Checkout screen of the payment system, transaction created and ready to pay" width="2000" height="1101" loading="lazy">
               <figcaption>payment-system &mdash; one transaction driven through CREATED, READY, SUCCESS and REFUND against the containerised stack.</figcaption>
@@ -1132,9 +1171,9 @@
           </div>
         </div>
 
-        <div class="runs reveal">
-          <h3 class="runs-title">What the runs printed</h3>
-          <ul class="runs-list">
+        <div class="runs">
+          <h3 class="runs-title reveal">What the runs printed</h3>
+          <ul class="runs-list stagger">
             <li>
               <span class="runs-fig">94%</span>
               <span class="runs-say">fewer tokens on the same agent prompts, after the gateway compressed tool output and replayed what it had already seen.</span>
@@ -1209,7 +1248,7 @@
       <div class="skills-layout">
         <div class="spec-cluster reveal">
           <h3 class="cluster-title">Languages &amp; Frameworks</h3>
-          <ul class="cluster-list">
+          <ul class="cluster-list stagger">
             <li class="cluster-item"><span class="check"></span><span>Java, Spring Framework &mdash; primary stack</span></li>
             <li class="cluster-item"><span class="check"></span><span>Go, Echo &mdash; microservices</span></li>
             <li class="cluster-item"><span class="check"></span><span>Python &middot; REST &middot; Microservices &middot; Clean Code</span></li>
@@ -1218,7 +1257,7 @@
 
         <div class="spec-cluster reveal">
           <h3 class="cluster-title">Data &amp; Infrastructure</h3>
-          <ul class="cluster-list">
+          <ul class="cluster-list stagger">
             <li class="cluster-item"><span class="check"></span><span>MySQL &middot; PostgreSQL &middot; Oracle &middot; Elasticsearch</span></li>
             <li class="cluster-item"><span class="check"></span><span>Kubernetes &middot; Docker &middot; Google Cloud Platform (GCP)</span></li>
           </ul>
@@ -1226,7 +1265,7 @@
 
         <div class="spec-cluster reveal">
           <h3 class="cluster-title">AI &amp; Agentic Systems</h3>
-          <ul class="cluster-list">
+          <ul class="cluster-list stagger">
             <li class="cluster-item"><span class="check"></span><span>Agentic AI development &middot; Model Context Protocol (MCP)</span></li>
             <li class="cluster-item"><span class="check"></span><span>Reusable agent skills &middot; AI-augmented workflows</span></li>
           </ul>
@@ -1234,7 +1273,7 @@
 
         <div class="spec-cluster reveal">
           <h3 class="cluster-title">Messaging &amp; APIs</h3>
-          <ul class="cluster-list">
+          <ul class="cluster-list stagger">
             <li class="cluster-item"><span class="check"></span><span>REST APIs &middot; Microservices &middot; SOA &middot; API Gateway</span></li>
             <li class="cluster-item"><span class="check"></span><span>Kafka &middot; RabbitMQ &middot; Solace</span></li>
           </ul>
@@ -1242,7 +1281,7 @@
 
         <div class="spec-cluster reveal">
           <h3 class="cluster-title">Architecture &amp; Practices</h3>
-          <ul class="cluster-list">
+          <ul class="cluster-list stagger">
             <li class="cluster-item"><span class="check"></span><span>OOP &middot; Clean Code &middot; SOLID Principles</span></li>
             <li class="cluster-item"><span class="check"></span><span>Agile/Scrum &middot; SDLC &middot; TDD &middot; Performance Optimization</span></li>
           </ul>
@@ -1250,15 +1289,15 @@
 
         <div class="spec-cluster reveal">
           <h3 class="cluster-title">Tools &amp; Languages spoken</h3>
-          <ul class="cluster-list">
+          <ul class="cluster-list stagger">
             <li class="cluster-item"><span class="check"></span><span>Git &middot; Jira &middot; Full-cycle delivery</span></li>
             <li class="cluster-item"><span class="check"></span><span>Bahasa Indonesia (native) &middot; English (professional)</span></li>
           </ul>
         </div>
 
-        <div class="reveal">
-          <span class="mono-tag">Certifications</span>
-          <div class="cert-panel">
+        <div>
+          <span class="mono-tag reveal">Certifications</span>
+          <div class="cert-panel stagger">
             <div class="cert-item"><span class="cert-year">2026</span><span class="cert-name">AI Engineer Agentic Track: The Complete Agent &amp; MCP Course</span></div>
             <div class="cert-item"><span class="cert-year">2026</span><span class="cert-name">AI Engineer Core Track: LLM Engineering, RAG, QLoRA, Agents</span></div>
             <div class="cert-item"><span class="cert-year">2026</span><span class="cert-name">Software Architecture &amp; Technology of Large-Scale Systems<span class="cert-issuer">Udemy</span></span></div>
@@ -1304,7 +1343,7 @@
 
       <a class="close-mail reveal" href="mailto:mariobgsp@gmail.com">mariobgsp@gmail.com</a>
 
-      <div class="close-links reveal">
+      <div class="close-links stagger">
         <a href="https://github.com/mariobgsp" target="_blank" rel="noopener">GitHub</a>
         <a href="https://linkedin.com/in/mariobgsp" target="_blank" rel="noopener">LinkedIn</a>
         <a href="assets/muhammad-ario-bagus-prakusa-cv.pdf" target="_blank" rel="noopener" download>R&eacute;sum&eacute;</a>
