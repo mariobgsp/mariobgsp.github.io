@@ -37,6 +37,13 @@
   --blue: #7aa2ff;
   --ok: var(--emerald);
 
+  /* the accent cycle: one of three solid hues per point, never a blend.
+     Surfaces keep their flat fill; an accent is ink or a low solid tint. */
+  --accent-1: var(--violet);
+  --accent-2: var(--emerald);
+  --accent-3: var(--blue);
+  --tint: rgba(255, 255, 255, 0.03);
+
   /* the pixel field (assets/site.js): one canvas pixel is one on-screen cell.
      The field is ambient and pointer-blind; the drift tokens are the period of
      its two slow cross-fades. */
@@ -700,7 +707,7 @@ html[data-freeze] *::after {
   height: 1px;
   margin: 28px 0 40px;
   border: 0;
-  background: linear-gradient(90deg, var(--line-strong), var(--line-soft) 40%, transparent);
+  background: var(--line);
 }
 
 .section-title {
@@ -719,7 +726,7 @@ html[data-freeze] *::after {
   height: 1px;
   margin: 0;
   border: 0;
-  background: linear-gradient(90deg, transparent, var(--line) 18%, var(--line) 82%, transparent);
+  background: var(--line);
 }
 
 .prose {
@@ -1144,13 +1151,102 @@ html[data-freeze] *::after {
   .btn:hover { will-change: transform; }
 }
 
-.stagger.visible > *:nth-child(1) { transition-delay: 40ms; }
-.stagger.visible > *:nth-child(2) { transition-delay: 110ms; }
-.stagger.visible > *:nth-child(3) { transition-delay: 180ms; }
-.stagger.visible > *:nth-child(4) { transition-delay: 250ms; }
-.stagger.visible > *:nth-child(5) { transition-delay: 320ms; }
-.stagger.visible > *:nth-child(6) { transition-delay: 390ms; }
-.stagger.visible > *:nth-child(n + 7) { transition-delay: 440ms; }
+.stagger.visible > * {
+  /* One delay rule for any list length: the index is written by assets/site.js
+     as --i, and the cap keeps a long list from waiting behind its own tail. */
+  transition-delay: min(calc(var(--i, 0) * 60ms + 30ms), 540ms);
+}
+
+/* ---------------------------------------------------------- word rise ---
+   A heading rises one word at a time out of a mask, the same mechanic as the
+   hero name. assets/site.js splits the words and marks the heading with
+   data-words; without JS the plain text stays and nothing is hidden. The
+   padding/margin pair widens the clip box without changing the layout height,
+   so descenders and cap heights are never shaved. */
+
+.js [data-words] .w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0.08em 0.02em 0.18em;
+  margin: -0.08em -0.02em -0.18em;
+}
+
+.js [data-words] .w-in {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 112%, 0);
+}
+
+.js [data-words].visible .w-in,
+.js .is-seen [data-words] .w-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 620ms var(--ease-out),
+    transform 620ms var(--ease-out);
+  transition-delay: min(calc(var(--wi, 0) * 45ms + 60ms), 480ms);
+}
+
+/* ----------------------------------------------------------- check-in ---
+   The marker on a list point pops in with its own row: the standalone scale
+   property, so it composes with the row transform instead of overwriting it.
+   The delay is inherited from the row, so marker and row move together. */
+
+.js .cluster-item .check,
+.js .exp-body li::before {
+  scale: 0;
+  transition: scale 420ms var(--ease-pop);
+  transition-delay: inherit;
+}
+
+.js .stagger.visible .cluster-item .check,
+.js .stagger.visible .exp-body li::before { scale: 1; }
+
+/* --------------------------------------------------------- link sweep ---
+   One accent line grows from the left under a text link on hover. Applied by
+   the page styles that opt in; it never replaces an outline or focus ring. */
+
+.link-sweep {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-sweep::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: var(--violet);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 360ms var(--ease-out);
+  pointer-events: none;
+}
+
+.link-sweep:hover::after,
+.link-sweep:focus-visible::after { transform: scaleX(1); }
+
+/* ----------------------------------------------------------- axis draw ---
+   A hairline axis above each section first container, drawn like the rules
+   when the section is first seen. Flat by construction: one solid 1px line. */
+
+.js .section.anchor > .container:first-child::before {
+  content: "";
+  display: block;
+  height: 1px;
+  margin: 0 0 clamp(28px, 3.2vw, 52px);
+  background: var(--line-soft);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 900ms var(--ease-out);
+}
+
+.js .is-seen .section.anchor > .container:first-child::before {
+  transform: scaleX(1);
+}
 
 /* -------------------------------------------------------- channel rail ---
    One tick per section, built from the document by assets/site.js: the index
@@ -1272,13 +1368,24 @@ html[data-freeze] *::after {
 .js .is-seen .section-rule { transform: scaleX(1); }
 
 .js .spec-value,
+.js .runs-fig,
 .js .stat b {
   opacity: 0.42;
-  transition: opacity 520ms var(--ease-out);
+  transform: translate3d(0, 6px, 0);
+  transition:
+    opacity 520ms var(--ease-out),
+    transform 520ms var(--ease-out);
 }
 
 .js .is-seen .spec-value,
-.js .is-seen .stat b { opacity: 1; }
+.js .is-seen .runs-fig,
+.js .is-seen .stat b {
+  opacity: 1;
+  transform: none;
+}
+
+/* A running count-up holds tabular figures so the width never jitters. */
+.counting { font-variant-numeric: tabular-nums; }
 
 /* The handoff between channels happens on the sheet chrome only, never on
    body copy, so reading contrast is unchanged as you leave a section. */
@@ -1398,6 +1505,27 @@ html[data-freeze] *::after {
     transition: opacity 150ms linear !important;
   }
 
+  /* The new primitives settle to their end state: words and markers arrive,
+     figures never move, the axis simply exists. */
+  .js [data-words] .w-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: opacity 150ms linear !important;
+    transition-delay: 0ms !important;
+  }
+
+  .js .cluster-item .check,
+  .js .exp-body li::before { scale: 1 !important; }
+
+  .js .spec-value,
+  .js .runs-fig,
+  .js .stat b {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .link-sweep::after { transition: none !important; }
+
 }
 
 /* ------------------------------------- reduced transparency, print, no-js --- */
@@ -1413,6 +1541,7 @@ html[data-freeze] *::after {
   /* Tier 1: the axis and the sweep are self-motion; the state stays. */
   .js .sheet-rule,
   .js .section-rule { transform: none !important; }
+  .js .section.anchor > .container:first-child::before { transform: none !important; }
   .scan-line { display: none !important; }
   .js [data-flow="is-past"] .fig-label { opacity: 1 !important; }
 }
@@ -1464,10 +1593,24 @@ html[data-freeze] *::after {
   .js .reveal,
   .js .stagger > *,
   .js .spec-value,
+  .js .runs-fig,
   .js .stat b {
     opacity: 1 !important;
     --lift: 0px !important;
+    transform: none !important;
   }
+
+  .js [data-words] .w-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .js .cluster-item .check,
+  .js .exp-body li::before { scale: 1 !important; }
+
+  .js .sheet-rule,
+  .js .section-rule,
+  .js .section.anchor > .container:first-child::before { transform: none !important; }
 
   .js.hero-intro .hero * {
     opacity: 1 !important;
