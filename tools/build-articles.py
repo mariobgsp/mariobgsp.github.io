@@ -673,41 +673,23 @@ def article_page(article, index, total, all_articles):
             out.append(block)
         return "\n\n".join(out)
 
-    # Every identified section (h2) becomes a fold: the heading and a one-line
-    # teaser stay visible, the full body sits one click away. The folds ship
-    # open - assets/site.js is the only thing that ever closes one, so a
-    # no-JS reader gets the whole article. The "at-a-glance" section is the
-    # summary the source already wrote; it never folds, and it carries the
-    # jump navigation to the other sections.
-    def teaser_for(blocks):
-        for block in blocks:
-            m = re.match(r"<p>(.*?)</p>", block, re.S)
-            if m:
-                text = html.unescape(plain(re.sub(r"<[^>]+>", " ", m.group(1)))).strip()
-                sentence = re.split(r"(?<=[.!?])\s", text, maxsplit=1)[0]
-                if len(sentence) > 140:
-                    sentence = sentence[:137].rstrip() + "..."
-                return sentence
-        return ""
-
+    # The reading column is one continuous sheet: every section renders in
+    # full, no folding. The "at-a-glance" section keeps its panel and the
+    # numbered jump navigation to the other sections.
     parsed = []
     for i, (ident, text) in enumerate(sections):
         title_html = ""
         title_text = ""
-        rest = text
         if ident:
-            blocks = text.split("\n\n")
-            m = re.match(r'<h2 id="[^"]+">(.*?)</h2>', blocks[0], re.S)
+            m = re.match(r'<h2 id="[^"]+">(.*?)</h2>', text.split("\n\n")[0], re.S)
             if m:
                 title_html = m.group(1)
                 title_text = html.unescape(plain(re.sub(r"<[^>]+>", "", title_html)))
-                rest = "\n\n".join(blocks[1:])
         parsed.append({
             "i": i,
             "ident": ident,
             "title_html": title_html,
             "title_text": title_text,
-            "rest": rest,
             "text": text,
         })
 
@@ -728,35 +710,25 @@ def article_page(article, index, total, all_articles):
       </section>'''
 
         if ident == "at-a-glance":
+            blocks = p["text"].split("\n\n")
+            rest = "\n\n".join(blocks[1:])
             nav = (f'''            <nav class="art-jump" aria-label="Article sections">
 {jump_links}
-              <button class="fold-toggle" id="foldToggle" type="button">Collapse all</button>
             </nav>''' if jump_links else "")
             return f'''      <section class="art-block art-glance" id="{e(ident)}">
         <div class="container">
           <article class="art-content">
             <h2>{p["title_html"]}</h2>
-{mark_pullquotes(p["rest"])}
+{mark_pullquotes(rest)}
 {nav}
           </article>
         </div>
       </section>'''
 
-        teaser = teaser_for(p["rest"].split("\n\n")) if p["rest"] else ""
-        teaser_html = (f'<p class="art-fold-teaser">{e(teaser)}</p>' if teaser else "")
         return f'''      <section class="art-block" id="{e(ident)}">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>{p["title_html"]}</h2>
-                {teaser_html}
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
-{mark_pullquotes(p["rest"])}
-              </div>
-            </details>
+{mark_pullquotes(p["text"])}
           </article>
         </div>
       </section>'''

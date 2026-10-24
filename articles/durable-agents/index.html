@@ -104,7 +104,6 @@
 <a href="#screenshots"><span>08</span>Screenshots</a>
 <a href="#what-id-fix-next"><span>09</span>What I&#x27;d fix next</a>
 <a href="#links"><span>10</span>Links</a>
-              <button class="fold-toggle" id="foldToggle" type="button">Collapse all</button>
             </nav>
           </article>
         </div>
@@ -112,13 +111,8 @@
       <section class="art-block" id="the-problem-agent-chat-is-the-least-durable-part-of-the-stack">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>The problem: agent chat is the least durable part of the stack</h2>
-                <p class="art-fold-teaser">Conventional chat UIs model a conversation as client state.</p>
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="the-problem-agent-chat-is-the-least-durable-part-of-the-stack">The problem: agent chat is the least durable part of the stack</h2>
+
 <p>Conventional chat UIs model a conversation as client state. That assumption breaks badly once each turn costs real money and takes minutes:</p>
 
 <ul>
@@ -128,59 +122,38 @@
 </ul>
 
 <p>This project inverts the ownership: the harness writes durable tasks first, and the browser is a view onto that log.</p>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="what-it-does">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>What it does</h2>
-                
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="what-it-does">What it does</h2>
+
 <div class="table-wrap"><table>
 <thead><tr><th>Capability</th><th>How</th></tr></thead>
 <tbody><tr><td><strong>Durable threads</strong></td><td>Every message, tool call and generation is a durable task; <code>resume()</code> replays work that was interrupted.</td></tr><tr><td><strong>Live streaming</strong></td><td>Per-conversation WebSocket emitting <code>snapshot</code> → <code>entry</code> → <code>message-start</code> → <code>delta</code>… → <code>message-end</code>.</td></tr><tr><td><strong>Agents as files</strong></td><td><code>data/agents/&lt;slug&gt;/{agent.json,AGENT.md,SOUL.md}</code>. <code>SOUL.md</code> is who it is; <code>AGENT.md</code> is its working rules.</td></tr><tr><td><strong>Hot reload into live threads</strong></td><td>Saving an agent rebinds it into existing threads (<code>rebindAgent</code>) and reports how many threads took the new files.</td></tr><tr><td><strong>Group chat, three modes</strong></td><td><code>Nyahut</code> (agents claim a message by responsibility), <code>Moderator</code> (one designated member), <code>Silent</code> (<code>@mention</code> only).</td></tr><tr><td><strong>Live presence and activity</strong></td><td>A presence socket says which sessions are generating, including ones you are not looking at; the active thread gets the phase, the calls and the elapsed time derived from <code>pi.live</code>.</td></tr><tr><td><strong>Per-agent models</strong></td><td>Each agent picks its own provider and model, with capability badges (image input, context window, cost, thinking levels).</td></tr><tr><td><strong>One identity system</strong></td><td>Colour + emoji per agent and per group, normalised in a single module.</td></tr><tr><td><strong>Attachments</strong></td><td>Images are normalized server-side to the model's own limits and documents become text; the bytes live in the entry the model was given, so there is no upload store.</td></tr><tr><td><strong>Full Access per thread</strong></td><td>An agent has a Standard / Custom / Full Access tier; a grant lifts one thread to Full Access, is enforced at tool-call time, and dies with that thread.</td></tr><tr><td><strong>Storage you can measure</strong></td><td><code>#/usage</code> splits the data directory by part; cleanup returns the bytes it actually gave back; a purge exports the transcript before deleting its rows.</td></tr><tr><td><strong>Ask, and search without a key</strong></td><td>A <code>question</code> tool writes a durable <code>chat.question</code> entry with option buttons; <code>web-search</code> reads DuckDuckGo's keyless HTML endpoint.</td></tr><tr><td><strong>Links and diagrams</strong></td><td>External links are re-targeted after sanitizing; a fenced <code>mermaid</code> block becomes a pan/zoom component whose library is fetched only when a diagram renders.</td></tr></tbody>
 </table></div>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="why-this-stack">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>Why this stack</h2>
-                
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="why-this-stack">Why this stack</h2>
+
 <div class="table-wrap"><table>
 <thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
 <tbody><tr><td>Durability</td><td><strong><code>pi-durable</code> on SQLite</strong></td><td>Durability is a property of the substrate, not of the UI. A single SQLite file in WAL mode means an interrupted generation is <em>resumable by construction</em>, with no queue, no worker fleet and no server-side session memory to rebuild.</td></tr><tr><td>Backend</td><td><strong>Fastify, bound to <code>127.0.0.1</code></strong></td><td>The server proxies model calls and reads agent files off disk; a small, explicit HTTP layer with a WebSocket upgrade is the whole surface.</td></tr><tr><td>Frontend</td><td><strong>Svelte 5 with runes</strong></td><td>Chat is a long-lived stream of small mutations. Runes give fine-grained reactivity without a virtual DOM or a state library, and the entry ships at <strong>71.86 kB gzip</strong>, with mermaid and its layout engines in their own chunks.</td></tr><tr><td>Transport</td><td><strong>WebSocket with an explicit frame contract</strong></td><td>Streaming partials need push, not polling. The frame types are declared in <code>wire.ts</code> on the server and mirrored in <code>ws.ts</code> on the client, so the contract has exactly two files to check.</td></tr><tr><td>State</td><td><strong>One runes store</strong></td><td><code>state.svelte.ts</code> is the only place incoming frames mutate state. One writer makes "why does the sidebar disagree with the chat header" a non-question — a bug class this project explicitly tested for.</td></tr><tr><td>Testing</td><td><strong>E2E only, against a faux provider</strong></td><td>With <code>PI_E2E=1</code> every real provider is swapped for the harness's faux provider, and thirteen scenarios each boot a throwaway server: no network, no cost, no flakes.</td></tr><tr><td>Bundle</td><td><strong>A 100 kB gzip budget</strong></td><td>A local app still has to load before it feels local. The budget turns "add a dependency" into a deliberate decision.</td></tr></tbody>
 </table></div>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="architecture">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>Architecture</h2>
-                <p class="art-fold-teaser">The routes are the whole API; everything else is a socket frame or a file on disk.</p>
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="architecture">Architecture</h2>
+
 <img src="/assets/articles/durable-agents-architecture-dark.png" alt="durable-agents architecture" loading="lazy" decoding="async" />
 
 <details>
@@ -267,21 +240,14 @@
 <thead><tr><th>Area</th><th>Routes</th></tr></thead>
 <tbody><tr><td>Liveness</td><td><code>GET /api/health</code></td></tr><tr><td>Threads</td><td><code>GET/POST /api/sessions</code> · <code>PATCH/DELETE /api/sessions/:id</code> · <code>POST /api/sessions/:id/{restore,move,restart,abort}</code></td></tr><tr><td>Messages</td><td><code>GET/POST /api/sessions/:id/messages</code> · <code>GET /api/sessions/:id/attachments/:entryId/:index</code></td></tr><tr><td>Context and model</td><td><code>GET /api/sessions/:id/context</code> · <code>POST /api/sessions/:id/compact</code> · <code>PUT /api/sessions/:id/model</code></td></tr><tr><td>Permissions and storage</td><td><code>POST /api/sessions/:id/permissions</code> · <code>GET /api/storage</code> · <code>POST /api/storage/cleanup</code> · <code>POST /api/sessions/:id/purge</code></td></tr><tr><td>Agents</td><td><code>GET/POST /api/agents</code> · <code>GET/PUT/DELETE /api/agents/:id</code> · <code>POST /api/agents/:id/enabled</code> · <code>POST /api/agents/suggest-responsibility</code></td></tr><tr><td>Models, activity, usage</td><td><code>GET /api/models</code> · <code>POST /api/models/test</code> · <code>GET /api/activity</code> · <code>GET /api/usage</code></td></tr><tr><td>Providers</td><td><code>GET /api/providers</code> · <code>PUT/DELETE /api/providers/:id/key</code></td></tr><tr><td>Groups</td><td><code>POST /api/rooms</code> · <code>PUT /api/rooms/:id</code></td></tr><tr><td>Sockets</td><td><code>GET /api/ws?conversation=&lt;id&gt;</code> · <code>GET /api/ws/presence</code></td></tr><tr><td>E2E only</td><td><code>GET/POST /api/e2e/{state,script}</code> when <code>PI_E2E=1</code> and the token is right</td></tr></tbody>
 </table></div>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="architecture-decisions-worth-defending">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>Architecture decisions worth defending</h2>
-                <p class="art-fold-teaser">Durability belongs to the harness, not the UI.</p>
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="architecture-decisions-worth-defending">Architecture decisions worth defending</h2>
+
 <p><strong>Durability belongs to the harness, not the UI.</strong> <em>Decision:</em> progress lives in durable tasks in SQLite; the browser renders what the log says. <em>Cost:</em> the UI has to handle snapshots, re-attachment and out-of-order resumption rather than just appending to an array. <em>Benefit:</em> <code>resume()</code> replays interrupted work, so "reload during a long generation" is a supported path instead of a data-loss path.</p>
 
 <p><strong>Streaming reads the live document, because the provider does not emit updates.</strong> The repo states the reason without dressing it up: <code>message_update</code> is never emitted by <code>watchEvents</code> for its default provider, so translated view changes never arrive as partials. The server therefore reads the assistant message in flight directly out of the <code>pi.live</code> document and emits the <em>difference</em>:</p>
@@ -305,21 +271,14 @@ message-end</code></pre>
 <p><strong>The app that runs <code>bash</code> gets a real security boundary, and a visible policy in front of it.</strong> The server binds <code>127.0.0.1</code>, rejects any request without <code>X-PI-Token</code>, allowlists <code>Host</code>, ships no permissive CORS, and stores its 32-byte token with mode <code>600</code>. On top of that, an agent's Standard / Custom / Full Access tier decides which tools exist: Standard refuses <code>bash</code> and <code>codemode</code>, and a scoped agent's <code>read</code>, <code>write</code> and <code>edit</code> stay inside its roots. Full Access can be granted to one thread, and only that thread — the grant lives on the session record, not on the agent, so the next thread starts back at the agent's tier. The tier is a policy and the UI labels it as one; <code>deploy/dura-agents.service</code> is what actually contains an allowed tool. <em>Cost:</em> you must inject the token into the page (the dev script does it for you), and a per-thread grant is a deliberate click on each thread that needs it. <em>Benefit:</em> a foreign web page can neither read the app nor reach an API that runs commands — which matters a great deal for a tool whose <code>bash</code> tool is genuine code execution, and which the editor warns about — and a permission decision cannot quietly outlive the thread that needed it.</p>
 
 <p><strong>E2E instead of unit tests, deliberately.</strong> <em>Decision:</em> no unit tests; thirteen E2E scenarios each boot a throwaway server with its own port, data directory and token, against the faux provider. <em>Cost:</em> coarser failure localisation and slower feedback than a unit suite. <em>Benefit:</em> the thing under test is the real assembly — real sockets, real SQLite, real streaming — and it is deterministic. It has already earned its keep: the suite caught that an instant answer never streamed (the faux provider now streams at 12 tokens/second) and that announcing <code>content-type: application/json</code> on an empty body makes Fastify answer 400 — which made <code>DELETE</code> look broken.</p>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="running-it">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>Running it</h2>
-                <p class="art-fold-teaser">Credentials resolve in this order: ~/.pi/agent/auth.json → OPENCODE_API_KEY → data/credentials.json (written by the #/providers screen).</p>
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="running-it">Running it</h2>
+
 <pre class="code-block" data-lang="bash"><code>git clone https://github.com/mariobgsp/durable-agents &amp;&amp; cd durable-agents
 npm install
 npm run dev            # creates data/token (600), Fastify on 8787, Vite on 5173
@@ -346,21 +305,14 @@ npm run seed           # demo threads, no model calls</code></pre>
 </table></div>
 
 <p>The E2E suite is the part worth dwelling on, because it asserts the design rather than the implementation. <code>identity</code> checks that an agent's colour and emoji survive a later patch that touches an unrelated field — the exact bug class the single normaliser exists to prevent. <code>activity</code> checks that an idle thread is <em>still</em> not active <strong>after a restart</strong>, which is what makes the presence registry trustworthy rather than merely optimistic. <code>storage</code> asserts the purge removed rows from the <code>entries</code> table, not just the session list; <code>permissions</code> asserts a grant is enforced at submit time and is not sticky on the agent; <code>questions</code> asserts the durable <code>chat.question</code> and the answer arriving as the next user message.</p>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="screenshots">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>Screenshots</h2>
-                
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="screenshots">Screenshots</h2>
+
 <img src="/assets/articles/durable-agents-agent-list.png" alt="Agent list with identity" loading="lazy" decoding="async" />
 
 <p class="fig-caption">The agent list. Each card carries its identity (avatar, colour, <code>@handle</code>), its one-line <code>responsibility</code>, and its model. Note <code>Pirate</code>: "No responsibility yet — fill it in so Nyahut mode can judge." That single field is what the group claim pass reads, and the UI says so instead of letting an unprotected group fail silently.</p>
@@ -372,21 +324,14 @@ npm run seed           # demo threads, no model calls</code></pre>
 <img src="/assets/articles/durable-agents-group-thread.png" alt="Group thread — Nyahut orchestration" loading="lazy" decoding="async" />
 
 <p class="fig-caption">A group thread in <code>Nyahut</code> mode. The system notes are the visible part of the protocol: <code>Klaim: @robot (…)</code> shows the claim pass resolving a question to the agent whose stated responsibility covers it, and <code>No claim; @pirate answers (highest confidence)</code> shows the fallback when nobody claims. The mode switch (<code>Nyahut</code> / <code>Moderator</code> / <code>Silent</code>) is per-group, the sidebar shows member avatars and which threads are active, and the presence socket reports <code>connected</code>.</p>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="what-id-fix-next">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>What I'd fix next</h2>
-                <p class="art-fold-teaser">The repository&#x27;s own gap list is unusually specific, and it is accurate — worth repeating rather than rediscovering, in the order I would...</p>
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="what-id-fix-next">What I'd fix next</h2>
+
 <p>The repository's own gap list is unusually specific, and it is accurate — worth repeating rather than rediscovering, in the order I would take them:</p>
 
 <ul>
@@ -400,21 +345,14 @@ npm run seed           # demo threads, no model calls</code></pre>
   <li><strong>No system notifications</strong> on turn completion, and no real cost counter — the group cost model is an estimate shown in a tooltip.</li>
   <li><strong>Single-user by design.</strong> No remote deploy, no billing, no multi-user.</li>
 </ul>
-              </div>
-            </details>
           </article>
         </div>
       </section>
       <section class="art-block" id="links">
         <div class="container">
           <article class="art-content">
-            <details class="art-fold" open>
-              <summary class="art-fold-head">
-                <h2>Links</h2>
-                
-                <span class="art-fold-mark" aria-hidden="true"></span>
-              </summary>
-              <div class="art-fold-body">
+<h2 id="links">Links</h2>
+
 <ul>
   <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/durable-agents">github.com/mariobgsp/durable-agents</a></li>
   <li><strong>Harness:</strong> <a href="https://www.npmjs.com/package/@earendil-works/pi-durable"><code>@earendil-works/pi-durable</code></a> (pinned 1.3.0)</li>
@@ -427,8 +365,6 @@ npm run seed           # demo threads, no model calls</code></pre>
 <hr />
 
 <p class="fig-caption">Verified against commit <code>ba185dd</code> (README uses an English example transcript). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/durable-agents.mmd"><code>diagrams/durable-agents.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/durable-agents.mjs"><code>tools/capture/durable-agents.mjs</code></a>.</p>
-              </div>
-            </details>
           </article>
         </div>
       </section>

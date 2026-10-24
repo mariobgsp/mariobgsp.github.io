@@ -489,121 +489,6 @@ body.art-page .bg-pixels { opacity: 0.28; }
 
 .art-jump a:hover span { color: var(--violet); }
 
-.fold-toggle {
-  justify-self: start;
-  margin-top: 8px;
-  padding: 7px 14px;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-pill);
-  background: none;
-  font-family: var(--mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
-}
-
-.fold-toggle:hover { color: var(--ink); border-color: var(--line-strong); }
-
-/* ----------------------------------------------------------- the folds ---
-   The simplification layer: heading and teaser stay visible, the full body
-   folds. The mark is a flat plus that turns into a cross (45 degrees) when
-   open - no arrow, no rotation ambiguity. The fold ships open; JS closes
-   it, so a no-JS reader never loses a word. */
-
-.art-fold { border: 0; background: none; box-shadow: none; padding: 0; margin: 0; }
-
-.art-fold-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 26px;
-  gap: 6px 14px;
-  align-items: baseline;
-  padding: 4px 0 0;
-  border-top: 1px solid var(--line-soft);
-  cursor: pointer;
-  list-style: none;
-}
-
-.art-fold-head::-webkit-details-marker { display: none; }
-
-.art-fold-head h2 {
-  margin: 22px 0 0;
-  /* the summary face is a mono label; the heading must keep the body face */
-  font-family: var(--sans) !important;
-  font-size: clamp(1.5rem, 1.1rem + 1.2vw, 1.95rem) !important;
-  font-weight: 500 !important;
-  text-transform: none !important;
-  letter-spacing: -0.03em !important;
-  color: var(--ink) !important;
-  transition: color 300ms var(--ease-out);
-}
-
-.art-fold-head:hover h2 { color: var(--violet); }
-
-.art-fold-teaser {
-  grid-column: 1;
-  margin: 10px 0 0;
-  /* same: opt out of the summary label face */
-  font-family: var(--sans) !important;
-  font-weight: 400 !important;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-size: 0.92rem !important;
-  line-height: 1.55 !important;
-  color: var(--ink-3) !important;
-}
-
-.art-fold-mark {
-  position: relative;
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px var(--line);
-  transition: background-color 300ms var(--ease-out), box-shadow 300ms var(--ease-out),
-              scale 420ms var(--ease-pop), transform 420ms var(--ease-out);
-}
-
-.art-fold-mark::before,
-.art-fold-mark::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 10px;
-  height: 1px;
-  background: var(--ink-2);
-  transition: background-color 300ms var(--ease-out);
-}
-
-.art-fold-mark::before { transform: translate(-50%, -50%); }
-.art-fold-mark::after { transform: translate(-50%, -50%) rotate(90deg); }
-
-.art-fold[open] .art-fold-mark {
-  background: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink);
-  transform: rotate(45deg);
-}
-
-.art-fold[open] .art-fold-mark::before,
-.art-fold[open] .art-fold-mark::after { background: var(--bg); }
-
-.art-fold-head:hover .art-fold-mark { box-shadow: inset 0 0 0 1px var(--line-strong); }
-
-.art-fold[open] .art-fold-head { padding-bottom: 8px; }
-
-.art-fold-body { animation: fold-open 560ms var(--ease-out) both; }
-
-@keyframes fold-open {
-  from { opacity: 0; transform: translate3d(0, 14px, 0); }
-  to   { opacity: 1; transform: none; }
-}
-
-.art-fold-body > :first-child { margin-top: 14px; }
 
 /* ----------------------------------------------------- pull-quotes ---
    A paragraph short enough to be the point, set louder: accent bar, larger
@@ -665,20 +550,14 @@ body.art-page .bg-pixels { opacity: 0.4; }
 
 /* --------------------------------------------------- reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
-  .art-fold-body { animation: none !important; }
   .art-content h2::before { transform: none !important; transition: none !important; }
   .art-content img:hover { transform: none !important; }
   .art-next-link b { transform: none !important; }
-  .art-fold-mark { transition: none !important; }
 }
 
 /* ---------------------------------------------------------- print --- */
 @media print {
-  .art-fold-body { animation: none !important; opacity: 1 !important; transform: none !important; }
-  .art-fold { display: block !important; }
-  .art-fold-head { cursor: auto; }
-  .art-fold-mark { display: none !important; }
-  .art-jump, .fold-toggle { display: none !important; }
+  .art-jump { display: none !important; }
   .art-glance { box-shadow: none !important; background: none !important; }
 }
 
@@ -698,6 +577,5 @@ body.art-page .bg-pixels { opacity: 0.4; }
   .art-next-all { order: -1; }
   .art-glance { padding: 18px 16px; }
   .art-jump a { padding: 8px 6px; }
-  .art-fold-head { grid-template-columns: minmax(0, 1fr) 30px; }
   .pull-quote { font-size: 1.08rem !important; }
 }

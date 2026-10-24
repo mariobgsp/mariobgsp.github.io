@@ -59,7 +59,7 @@
      All of them are inert when absent. */
 
   var HARNESS = { t: null, scroll: null, focus: null, at: null, hover: null, freeze: false,
-                  cursor: null, cursorState: null, click: false, fps: false, open: false };
+                  cursor: null, cursorState: null, click: false, fps: false };
 
   if (window.URLSearchParams) {
     try {
@@ -82,7 +82,6 @@
       HARNESS.cursorState = query.get("cursorstate");
       HARNESS.click = query.get("click") === "1";
       HARNESS.fps = query.get("fps") === "1";
-      HARNESS.open = query.get("open") === "1";
     } catch (err) { /* malformed query string: run without the harness */ }
   }
 
@@ -249,54 +248,22 @@
 
   /* Article pages wire their reading column at runtime, so the generated
      markup never carries a behaviour class: each section and its heading join
-     the reveal set, the column becomes a stagger list, and the folds
-     (details/summary, open by default) close only when JS is actually running. */
+     the reveal set, the column becomes a stagger list, and every plain h2
+     joins the word rise - a heading with inline code or emphasis keeps its
+     markup unmasked. */
 
   (function wireArticle() {
     if (!document.body.classList.contains("art-page")) return;
 
     [].slice.call(document.querySelectorAll(".art-block")).forEach(function (block) {
       block.classList.add("reveal");
-      [].slice.call(block.querySelectorAll(".art-fold-head h2")).forEach(function (h2) {
+      [].slice.call(block.querySelectorAll(".art-content > h2")).forEach(function (h2) {
         splitWords(h2);
         h2.classList.add("reveal");
       });
       var content = block.querySelector(".art-content");
       if (content) content.classList.add("stagger");
     });
-
-    /* The folds ship open for a no-JS reader; JS is the only thing that ever
-       closes one - and ?open=1 keeps them open for a capture. */
-    if (!HARNESS.open) {
-      [].slice.call(document.querySelectorAll("details.art-fold")).forEach(function (fold) {
-        fold.open = false;
-      });
-    }
-
-    document.addEventListener("click", function (event) {
-      var link = event.target.closest ? event.target.closest('a[href^="#"]') : null;
-      if (!link) return;
-      var id = (link.getAttribute("href") || "").slice(1);
-      if (!id) return;
-      var target = document.getElementById(id);
-      if (!target) return;
-      var fold = target.querySelector("details.art-fold");
-      if (fold) fold.open = true;
-    });
-
-    var toggle = document.getElementById("foldToggle");
-    if (toggle) {
-      var folds = [].slice.call(document.querySelectorAll("details.art-fold"));
-      if (!folds.length) {
-        toggle.parentNode.removeChild(toggle);
-        return;
-      }
-      toggle.addEventListener("click", function () {
-        var open = !(folds[0] && folds[0].open);
-        folds.forEach(function (fold) { fold.open = open; });
-        toggle.textContent = open ? "Collapse all" : "Expand all";
-      });
-    }
   })();
 
   /* Section titles split into words on every page: the spans carry the
