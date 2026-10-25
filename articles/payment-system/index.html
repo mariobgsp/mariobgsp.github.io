@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka</title>
-    <meta name="description" content="This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command." />
+    <title>One Go Binary Instead of Four Java Services</title>
+    <meta name="description" content="This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command." />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#faf9f6" />
@@ -14,16 +14,16 @@
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://mariobgsp.github.io/articles/payment-system/" />
-    <meta property="og:title" content="Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka" />
-    <meta property="og:description" content="This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command." />
+    <meta property="og:title" content="One Go Binary Instead of Four Java Services" />
+    <meta property="og:description" content="This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command." />
     <meta property="og:image" content="https://mariobgsp.github.io/assets/articles/og-payment-system.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka" />
+    <meta property="og:image:alt" content="One Go Binary Instead of Four Java Services" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka" />
-    <meta name="twitter:description" content="This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command." />
+    <meta name="twitter:title" content="One Go Binary Instead of Four Java Services" />
+    <meta name="twitter:description" content="This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command." />
     <meta name="twitter:image" content="https://mariobgsp.github.io/assets/articles/og-payment-system.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,12 +58,12 @@
         <div class="container">
           <a class="crumb reveal" href="/articles/">&larr; All articles</a>
           <p class="kicker reveal"><b>[ 04 / 05 ]</b> payment-system</p>
-          <h1 class="art-title reveal">Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka</h1>
-          <p class="art-standfirst reveal">This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command.</p>
+          <h1 class="art-title reveal">One Go Binary Instead of Four Java Services</h1>
+          <p class="art-standfirst reveal">This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command.</p>
           <p class="art-byline reveal">
             <span>Muhammad Ario Bagus Prakusa</span>
-            <span>17 October 2026</span>
-            <span>~10 min read</span>
+            <span>25 October 2026</span>
+            <span>~5 min read</span>
           </p>
           <dl class="art-facts reveal">
             <div class="art-fact">
@@ -76,11 +76,11 @@
             </div>
             <div class="art-fact">
               <dt>Stack</dt>
-              <dd>Go (<code>net/http</code> stdlib) · PostgreSQL 15 · Redis 7 · Next.js 16 portal · Docker Compose</dd>
+              <dd>Go (<code>net/http</code> stdlib) · PostgreSQL 15 · Redis 7 · Next.js portal · Docker Compose</dd>
             </div>
             <div class="art-fact">
               <dt>Verified</dt>
-              <dd>All five containers built and run locally (2026-10-17); the full lifecycle was driven end to end and screenshotted.</dd>
+              <dd>Re-read against commit <code>0f2acef</code> (2026-10-25; dependency bumps only). Screenshots and observed output are from the 2026-10-17 run.</dd>
             </div>
           </dl>
         </div>
@@ -91,38 +91,37 @@
           <article class="art-content">
             <h2>At a glance</h2>
 <ul>
-  <li><strong>What it is</strong> — a payment lifecycle for a storefront: order → charge → signed callback → invoice → refund, with idempotency, authorization, pricing and audit logging on the same path.</li>
-  <li><strong>Who it's for</strong> — teams paying the operational tax of microservices they do not need: four deployables, a broker and two databases for one business process.</li>
-  <li><strong>The interesting part</strong> — the <strong>outbox pattern replaced Kafka without replacing Kafka's guarantees</strong>: atomic writes, at-least-once delivery, retry with backoff, and a terminal dead-letter table that is never redelivered. Plus a documented, measured trigger for splitting the monolith again.</li>
+  <li><strong>What it is</strong> — a storefront payment lifecycle: order → charge → signed callback → invoice → refund, with idempotency, authorization and audit logging.</li>
+  <li><strong>Who it's for</strong> — teams paying the operational tax of microservices they do not need.</li>
+  <li><strong>The interesting part</strong> — the outbox replaced Kafka without losing its guarantees: atomic writes, at-least-once delivery, retry with backoff, and a terminal dead-letter table.</li>
 </ul>
             <nav class="art-jump" aria-label="Article sections">
-<a href="#the-problem-a-broker-for-a-two-schema-system"><span>02</span>The problem: a broker for a two-schema system</a>
+<a href="#the-problem"><span>02</span>The problem</a>
 <a href="#what-it-does"><span>03</span>What it does</a>
-<a href="#why-this-stack"><span>04</span>Why this stack</a>
-<a href="#architecture"><span>05</span>Architecture</a>
-<a href="#architecture-decisions-worth-defending"><span>06</span>Architecture decisions worth defending</a>
-<a href="#running-it"><span>07</span>Running it</a>
-<a href="#screenshots"><span>08</span>Screenshots</a>
-<a href="#what-id-fix-next"><span>09</span>What I&#x27;d fix next</a>
-<a href="#links"><span>10</span>Links</a>
+<a href="#how-it-works"><span>04</span>How it works</a>
+<a href="#key-choices"><span>05</span>Key choices</a>
+<a href="#running-it"><span>06</span>Running it</a>
+<a href="#screenshots"><span>07</span>Screenshots</a>
+<a href="#what-id-fix-next"><span>08</span>What I&#x27;d fix next</a>
+<a href="#links"><span>09</span>Links</a>
             </nav>
           </article>
         </div>
       </section>
-      <section class="art-block" id="the-problem-a-broker-for-a-two-schema-system">
+      <section class="art-block" id="the-problem">
         <div class="container">
           <article class="art-content">
-<h2 id="the-problem-a-broker-for-a-two-schema-system">The problem: a broker for a two-schema system</h2>
+<h2 id="the-problem">The problem</h2>
 
-<p>The original design split the payment lifecycle across <code>ms-order</code>, <code>ms-payment</code>, <code>ms-invoice</code> and <code>ms-logger</code>, wired through Kafka, Mongo and Zookeeper. That architecture has real advantages — independent scaling, independent deploys, blast-radius isolation — and none of them were being used here:</p>
+<p>The original design split the lifecycle across <code>ms-order</code>, <code>ms-payment</code>, <code>ms-invoice</code> and <code>ms-logger</code>, wired through Kafka, Mongo and Zookeeper. That architecture had real advantages — independent scaling, deploys and blast radius — none of which were used.</p>
 
 <ul>
-  <li><strong>There was nothing to scale independently.</strong> Order, charge and refund are one lifecycle with one transaction boundary. Splitting them made the <em>transaction</em> distributed, so consistency had to be re-derived with sagas and compensation.</li>
-  <li><strong>Kafka was a delivery mechanism, not a stream processor.</strong> Every message was consumed once, keyed to one transaction, with no replay requirements beyond retry. A Postgres table with a poller covers that.</li>
-  <li><strong>Mongo held logs that had one access pattern</strong> — newest-first, by transaction, with a 30-day retention window. That is a <code>SELECT</code> with an index.</li>
+  <li><strong>Nothing scaled independently.</strong> Order, charge and refund share one transaction boundary; splitting them made consistency a saga problem.</li>
+  <li><strong>Kafka was delivery, not stream processing.</strong> Every message was consumed once, keyed to one transaction, with no replay beyond retry. A Postgres table and a poller cover that.</li>
+  <li><strong>Mongo held logs with one access pattern:</strong> newest first, by transaction, with 30-day retention. That is a <code>SELECT</code> with an index.</li>
 </ul>
 
-<p>The rewrite keeps the guarantees and removes the moving parts: five containers, one Go binary for the domain, one database with two schemas.</p>
+<p>The rewrite keeps the guarantees and removes the moving parts: one binary, one database, two schemas.</p>
           </article>
         </div>
       </section>
@@ -133,27 +132,15 @@
 
 <div class="table-wrap"><table>
 <thead><tr><th>Capability</th><th>How</th></tr></thead>
-<tbody><tr><td><strong>Transaction lifecycle</strong></td><td>One <code>TransactionLifecycle</code> module owns the status chart: <code>CREATED → READY → SUCCESS → PUBLISHED</code>, plus <code>SUCCESS → REFUND</code> and <code>READY → FAILED</code>.</td></tr><tr><td><strong>Idempotency</strong></td><td><code>Idempotency-Key</code> on order creation, <code>transactionId</code> as the natural key for charge and refund. The key insert and the transaction insert share one database transaction.</td></tr><tr><td><strong>Atomic outbox</strong></td><td><code>product_trx</code>, the outbox row and the idempotency record are written in a single transaction, so a state change can never exist without its event.</td></tr><tr><td><strong>Signed callbacks</strong></td><td>Partner callbacks carry <code>x-callback-signature</code> (HMAC-SHA256) and <code>x-callback-timestamp</code>; the monolith verifies both against a 300-second replay window, and returns 401 for a forgery.</td></tr><tr><td><strong>Retry and dead-lettering</strong></td><td>A 5-second poller retries 3× with backoff, then writes to <code>dlq.*</code> and never redelivers.</td></tr><tr><td><strong>Stale-state sweeping</strong></td><td>A 60-second sweeper moves <code>READY → FAILED</code> after 5 minutes and purges processed logs past their retention window.</td></tr><tr><td><strong>Invoice provisioning</strong></td><td>The outbox poller emits a receipt file per settled transaction.</td></tr><tr><td><strong>Audit query</strong></td><td><code>GET /v1/logs?limit=</code> serves the log rows with retention.</td></tr><tr><td><strong>Session identity</strong></td><td>Short-lived opaque session tokens with a 60-second eviction ticker, plus login rate limiting (10 attempts / 15 minutes).</td></tr></tbody>
+<tbody><tr><td><strong>Transaction lifecycle</strong></td><td><code>TransactionLifecycle</code> owns the status chart: <code>CREATED → READY → SUCCESS → PUBLISHED</code>, plus <code>SUCCESS → REFUND</code> and <code>READY → FAILED</code>.</td></tr><tr><td><strong>Idempotency</strong></td><td><code>Idempotency-Key</code> on order creation; <code>transactionId</code> for charge and refund. Key and transaction share one commit.</td></tr><tr><td><strong>Atomic outbox</strong></td><td>The transaction row, its outbox row and its idempotency record are written in one commit, so a state change cannot exist without its event.</td></tr><tr><td><strong>Signed callbacks</strong></td><td><code>x-callback-signature</code> (HMAC-SHA256) and <code>x-callback-timestamp</code>, checked against a 300-second replay window. Forgeries get 401.</td></tr><tr><td><strong>Retry and dead-lettering</strong></td><td>A 5-second poller retries three times with backoff, then writes to <code>dlq.*</code> and never redelivers.</td></tr><tr><td><strong>Sweeping and invoicing</strong></td><td>A 60-second sweeper fails stale <code>READY</code> rows after five minutes. The poller writes one invoice per settled transaction.</td></tr><tr><td><strong>Sessions and audit</strong></td><td>Short-lived opaque session tokens, login rate limiting, and <code>GET /v1/logs?limit=</code> over retained audit rows.</td></tr></tbody>
 </table></div>
           </article>
         </div>
       </section>
-      <section class="art-block" id="why-this-stack">
+      <section class="art-block" id="how-it-works">
         <div class="container">
           <article class="art-content">
-<h2 id="why-this-stack">Why this stack</h2>
-
-<div class="table-wrap"><table>
-<thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
-<tbody><tr><td>Domain language</td><td><strong>Go monolith, <code>net/http</code> standard library</strong></td><td>One binary to build, ship and reason about. The routing table is a Go slice, so the endpoint list is readable in one file. A framework would add a middleware order to learn before you can read your own request path.</td></tr><tr><td>Consistency</td><td><strong>Postgres outbox in one transaction</strong></td><td>The alternative is a broker plus a saga. Here the state change and the event are <em>the same commit</em>, so "the payment succeeded but nothing was notified" is not a reachable state.</td></tr><tr><td>Delivery</td><td><strong>Polling worker with backoff and a DLQ</strong></td><td>At-least-once with an explicit terminal state, without a broker to operate. The trade is latency (a 5-second poll) for one fewer system.</td></tr><tr><td>Persistence</td><td><strong>Two schemas in one database</strong></td><td><code>transaction</code> and <code>store</code> in a single DSN keeps joins and transactions possible. Separate databases would reintroduce distributed consistency at the storage layer — the exact problem being removed.</td></tr><tr><td>Cache</td><td><strong>Redis for sessions and partner TTLs</strong></td><td>Ephemeral, TTL-shaped data. Deliberately <em>not</em> used for anything the lifecycle depends on, so a Redis restart cannot corrupt a payment.</td></tr><tr><td>Portal</td><td><strong>Next.js 16 App Router</strong></td><td>The portal is a client of the monolith through BFF routes; no business rule lives in the frontend.</td></tr><tr><td>Legacy compatibility</td><td><strong><code>/ms/api/v1/*</code> routes on the same monolith</strong></td><td>The old frontend contract keeps working while the new <code>/v1/*</code> API grows, so the migration did not require a flag day.</td></tr></tbody>
-</table></div>
-          </article>
-        </div>
-      </section>
-      <section class="art-block" id="architecture">
-        <div class="container">
-          <article class="art-content">
-<h2 id="architecture">Architecture</h2>
+<h2 id="how-it-works">How it works</h2>
 
 <img src="/assets/articles/payment-system-architecture-dark.png" alt="payment-system architecture" loading="lazy" decoding="async" />
 
@@ -189,44 +176,38 @@
 
 </details>
 
-<h3 id="component-walkthrough">Component walkthrough</h3>
+<h3 id="components">Components</h3>
 
 <ul>
-  <li><strong><code>monolith/lifecycle/</code></strong> — the deep module: the status chart, pricing and discount math, idempotency and authorization. Every caller that wants to move a payment goes through it.</li>
-  <li><strong><code>monolith/store/</code></strong> — the persistence seam: <code>pg.go</code> for production, <code>memory.go</code> as a fake, <code>store.go</code> for the types. The e2e suite runs on the fake with no database.</li>
-  <li><strong><code>monolith/jobs/</code></strong> — the outbox poller and the sweeper, each small enough to read in one sitting.</li>
-  <li><strong><code>monolith/cmd/</code></strong> — <code>routes.go</code> (one table for every endpoint), <code>handlers.go</code> (the new API), <code>legacy.go</code> (the <code>ms-*</code> compatibility surface), <code>http.go</code> (envelopes, partner transport, outbox transport).</li>
-  <li><strong><code>ms-paymentagr/</code></strong> — a deliberately separate service: an external payment partner is a different failure domain, so it stays a separate binary and speaks to the monolith through a signed callback. That separation is real, unlike the four-way split inside the lifecycle.</li>
+  <li><strong><code>monolith/lifecycle/</code></strong> — the deep module: status chart, pricing, idempotency, authorization. Every caller that moves a payment goes through it.</li>
+  <li><strong><code>monolith/store/</code></strong> — the persistence seam: <code>pg.go</code> for production, <code>memory.go</code> as a fake. The end-to-end suite runs on the fake with no database.</li>
+  <li><strong><code>monolith/jobs/</code></strong> — the outbox poller and the sweeper, each readable in one sitting.</li>
+  <li><strong><code>monolith/cmd/</code></strong> — the route table, the new API, the legacy compatibility surface, and the envelopes and transports in <code>http.go</code>.</li>
+  <li><strong><code>ms-paymentagr/</code></strong> — the simulated partner. An external partner is a different failure domain: a separate binary with a signed callback.</li>
 </ul>
 
-<h3 id="the-lifecycle-end-to-end">The lifecycle, end to end</h3>
+<h3 id="one-payment-end-to-end">One payment, end to end</h3>
 
 <ol>
-  <li><strong>Sign in</strong> — BCrypt verification against <code>store.store_user</code>; the monolith issues a short-lived opaque session token.</li>
-  <li><strong>Place an order</strong> — price and discount are computed inside <code>TransactionLifecycle</code>, then <code>product_trx</code> (<code>CREATED</code>), one outbox row and one idempotency row are inserted <strong>in a single transaction</strong>.</li>
-  <li><strong>Create payment</strong> — <code>CREATED → READY</code>, and the partner is called with an <code>api-key</code> header. A duplicate call returns the same <code>CheckoutUrl</code> instead of charging twice.</li>
-  <li><strong>Callback</strong> — the partner posts a signed event; the monolith verifies the HMAC and the timestamp window, then <code>READY → SUCCESS/PUBLISHED</code> with an outbox row.</li>
-  <li><strong>Sweep and retry</strong> — the poller routes the outbox (retrying 3× then dead-lettering), and the sweeper fails stale <code>READY</code> rows after 5 minutes.</li>
-  <li><strong>Invoice</strong> — the outbox poller writes a receipt file for the settled transaction.</li>
-  <li><strong>Refund</strong> — <code>SUCCESS → REFUND</code>; a second refund is a 409, not a double refund.</li>
+  <li><strong>Sign in.</strong> BCrypt verification against <code>store.store_user</code>; the monolith issues a short-lived opaque session token.</li>
+  <li><strong>Place the order.</strong> Price and discount are computed in <code>TransactionLifecycle</code>, then the <code>CREATED</code> transaction, one outbox row and one idempotency row are inserted in a single transaction.</li>
+  <li><strong>Create the charge.</strong> <code>CREATED → READY</code>; the partner is called with an <code>api-key</code> header. A duplicate call returns the same <code>CheckoutUrl</code>.</li>
+  <li><strong>Receive the callback.</strong> The partner posts a signed event; the monolith verifies HMAC and timestamp, then moves <code>READY → SUCCESS/PUBLISHED</code> and writes an outbox row.</li>
+  <li><strong>Sweep and retry.</strong> The poller routes the outbox (three attempts, then dead-letter); the sweeper fails stale <code>READY</code> rows after five minutes.</li>
+  <li><strong>Settle and refund.</strong> The poller writes the invoice. A refund moves <code>SUCCESS → REFUND</code>; a second refund returns 409.</li>
 </ol>
           </article>
         </div>
       </section>
-      <section class="art-block" id="architecture-decisions-worth-defending">
+      <section class="art-block" id="key-choices">
         <div class="container">
           <article class="art-content">
-<h2 id="architecture-decisions-worth-defending">Architecture decisions worth defending</h2>
+<h2 id="key-choices">Key choices</h2>
 
-<p><strong>Write the event in the same transaction as the state change.</strong> <em>Cost:</em> outbox rows live in the hot database and need retention management. <em>Benefit:</em> the classic "the payment committed but the notification vanished" window does not exist, because there is no window — it is one commit. This is the decision that made a message broker unnecessary.</p>
-
-<p><strong>A terminal dead-letter state instead of infinite retry.</strong> Poison rows get 3 attempts with backoff, then land in <code>dlq.*</code> and are <strong>never redelivered</strong>. <em>Cost:</em> someone has to look at the DLQ, and there is no automatic recovery. <em>Benefit:</em> a malformed event cannot pin a worker forever, and the failure is visible as data instead of as noise in a log.</p>
-
-<p><strong>Keep the monolith until a measurement says otherwise.</strong> The repo states the split triggers explicitly: a module's change rate causing merge contention, a resource profile that diverges under load, or a crash in one module taking down the others. It also states what does <em>not</em> justify a split: "Do not split for code size alone — total tokens don't shrink, they scatter across repos." <em>Cost:</em> one deployable for the whole lifecycle. <em>Benefit:</em> the decision has a test rather than a preference, and the cheapest module to extract first (invoice) is already named, with a <code>docker-compose.split.yml</code> to try it.</p>
-
-<p><strong>Fail closed on the partner call.</strong> When <code>PARTNER_CHARGE_URL</code> is set and the partner errors, the monolith returns a 502 rather than optimistically marking the payment <code>READY</code>. <em>Cost:</em> a partner outage stops new payments. <em>Benefit:</em> no customer is sent to a checkout page for a charge the system never registered.</p>
-
-<p><strong>Serve two API generations from one binary.</strong> <code>/v1/*</code> is the new contract; <code>/ms/api/v1/*</code> keeps the old frontend working. <em>Cost:</em> two surfaces to maintain, and the legacy path is where the older weak authorization lived (the repo documents that as an accepted exception with a retirement plan). <em>Benefit:</em> the migration shipped incrementally instead of as a cutover.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Choice</th><th>Why</th><th>Cost</th></tr></thead>
+<tbody><tr><td><strong>Outbox in the same transaction</strong></td><td>The state change and the event are one commit, so "payment succeeded but nothing was notified" cannot happen.</td><td>Outbox rows live in the hot database and need retention.</td></tr><tr><td><strong>Terminal DLQ</strong></td><td>A malformed event cannot pin a worker, and the failure is visible as data.</td><td>Someone must look at the DLQ.</td></tr><tr><td><strong>Monolith until measured</strong></td><td>The split triggers are named: merge contention, diverging resources, or a crash that takes the lifecycle down.</td><td>One deployable.</td></tr><tr><td><strong>Fail closed on the partner</strong></td><td>Partner errors return 502 instead of marking the payment <code>READY</code>.</td><td>A partner outage stops new payments.</td></tr></tbody>
+</table></div>
           </article>
         </div>
       </section>
@@ -237,35 +218,27 @@
 
 <pre class="code-block" data-lang="bash"><code>cd project
 cp .env.example .env          # change every secret
-docker compose up --build     # postgres + redis + ms-paymentagr + monolith + frontend
+docker compose up --build     # postgres + redis + partner + monolith + frontend
 
 # portal       http://localhost:3000
 # monolith API http://localhost:8085   (/health, /v1/logs)
 # partner      http://localhost:8081   (/health)
 
-# tests
 cd monolith &amp;&amp; go vet ./... &amp;&amp; go test ./... -count=1
 cd ms-paymentagr &amp;&amp; go vet ./... &amp;&amp; go build ./...
 cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 
-<p class="pull-quote">Seeded demo users come from <code>project/pg-init-scripts/sql/20-store-schema.sql</code> (for example <code>klhomme0</code> / <code>user1Pass!</code>).</p>
-
 <h3 id="what-i-observed">What I observed</h3>
 
-<p>The five-container stack came up clean and the lifecycle ran end to end: a real order, a real charge against the simulated partner, a real signed callback, a real invoice file written by the outbox poller, and a real refund. The status chart walked <code>CREATED → READY → SUCCESS → REFUND</code>, and the invoice the poller wrote contains exactly the settled state:</p>
+<p>The five-container stack came up clean and the lifecycle ran end to end. The status chart walked <code>CREATED → READY → SUCCESS → REFUND</code>, and the invoice contains exactly the settled state:</p>
 
 <pre class="code-block" data-lang="json"><code>{
-  &quot;generatedAt&quot;: &quot;2026-10-17T11:57:15Z&quot;,
-  &quot;orderStatus&quot;: &quot;PUBLISHED&quot;,
-  &quot;paymentDate&quot;: &quot;2026-10-17 11:57:14&quot;,
   &quot;paymentStatus&quot;: &quot;SUCCESS&quot;,
-  &quot;price&quot;: 61557,
   &quot;priceCharge&quot;: 61557,
-  &quot;productCode&quot;: &quot;TJX-99896&quot;,
   &quot;transactionId&quot;: &quot;PTRX-22b7a774&quot;
 }</code></pre>
 
-<p>I found two real defects by driving the stack instead of reading it. Both are described in <a href="#what-id-fix-next">What I'd fix next</a> with the exact code paths, because they are the most useful thing a run can produce.</p>
+<p class="pull-quote">Driving the stack surfaced two real defects.</p>
           </article>
         </div>
       </section>
@@ -274,29 +247,13 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
           <article class="art-content">
 <h2 id="screenshots">Screenshots</h2>
 
-<img src="/assets/articles/payment-system-catalog.png" alt="Product catalog" loading="lazy" decoding="async" />
-
-<p class="fig-caption">The portal after sign-in. Prices and discount availability come from <code>store.product</code> through the monolith; the frontend holds no pricing logic.</p>
-
-<img src="/assets/articles/payment-system-order-dialog.png" alt="Order dialog" loading="lazy" decoding="async" />
-
-<p class="fig-caption">Placing an order. The BFF sends an <code>Idempotency-Key</code>, which is why a double-click cannot create two transactions.</p>
-
-<img src="/assets/articles/payment-system-checkout-ready.png" alt="Checkout — READY" loading="lazy" decoding="async" />
-
-<p class="fig-caption"><code>READY</code>: the charge reached the partner, the checkout URL is live, and the status badge is driven by the monolith's own state chart rather than by the client's opinion.</p>
-
 <img src="/assets/articles/payment-system-checkout-success.png" alt="Checkout — SUCCESS" loading="lazy" decoding="async" />
 
-<p class="fig-caption"><code>SUCCESS</code> after the partner's signed callback was verified. The invoice exists because the outbox poller wrote it — visible in the container at <code>/tmp/invoices/invoice_&lt;trx&gt;.json</code>.</p>
-
-<img src="/assets/articles/payment-system-checkout-refund.png" alt="Checkout — REFUND" loading="lazy" decoding="async" />
-
-<p class="fig-caption"><code>REFUND</code> after the refund path. A second refund attempt returns 409.</p>
+<p class="fig-caption"><code>SUCCESS</code> after the signed callback; the outbox poller wrote the invoice.</p>
 
 <img src="/assets/articles/payment-system-partner-checkout.png" alt="The partner&#x27;s checkout endpoint" loading="lazy" decoding="async" />
 
-<p class="fig-caption">The simulated partner's side of the flow: <code>GET /payments/redirect/{trxid}</code> mints the payment session and fires the signed callback in the background. This screen is where the callback defect in <a href="#what-id-fix-next">What I'd fix next</a> becomes visible — the partner reports success while the monolith stays at <code>READY</code>, because the event it sends cannot be matched to a transaction.</p>
+<p class="fig-caption">The partner's side. It reports success while the monolith can stay at <code>READY</code> — the callback defect below.</p>
           </article>
         </div>
       </section>
@@ -305,20 +262,16 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
           <article class="art-content">
 <h2 id="what-id-fix-next">What I'd fix next</h2>
 
-<p><strong>1 — The legacy compat endpoint answers in <code>snake_case</code>, and the new checkout screen reads <code>camelCase</code>, so the page crashes.</strong> The monolith exposes two generations of the same query: <code>/v1/*</code> returns <code>transactionId</code>, <code>priceCharge</code>, <code>orderStatus</code>; the legacy <code>/ms/api/v1/*</code> route returns <code>transaction_id</code>, <code>price_charge</code>, <code>order_status</code>. The checkout page's <code>ProductTrx</code> type describes the camelCase shape, so:</p>
+<p><strong>1 — The legacy endpoint answers in <code>snake_case</code>, and the checkout page reads <code>camelCase</code>, so the page crashes.</strong> <code>/v1/*</code> returns <code>transactionId</code> and <code>priceCharge</code>; <code>/ms/api/v1/*</code> returns <code>transaction_id</code> and <code>price_charge</code>. The page expects camelCase, so <code>formatIdr(trx.priceCharge)</code> gets <code>undefined</code> and React unmounts into an error boundary. Normalise the legacy response in the BFF, or pin the contract with a shared type.</p>
 
-<pre class="code-block" data-lang="text"><code>PAGEERROR: Cannot read properties of undefined (reading &#x27;toLocaleString&#x27;)</code></pre>
+<p><strong>2 — The partner's callback key does not match the monolith's contract, so a payment can never reach <code>SUCCESS</code> through the normal partner flow.</strong> <code>ms-paymentagr</code> signs and sends <code>reference_id</code>; the monolith's <code>CallbackEvt</code> reads <code>referenceId</code>. Go does not match across an underscore, so the identifier arrives empty and the callback is rejected:</p>
 
-<p><code>formatIdr(trx.priceCharge)</code> is called with <code>undefined</code> and React unmounts into the error boundary. The frontend also renders no error state of its own, so the user sees "This page couldn't load" with no clue that a field name is the cause. Either normalise the legacy response in the BFF (one mapping, one place) or pin the contract with a test — a screen that crashes on a field rename is exactly what a generated type shared with the backend would have prevented.</p>
+<pre class="code-block" data-lang="text"><code>{&quot;reference_id&quot;:&quot;PTRX-22b7a774&quot;, ...}  -&gt;  HTTP 400  invalid callback
+{&quot;referenceId&quot;: &quot;PTRX-22b7a774&quot;, ...}  -&gt;  HTTP 202  Request being processed</code></pre>
 
-<p><strong>2 — The partner's callback payload does not match the monolith's callback contract, so a payment can never reach <code>SUCCESS</code> through the normal partner flow.</strong> <code>ms-paymentagr</code> signs and sends its <code>ChargeRs</code> struct, whose JSON key is <code>reference_id</code>. The monolith's <code>CallbackEvt</code> reads <code>referenceId</code>. Go's decoder matches field names case-insensitively but not across an underscore, so the identifier arrives empty and <code>OnCallback</code> rejects the event as invalid. Proven with two otherwise-identical signed requests:</p>
+<p>The signature is correct; the payment sits at <code>READY</code> until the poller gives up. Map the payload in one place, or assert the shape in the partner's tests.</p>
 
-<pre class="code-block" data-lang="text"><code>{&quot;reference_id&quot;:&quot;PTRX-22b7a774&quot;,&quot;status&quot;:&quot;SUCCEEDED&quot;}  -&gt;  HTTP 400  {&quot;code&quot;:&quot;01&quot;,&quot;message&quot;:&quot;LC: invalid callback&quot;}
-{&quot;referenceId&quot;: &quot;PTRX-22b7a774&quot;,&quot;status&quot;:&quot;SUCCEEDED&quot;}  -&gt;  HTTP 202  {&quot;code&quot;:&quot;00&quot;,&quot;message&quot;:&quot;Request being processed&quot;}</code></pre>
-
-<p>The signature verification is correct on both sides — the HMAC covers <code>timestamp + body</code> identically — so this is purely a field-name mismatch, and it fails silently from the partner's perspective: the poller's 3 retries expire, the payment sits at <code>READY</code> forever, and neither service logs a contract error. Mapping the payload in one shared place, or asserting the callback shape in the partner's own test suite, is the fix.</p>
-
-<p><strong>3 — Smaller items.</strong> The Compose file pins Postgres to <code>15-alpine3.17</code>, which is unmaintained; the seeded demo users ship with real BCrypt hashes in the init SQL, which is convenient locally and a habit worth breaking; and <code>payment_date</code> is populated at <code>READY</code> rather than at settlement, which reads oddly in the UI before the callback lands.</p>
+<p><strong>3 — Smaller items.</strong> Postgres is pinned to an unmaintained <code>15-alpine3.17</code>; seeded users ship real BCrypt hashes; and <code>payment_date</code> is set at <code>READY</code>, not settlement.</p>
           </article>
         </div>
       </section>
@@ -329,14 +282,14 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 
 <ul>
   <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/payment-system">github.com/mariobgsp/payment-system</a></li>
-  <li><strong>Domain language:</strong> <a href="https://github.com/mariobgsp/payment-system/blob/main/specs/tech-architecture/tech-stack.md"><code>specs/tech-architecture/tech-stack.md</code></a></li>
-  <li><strong>Accepted exceptions:</strong> <a href="https://github.com/mariobgsp/payment-system/blob/main/specs/security/EXCEPTIONS.md"><code>specs/security/EXCEPTIONS.md</code></a></li>
-  <li><strong>PlantUML sources:</strong> <a href="https://github.com/mariobgsp/payment-system/tree/main/assets"><code>assets/</code></a></li>
+  <li><strong>Domain language:</strong> <a href="https://github.com/mariobgsp/payment-system/blob/master/specs/tech-architecture/tech-stack.md"><code>specs/tech-architecture/tech-stack.md</code></a></li>
+  <li><strong>Accepted exceptions:</strong> <a href="https://github.com/mariobgsp/payment-system/blob/master/specs/security/EXCEPTIONS.md"><code>specs/security/EXCEPTIONS.md</code></a></li>
+  <li><strong>PlantUML sources:</strong> <a href="https://github.com/mariobgsp/payment-system/tree/master/assets"><code>assets/</code></a></li>
 </ul>
 
 <hr />
 
-<p class="fig-caption">Verified against commit <code>6db1fe0</code> (2026-09-18). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/payment-system.mmd"><code>diagrams/payment-system.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/payment-system.mjs"><code>tools/capture/payment-system.mjs</code></a>.</p>
+<p class="fig-caption">Verified against commit <code>0f2acef</code> (2026-10-25). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/payment-system.mmd"><code>diagrams/payment-system.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/payment-system.mjs"><code>tools/capture/payment-system.mjs</code></a>.</p>
           </article>
         </div>
       </section>
@@ -347,7 +300,7 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 <a class="art-next-link art-next-link--right" href="/articles/the-gateway/"><span>Next</span><b>the-gateway</b></a>
       </nav>
 
-      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka","description":"This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command.","url":"https://mariobgsp.github.io/articles/payment-system/","mainEntityOfPage":"https://mariobgsp.github.io/articles/payment-system/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Go (net/http stdlib) · PostgreSQL 15 · Redis 7 · Next.js 16 portal · Docker Compose","image":"https://mariobgsp.github.io/assets/articles/payment-system-architecture-dark.png"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"One Go Binary Instead of Four Java Services","description":"This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command.","url":"https://mariobgsp.github.io/articles/payment-system/","mainEntityOfPage":"https://mariobgsp.github.io/articles/payment-system/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Go (net/http stdlib) · PostgreSQL 15 · Redis 7 · Next.js portal · Docker Compose","image":"https://mariobgsp.github.io/assets/articles/payment-system-architecture-dark.png"}</script>
     </main>
 
     <footer class="footer" id="contact">

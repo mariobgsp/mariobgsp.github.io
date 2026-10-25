@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF</title>
-    <meta name="description" content="The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript." />
+    <title>An API Gateway That Keeps JWTs Out of the Browser</title>
+    <meta name="description" content="The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript." />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#faf9f6" />
@@ -14,16 +14,16 @@
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://mariobgsp.github.io/articles/the-gateway/" />
-    <meta property="og:title" content="Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF" />
-    <meta property="og:description" content="The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript." />
+    <meta property="og:title" content="An API Gateway That Keeps JWTs Out of the Browser" />
+    <meta property="og:description" content="The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript." />
     <meta property="og:image" content="https://mariobgsp.github.io/assets/articles/og-the-gateway.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF" />
+    <meta property="og:image:alt" content="An API Gateway That Keeps JWTs Out of the Browser" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF" />
-    <meta name="twitter:description" content="The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript." />
+    <meta name="twitter:title" content="An API Gateway That Keeps JWTs Out of the Browser" />
+    <meta name="twitter:description" content="The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript." />
     <meta name="twitter:image" content="https://mariobgsp.github.io/assets/articles/og-the-gateway.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,12 +58,12 @@
         <div class="container">
           <a class="crumb reveal" href="/articles/">&larr; All articles</a>
           <p class="kicker reveal"><b>[ 05 / 05 ]</b> the-gateway</p>
-          <h1 class="art-title reveal">Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF</h1>
-          <p class="art-standfirst reveal">The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript.</p>
+          <h1 class="art-title reveal">An API Gateway That Keeps JWTs Out of the Browser</h1>
+          <p class="art-standfirst reveal">The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript.</p>
           <p class="art-byline reveal">
             <span>Muhammad Ario Bagus Prakusa</span>
-            <span>17 October 2026</span>
-            <span>~8 min read</span>
+            <span>25 October 2026</span>
+            <span>~5 min read</span>
           </p>
           <dl class="art-facts reveal">
             <div class="art-fact">
@@ -76,11 +76,11 @@
             </div>
             <div class="art-fact">
               <dt>Stack</dt>
-              <dd>Next.js 15 (BFF) · Go 1.x + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes</dd>
+              <dd>Next.js 15 (BFF) · Go 1.26 + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes</dd>
             </div>
             <div class="art-fact">
               <dt>Verified</dt>
-              <dd>Built and run locally via Docker Compose (2026-10-17). The cookie and BFF evidence below is copied from that run.</dd>
+              <dd>Re-read against <code>82acad0</code> (2026-10-25; tooling-only). Screenshots from the 2026-10-17 run.</dd>
             </div>
           </dl>
         </div>
@@ -91,36 +91,35 @@
           <article class="art-content">
             <h2>At a glance</h2>
 <ul>
-  <li><strong>What it is</strong> — a control plane for outbound HTTP APIs plus a runtime that executes them: each <code>ApiGateway</code> record stores a host, a path, a method, a header allowlist, an optional parameter allowlist and a required-body gate.</li>
-  <li><strong>Who it's for</strong> — teams that call many third-party APIs and want one place to see, constrain and test them, without putting a credential in front of the browser.</li>
-  <li><strong>The interesting part</strong> — the trust boundary is the <strong>Next.js server</strong>, not the SPA. Every backend call is a server-side fetch behind an <code>httpOnly</code> cookie, and every upstream call re-enforces the allowlists that are stored in the database.</li>
+  <li><strong>What it is</strong> — a control plane for outbound HTTP APIs plus a runtime that executes them. Each <code>ApiGateway</code> record stores the host, path, method, header and parameter allowlists, and a required-body gate.</li>
+  <li><strong>Who it's for</strong> — teams that call many third-party APIs and want one place to see, constrain and test them without exposing a credential to the browser.</li>
+  <li><strong>The interesting part</strong> — the trust boundary is the <strong>Next.js server</strong>, not the SPA. Every backend call is a server-side fetch behind an <code>httpOnly</code> cookie, and every upstream call re-enforces the allowlists in the database.</li>
 </ul>
             <nav class="art-jump" aria-label="Article sections">
-<a href="#the-problem-two-credentials-in-the-wrong-places"><span>02</span>The problem: two credentials in the wrong places</a>
+<a href="#the-problem"><span>02</span>The problem</a>
 <a href="#what-it-does"><span>03</span>What it does</a>
-<a href="#why-this-stack"><span>04</span>Why this stack</a>
-<a href="#architecture"><span>05</span>Architecture</a>
-<a href="#architecture-decisions-worth-defending"><span>06</span>Architecture decisions worth defending</a>
-<a href="#running-it"><span>07</span>Running it</a>
-<a href="#screenshots"><span>08</span>Screenshots</a>
-<a href="#what-id-fix-next"><span>09</span>What I&#x27;d fix next</a>
-<a href="#links"><span>10</span>Links</a>
+<a href="#how-it-works"><span>04</span>How it works</a>
+<a href="#key-choices"><span>05</span>Key choices</a>
+<a href="#running-it"><span>06</span>Running it</a>
+<a href="#screenshots"><span>07</span>Screenshots</a>
+<a href="#what-id-fix-next"><span>08</span>What I&#x27;d fix next</a>
+<a href="#links"><span>09</span>Links</a>
             </nav>
           </article>
         </div>
       </section>
-      <section class="art-block" id="the-problem-two-credentials-in-the-wrong-places">
+      <section class="art-block" id="the-problem">
         <div class="container">
           <article class="art-content">
-<h2 id="the-problem-two-credentials-in-the-wrong-places">The problem: two credentials in the wrong places</h2>
+<h2 id="the-problem">The problem</h2>
 
-<p class="pull-quote">Most SPA-plus-API projects end up with the same two problems.</p>
+<p class="pull-quote">Most SPA-plus-API projects end up with two problems.</p>
 
-<p><strong>1 — The token is readable by any script on the page.</strong> Storing a JWT in <code>localStorage</code> means one injected script, one compromised dependency, or one careless <code>dangerouslySetInnerHTML</code> is a full account takeover. The token also becomes part of every XSS payload the app ever has.</p>
+<p><strong>1 — The token is readable by any script on the page.</strong> A JWT in <code>localStorage</code> means one injected script or compromised dependency is a full account takeover.</p>
 
-<p><strong>2 — Any URL the browser can name, the server will fetch.</strong> A gateway that forwards whatever path, header or query it is handed is an open proxy: an attacker can reach hosts you never configured, leak credentials you meant to keep local, or use your service as an SSRF pivot.</p>
+<p><strong>2 — Any URL the browser can name, the server will fetch.</strong> A gateway that forwards whatever path, header or query it is handed is an open proxy. An attacker can reach unconfigured hosts, leak credentials, or use your service as an SSRF pivot.</p>
 
-<p>This project answers both by construction: the browser holds an opaque cookie it cannot read, and the Go service derives the outbound request from <em>persisted configuration</em> rather than from the incoming request.</p>
+<p>This project answers both by construction: the browser holds an opaque cookie it cannot read, and the Go service derives the outbound request from <em>persisted configuration</em>, not the incoming request.</p>
           </article>
         </div>
       </section>
@@ -131,27 +130,15 @@
 
 <div class="table-wrap"><table>
 <thead><tr><th>Capability</th><th>How</th></tr></thead>
-<tbody><tr><td><strong>Upstream API registry</strong></td><td>Named <code>ApiGateway</code> records: identifier, host, path, method, header allowlist, parameter allowlist, required-body flag, status.</td></tr><tr><td><strong>Store accounts</strong></td><td>Machine principals with a client id and secret, tied to a user through a join table.</td></tr><tr><td><strong>Server-side session</strong></td><td>Login mints a JWT into an <code>httpOnly</code>, <code>SameSite=Lax</code>, secure-in-production cookie. The browser never reads it.</td></tr><tr><td><strong>Guarded forwarding</strong></td><td><code>GatewayForward</code> resolves the stored config, filters headers and parameters against it, encodes the URL once, enforces the body gate, then calls upstream.</td></tr><tr><td><strong>Try-it console</strong></td><td>Run a configured API from the UI and see the raw upstream response without writing a script.</td></tr><tr><td><strong>Envelope contract</strong></td><td>One response shape for the UI: <code>code: &quot;00&quot;</code> means success; <code>01</code>–<code>06</code>, <code>98</code> and <code>99</code> identify specific faults.</td></tr><tr><td><strong>Two deploy paths</strong></td><td>Docker Compose for local, Kubernetes manifests for a cluster.</td></tr></tbody>
+<tbody><tr><td><strong>Upstream API registry</strong></td><td>Named <code>ApiGateway</code> records: identifier, host, path, method, allowlists, body gate, status.</td></tr><tr><td><strong>Store accounts</strong></td><td>Machine principals with a client id and secret, tied to a user.</td></tr><tr><td><strong>Server-side session</strong></td><td>Login mints a JWT into an <code>httpOnly</code>, <code>SameSite=Lax</code> cookie, <code>Secure</code> in production. The browser never reads it.</td></tr><tr><td><strong>Guarded forwarding</strong></td><td><code>GatewayForward</code> resolves the stored config, filters headers and parameters, encodes the URL once, enforces the body gate, then calls upstream.</td></tr><tr><td><strong>Try-it console</strong></td><td>Run a configured API from the UI and see the raw upstream response.</td></tr><tr><td><strong>Envelope contract</strong></td><td>One shape: <code>code: &quot;00&quot;</code> is success; other codes name specific faults.</td></tr><tr><td><strong>Two deploy paths</strong></td><td>Docker Compose locally, Kubernetes manifests for a cluster.</td></tr></tbody>
 </table></div>
           </article>
         </div>
       </section>
-      <section class="art-block" id="why-this-stack">
+      <section class="art-block" id="how-it-works">
         <div class="container">
           <article class="art-content">
-<h2 id="why-this-stack">Why this stack</h2>
-
-<div class="table-wrap"><table>
-<thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
-<tbody><tr><td>Trust boundary</td><td><strong>Next.js App Router server (BFF)</strong></td><td>The session token has to live somewhere the browser cannot read. A server-rendered BFF is already in the stack for the UI, so the token handler costs no extra service.</td></tr><tr><td>Session transport</td><td><strong><code>httpOnly</code> + <code>SameSite=Lax</code> cookie</strong></td><td>Removes the token from JavaScript entirely and gets CSRF protection from the cookie policy rather than from a custom scheme. <code>Secure</code> flips on in production.</td></tr><tr><td>Backend language</td><td><strong>Go with chi and pgx</strong></td><td>The forwarding path is I/O-bound and latency-sensitive; a small binary with an explicit router and a real driver beats a framework where the middleware order is implicit.</td></tr><tr><td>Persistence</td><td><strong>PostgreSQL, entity-specific queries</strong></td><td>The records <em>are</em> the configuration, and they need constraints (unique identifier, foreign keys to users). <code>internal/store</code> keeps one file per entity instead of a generic repository.</td></tr><tr><td>Route table</td><td><strong>Declarative <code>gwRoutes.ts</code></strong></td><td>A <code>/gw/*</code> surface that grows by copy-paste eventually diverges. One table means adding an endpoint is one entry, and the BFF mapping is auditable in a single read.</td></tr><tr><td>Styling / runtime</td><td><strong>Standard Web APIs</strong> (<code>fetch</code>, <code>AbortController</code>)</td><td>The BFF needs a timeout and a cancellation path, both of which are in the platform.</td></tr></tbody>
-</table></div>
-          </article>
-        </div>
-      </section>
-      <section class="art-block" id="architecture">
-        <div class="container">
-          <article class="art-content">
-<h2 id="architecture">Architecture</h2>
+<h2 id="how-it-works">How it works</h2>
 
 <img src="/assets/articles/the-gateway-architecture-dark.png" alt="The Gateway architecture" loading="lazy" decoding="async" />
 
@@ -162,63 +149,53 @@
 <pre class="code-block" data-lang="mermaid"><code>flowchart TD
   BR[&quot;Browser&lt;br/&gt;API list · Store · Try it&quot;]
 
-  BFF[&quot;Next.js server — the trust boundary&lt;br/&gt;BffGateway: /gw/[...path] catch-all&lt;br/&gt;session lookup · timeout · sanitization · envelope mapping&lt;br/&gt;gwRoutes.ts — declarative route table&quot;]
+  BFF[&quot;Next.js server — BffGateway, the trust boundary&lt;br/&gt;/gw/[...path] catch-all · gwRoutes.ts route table&quot;]
 
-  GO[&quot;gateway-go :8080&lt;br/&gt;JWT auth + rate limiting&lt;br/&gt;services: api · account · auth · forward&quot;]
+  GO[&quot;gateway-go :8080&lt;br/&gt;JWT auth · rate limiting · api / account / auth / forward&quot;]
 
-  FWD[&quot;GatewayForward&lt;br/&gt;resolve config → allowlist headers and params&lt;br/&gt;→ encode URL once → enforce request gates&quot;]
-
-  STORE[(&quot;PostgreSQL 15&lt;br/&gt;ApiGateway configs&lt;br/&gt;StoreAccounts · users&quot;)]
+  STORE[(&quot;PostgreSQL 15&lt;br/&gt;ApiGateway configs · StoreAccounts · users&quot;)]
   UP[&quot;Configured upstream APIs&quot;]
 
   BR --&gt;|&quot;gw_session cookie — httpOnly, SameSite=Lax,&lt;br/&gt;Secure in production, never in localStorage&quot;| BFF
   BFF --&gt;|&quot;server-side fetch only —&lt;br/&gt;the JWT never leaves the server&quot;| GO
   GO --&gt; STORE
-  GO --&gt; FWD
-  FWD --&gt;|&quot;5s dial · 30s client timeout&quot;| UP</code></pre>
+  GO --&gt;|&quot;GatewayForward: resolve config → allowlist headers and params&lt;br/&gt;→ encode the URL once → enforce request gates&lt;br/&gt;5s dial · 30s client timeout&quot;| UP</code></pre>
 
 </details>
 
-<h3 id="component-walkthrough">Component walkthrough</h3>
+<h3 id="components">Components</h3>
 
 <ul>
-  <li><strong><code>frontend/src/app/gw/[...path]/route.ts</code></strong> — the catch-all HTTP adapter. Every browser→backend call enters here.</li>
-  <li><strong><code>frontend/src/lib/bffGateway.ts</code></strong> — <code>BffGateway</code>, the deep module that owns session lookup, the unauthorized response, the backend fetch, the timeout and the envelope translation. Sanitization is private to it, so no call site can forget it.</li>
+  <li><strong><code>frontend/src/app/gw/[...path]/route.ts</code></strong> — the catch-all HTTP adapter. Every browser-to-backend call enters here.</li>
+  <li><strong><code>frontend/src/lib/bffGateway.ts</code></strong> — <code>BffGateway</code> owns session lookup, the unauthorized response, the backend fetch, the timeout and envelope translation. Sanitisation is private, so no call site can forget it.</li>
   <li><strong><code>frontend/src/lib/gwRoutes.ts</code></strong> — the declarative route table that maps <code>/gw/*</code> paths onto backend paths.</li>
-  <li><strong><code>gateway-go/internal/handler/</code></strong> — router, HTTP adapters and the auth middleware.</li>
-  <li><strong><code>gateway-go/internal/service/forward.go</code></strong> — <code>ForwardRequest</code> (path name, query params, headers, body) is the typed seam between the HTTP layer and the forwarder, which keeps the forwarding policy testable without a socket.</li>
-  <li><strong><code>gateway-go/internal/store/</code></strong> — one file per entity (<code>api.go</code>, <code>account.go</code>, <code>user.go</code>) over a shared <code>postgres.go</code> connection.</li>
-  <li><strong><code>gateway-go/internal/api/</code></strong> — the envelope, the error codes and the mapping from service errors to them.</li>
+  <li><strong><code>gateway-go/internal/handler/</code></strong> and <strong><code>internal/service/forward.go</code></strong> — the router, auth middleware and <code>ForwardRequest</code>, the typed seam that keeps forwarding policy testable without a socket.</li>
+  <li><strong><code>gateway-go/internal/store/</code></strong> and <strong><code>internal/api/</code></strong> — one file per entity over a shared Postgres connection, plus the envelope and its error codes.</li>
 </ul>
 
 <h3 id="one-browser-click-end-to-end">One browser click, end to end</h3>
 
 <ol>
-  <li>The page calls a literal <code>/gw/...</code> path — never a user-constructed URL, so no user-controlled value reaches the fetch sink as a parameter.</li>
+  <li>The page calls a literal <code>/gw/...</code> path; no user-constructed URL reaches the fetch sink.</li>
   <li><code>gwRoutes.ts</code> matches the path and resolves the backend path.</li>
-  <li><code>BffGateway</code> reads the <code>gw_session</code> cookie, and if it is missing or invalid returns an envelope error rather than calling the backend.</li>
-  <li>The backend fetch runs server-side with the JWT in an <code>Authorization</code> header, under a timeout and an <code>AbortController</code>.</li>
-  <li><code>gateway-go</code> authenticates the JWT, then the service layer loads the stored <code>ApiGateway</code> record for the identifier.</li>
-  <li><code>GatewayForward</code> builds the outbound URL from the <em>stored</em> host and path, filters outbound headers and query parameters down to the stored allowlists, enforces the required-body gate, and calls the upstream.</li>
-  <li>The upstream response is mapped back into the envelope and returned to the BFF, which maps it once more for the browser.</li>
+  <li><code>BffGateway</code> reads the <code>gw_session</code> cookie. If missing or invalid, it returns an envelope error without calling the backend.</li>
+  <li>The server-side fetch runs with the JWT in <code>Authorization</code>, under a timeout and <code>AbortController</code>.</li>
+  <li><code>gateway-go</code> authenticates the JWT and loads the stored <code>ApiGateway</code> record.</li>
+  <li><code>GatewayForward</code> builds the URL from the stored host and path, filters headers and query parameters down to the allowlists, enforces the body gate, and calls upstream.</li>
+  <li>The upstream response is mapped into the envelope, then mapped once more for the browser.</li>
 </ol>
           </article>
         </div>
       </section>
-      <section class="art-block" id="architecture-decisions-worth-defending">
+      <section class="art-block" id="key-choices">
         <div class="container">
           <article class="art-content">
-<h2 id="architecture-decisions-worth-defending">Architecture decisions worth defending</h2>
+<h2 id="key-choices">Key choices</h2>
 
-<p><strong>The browser never holds a credential.</strong> <em>Decision:</em> the session is an <code>httpOnly</code>, <code>SameSite=Lax</code> cookie minted and read only by the Next.js server. <em>Cost:</em> every backend interaction costs a server round-trip, and the BFF has to exist as a deployment unit. <em>Benefit:</em> the credential is not reachable from the page, which removes an entire class of vulnerability rather than mitigating it.</p>
-
-<p><strong>Allowlists are enforced twice, from two different sources.</strong> The BFF sanitizes what it forwards, and the Go service <em>re-derives</em> the outbound request from the persisted configuration. <em>Cost:</em> a header that is allowed in the config but stripped by the BFF fails confusingly. <em>Benefit:</em> no browser-supplied value is ever trusted, so the gateway cannot be used as an open proxy even if the BFF is bypassed.</p>
-
-<p><strong>The URL is encoded exactly once.</strong> Query parsing is deliberately tolerant — <code>?foo</code> becomes <code>foo=&quot;&quot;</code> and duplicate keys are last-wins — and canonical encoding happens in a single place (<code>service.BuildForwardURL</code>). <em>Cost:</em> the tolerant parse is a policy a caller has to know about. <em>Benefit:</em> double-encoding bugs, which are the classic source of "works in the UI, fails for the partner" tickets, cannot happen.</p>
-
-<p><strong>One response envelope for every fault.</strong> <em>Decision:</em> <code>code: &quot;00&quot;</code> is success, and every failure maps to a numbered code in one package. <em>Cost:</em> an extra translation step for upstream bodies. <em>Benefit:</em> the UI has exactly one error path to implement, and the codes are stable enough to document for other consumers.</p>
-
-<p><strong>Reuse the platform before adding a dependency.</strong> <code>fetch</code>, <code>AbortController</code> and the platform's cookie handling are used rather than an HTTP client or a session library. <em>Cost:</em> a little more code in the BFF. <em>Benefit:</em> the dependency surface that has to be patched stays small — which is the same reason the backend keeps <code>net/http</code>, <code>chi</code> and <code>pgx</code> and stops there.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Choice</th><th>Why</th><th>Cost</th></tr></thead>
+<tbody><tr><td><strong>Next.js server as the trust boundary</strong></td><td>The token must live where the browser cannot read it; the BFF is already there for the UI.</td><td>Every backend call costs a server round-trip; the BFF is another deployment unit.</td></tr><tr><td><strong><code>httpOnly</code> + <code>SameSite=Lax</code> cookie</strong></td><td>Removes the token from JavaScript; the cookie policy provides CSRF protection.</td><td>The server must set <code>COOKIE_SECURE</code> correctly behind TLS.</td></tr><tr><td><strong>Allowlists enforced twice</strong></td><td>The BFF sanitises what it forwards; the Go service re-derives the request from persisted config.</td><td>A header allowed in config but stripped by the BFF fails confusingly.</td></tr><tr><td><strong>Encode the URL exactly once</strong></td><td>Tolerant query parsing; canonical encoding in one place (<code>service.BuildForwardURL</code>).</td><td>Callers must know the tolerant-parse policy.</td></tr><tr><td><strong>One envelope for every fault</strong></td><td>One UI error path; stable, documentable codes.</td><td>An extra translation step for upstream bodies.</td></tr></tbody>
+</table></div>
           </article>
         </div>
       </section>
@@ -227,42 +204,26 @@
           <article class="art-content">
 <h2 id="running-it">Running it</h2>
 
-<pre class="code-block" data-lang="bash"><code># 1 · database
-cd project &amp;&amp; docker compose up -d postgres
+<pre class="code-block" data-lang="bash"><code>cd project &amp;&amp; docker compose up -d postgres
 psql &quot;$DATABASE_URL&quot; -f project/pg-init-scripts/gateway.sql
 
-# 2 · everything, including the UI, in containers
 docker compose up -d --build          # postgres + gateway-go (8080) + frontend (3000)
 
-# or run the halves natively
-cd gateway-go &amp;&amp; DATABASE_URL=postgres://microservices:password@localhost:5432/gateway?sslmode=disable go run ./cmd/server
-cd frontend   &amp;&amp; BACKEND_API_URL=http://localhost:8080 npm run dev
-
-# tests
 cd gateway-go &amp;&amp; go build ./... &amp;&amp; go vet ./... &amp;&amp; go test ./...
-cd frontend   &amp;&amp; npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm test &amp;&amp; npm run build &amp;&amp; npm run test:e2e</code></pre>
+cd frontend   &amp;&amp; npm run lint &amp;&amp; npm run typecheck &amp;&amp; npm test &amp;&amp; npm run build</code></pre>
 
 <h3 id="what-i-observed">What I observed</h3>
 
-<p>This is the part of the design that is easiest to <em>claim</em> and easiest to <em>check</em>. After logging in, from inside the page:</p>
+<p class="pull-quote">After login, from inside the page:</p>
 
 <pre class="code-block" data-lang="text"><code>document.cookie =&gt; &quot;&quot;
 session cookie  =&gt; gw_session httpOnly=true sameSite=Lax
 BFF 200 /gw/auth/login
-BFF 200 /gw/apis
-BFF 200 /gw/stores
-BFF 200 /gw/apis/detail/gateway-example-1</code></pre>
+BFF 200 /gw/apis</code></pre>
 
-<p>The session cookie exists, the backend calls all went through the BFF, and <code>document.cookie</code> is empty: the token is not merely "not used by" the frontend, it is unreadable to it.</p>
+<p>The cookie exists and every backend call went through the BFF, yet <code>document.cookie</code> is empty: the token is unreadable.</p>
 
-<p>A second observation, from the Try-it console. Forwarding to a public upstream failed in my sandbox with:</p>
-
-<pre class="code-block" data-lang="text"><code>Get &quot;https://api.thecatapi.com/v1/images/search&quot;: tls: failed to verify certificate:
-x509: certificate signed by unknown authority</code></pre>
-
-<p>That is an environment fact, not a code fault — the container does not carry the intercepting CA this network uses. It is worth showing anyway, because it demonstrates the desired behaviour under failure: the gateway surfaces the upstream's real error verbatim instead of collapsing it into a generic 500, which is what makes an integration debuggable. Pointing the same configuration at an internal endpoint completes the round trip and returns the upstream body unchanged:</p>
-
-<img src="/assets/articles/the-gateway-forward-response.png" alt="Try it, forwarding to an upstream" loading="lazy" decoding="async" />
+<p>The Try-it console also surfaced an environment fact: a public upstream failed with <code>x509: certificate signed by unknown authority</code> because the container lacked this network's intercepting CA. The gateway returned the real error instead of a generic 500; an internal endpoint completed the round trip.</p>
           </article>
         </div>
       </section>
@@ -273,15 +234,15 @@ x509: certificate signed by unknown authority</code></pre>
 
 <img src="/assets/articles/the-gateway-dashboard.png" alt="API list dashboard" loading="lazy" decoding="async" />
 
-<p class="fig-caption">The API list: name, identifier, method badge and lifecycle status. Rows open the configuration screen; <code>Store Account</code> is the machine-credential tab.</p>
+<p class="fig-caption">The API list: name, identifier, method badge and lifecycle status.</p>
 
 <img src="/assets/articles/the-gateway-api-detail.png" alt="API configuration detail" loading="lazy" decoding="async" />
 
-<p class="fig-caption">One API's configuration. The lower row is the security surface: the header allowlist, the required-parameter allowlist and the required-body gate. These are the values the Go forwarder re-enforces at request time — the UI is only where they are edited.</p>
+<p class="fig-caption">One API's configuration; the lower row is the security surface.</p>
 
 <img src="/assets/articles/the-gateway-try-it.png" alt="Try it console" loading="lazy" decoding="async" />
 
-<p class="fig-caption">The Try-it console issues a real request through the whole pipeline, which is why it is the most useful screen for debugging a partner integration.</p>
+<p class="fig-caption">The Try-it console issues a real request through the whole pipeline.</p>
           </article>
         </div>
       </section>
@@ -290,13 +251,11 @@ x509: certificate signed by unknown authority</code></pre>
           <article class="art-content">
 <h2 id="what-id-fix-next">What I'd fix next</h2>
 
-<p class="pull-quote">Ordered by how much each item costs to leave alone:</p>
-
 <ul>
-  <li><strong>The schema and seed rows are a separate step.</strong> The Compose file mounts the init SQL, but a native run needs the <code>psql -f</code> command above before the UI has anything to show. A migration step at boot, or a health readout that says "0 APIs configured", would make a first run self-explaining.</li>
-  <li><strong><code>test:e2e</code> runs against port 3001</strong> to avoid colliding with a local dev server; worth knowing when a run "hangs" on a busy machine.</li>
-  <li><strong>The security posture depends on deployment, not code.</strong> <code>COOKIE_SECURE</code> must be <code>true</code> behind TLS; the shipped Compose file sets it to <code>false</code> for local HTTP, which is correct locally and wrong anywhere else.</li>
-  <li><strong>Forwarding inherits the host's CA trust.</strong> As observed above, a container with a slim trust store will reject upstreams that the host accepts.</li>
+  <li><strong>The schema is a separate step.</strong> Compose mounts the init SQL, but a native run needs <code>psql -f</code> before the UI has anything to show. A boot migration or a "0 APIs configured" readout would explain a first run.</li>
+  <li><strong><code>test:e2e</code> uses port 3001</strong> to avoid a local dev server; a busy port makes a run appear to hang.</li>
+  <li><strong><code>COOKIE_SECURE</code> must be <code>true</code> behind TLS.</strong> The Compose file sets it to <code>false</code> for local HTTP, correct locally and wrong anywhere else.</li>
+  <li><strong>Forwarding inherits the host's CA trust</strong>; a slim container store rejects upstreams the host accepts.</li>
 </ul>
           </article>
         </div>
@@ -314,7 +273,7 @@ x509: certificate signed by unknown authority</code></pre>
 
 <hr />
 
-<p class="fig-caption">Verified against commit <code>15446fc</code> (2026-09-18). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/the-gateway.mmd"><code>diagrams/the-gateway.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/the-gateway.mjs"><code>tools/capture/the-gateway.mjs</code></a>.</p>
+<p class="fig-caption">Verified against commit <code>82acad0</code> (2026-10-25). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/the-gateway.mmd"><code>diagrams/the-gateway.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/the-gateway.mjs"><code>tools/capture/the-gateway.mjs</code></a>.</p>
           </article>
         </div>
       </section>
@@ -325,7 +284,7 @@ x509: certificate signed by unknown authority</code></pre>
 <span></span>
       </nav>
 
-      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF","description":"The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript.","url":"https://mariobgsp.github.io/articles/the-gateway/","mainEntityOfPage":"https://mariobgsp.github.io/articles/the-gateway/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Next.js 15 (BFF) · Go 1.x + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes","image":"https://mariobgsp.github.io/assets/articles/the-gateway-architecture-dark.png"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"An API Gateway That Keeps JWTs Out of the Browser","description":"The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript.","url":"https://mariobgsp.github.io/articles/the-gateway/","mainEntityOfPage":"https://mariobgsp.github.io/articles/the-gateway/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Next.js 15 (BFF) · Go 1.26 + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes","image":"https://mariobgsp.github.io/assets/articles/the-gateway-architecture-dark.png"}</script>
     </main>
 
     <footer class="footer" id="contact">

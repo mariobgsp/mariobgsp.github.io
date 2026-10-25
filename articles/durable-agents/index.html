@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</title>
-    <meta name="description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own." />
+    <title>Agent Chats That Survive a Crash</title>
+    <meta name="description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download." />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#faf9f6" />
@@ -14,16 +14,16 @@
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://mariobgsp.github.io/articles/durable-agents/" />
-    <meta property="og:title" content="Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log" />
-    <meta property="og:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own." />
+    <meta property="og:title" content="Agent Chats That Survive a Crash" />
+    <meta property="og:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download." />
     <meta property="og:image" content="https://mariobgsp.github.io/assets/articles/og-durable-agents.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log" />
+    <meta property="og:image:alt" content="Agent Chats That Survive a Crash" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log" />
-    <meta name="twitter:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own." />
+    <meta name="twitter:title" content="Agent Chats That Survive a Crash" />
+    <meta name="twitter:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download." />
     <meta name="twitter:image" content="https://mariobgsp.github.io/assets/articles/og-durable-agents.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,12 +58,12 @@
         <div class="container">
           <a class="crumb reveal" href="/articles/">&larr; All articles</a>
           <p class="kicker reveal"><b>[ 02 / 05 ]</b> durable-agents</p>
-          <h1 class="art-title reveal">Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</h1>
-          <p class="art-standfirst reveal">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.</p>
+          <h1 class="art-title reveal">Agent Chats That Survive a Crash</h1>
+          <p class="art-standfirst reveal">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download.</p>
           <p class="art-byline reveal">
             <span>Muhammad Ario Bagus Prakusa</span>
-            <span>19 October 2026</span>
-            <span>~15 min read</span>
+            <span>25 October 2026</span>
+            <span>~6 min read</span>
           </p>
           <dl class="art-facts reveal">
             <div class="art-fact">
@@ -80,7 +80,7 @@
             </div>
             <div class="art-fact">
               <dt>Verified</dt>
-              <dd>App run locally, checks and E2E suite executed (2026-10-19). Verification numbers below are mine, not quoted from the README.</dd>
+              <dd>Re-read against <code>06f5bad</code> (2026-10-25). Checks are the repository's 2026-10-24 run; screenshots are from 2026-10-19.</dd>
             </div>
           </dl>
         </div>
@@ -91,35 +91,34 @@
           <article class="art-content">
             <h2>At a glance</h2>
 <ul>
-  <li><strong>What it is</strong> — a single-user web app for talking to AI agents: threads that survive restarts, agents defined by <code>AGENT.md</code> + <code>SOUL.md</code>, and group chats where several agents decide among themselves who answers.</li>
+  <li><strong>What it is</strong> — a single-user web app for durable agent work: threads that survive restarts, agents defined by two markdown files, group chats, a directed agent network, schedules, generated files, and a system panel.</li>
   <li><strong>Who it's for</strong> — anyone who treats an agent session as work rather than a prompt: long threads, expensive generations, and a strong preference not to lose either because a socket dropped.</li>
-  <li><strong>The interesting part</strong> — the durability is not a save button. It is a <strong>durable task log</strong>: the harness owns progress, and the UI's job reduces to <em>rendering what the log says</em>, including re-attaching to a generation that was already running when you left.</li>
+  <li><strong>The interesting part</strong> — durability is not a save button. It is a <strong>durable task log</strong>. The harness owns progress, and the UI's job is to render what the log says, including re-attaching to a generation that was already running when you left.</li>
 </ul>
             <nav class="art-jump" aria-label="Article sections">
-<a href="#the-problem-agent-chat-is-the-least-durable-part-of-the-stack"><span>02</span>The problem: agent chat is the least durable part of the stack</a>
+<a href="#the-problem"><span>02</span>The problem</a>
 <a href="#what-it-does"><span>03</span>What it does</a>
-<a href="#why-this-stack"><span>04</span>Why this stack</a>
-<a href="#architecture"><span>05</span>Architecture</a>
-<a href="#architecture-decisions-worth-defending"><span>06</span>Architecture decisions worth defending</a>
-<a href="#running-it"><span>07</span>Running it</a>
-<a href="#screenshots"><span>08</span>Screenshots</a>
-<a href="#what-id-fix-next"><span>09</span>What I&#x27;d fix next</a>
-<a href="#links"><span>10</span>Links</a>
+<a href="#how-it-works"><span>04</span>How it works</a>
+<a href="#key-choices"><span>05</span>Key choices</a>
+<a href="#running-it"><span>06</span>Running it</a>
+<a href="#screenshots"><span>07</span>Screenshots</a>
+<a href="#what-id-fix-next"><span>08</span>What I&#x27;d fix next</a>
+<a href="#links"><span>09</span>Links</a>
             </nav>
           </article>
         </div>
       </section>
-      <section class="art-block" id="the-problem-agent-chat-is-the-least-durable-part-of-the-stack">
+      <section class="art-block" id="the-problem">
         <div class="container">
           <article class="art-content">
-<h2 id="the-problem-agent-chat-is-the-least-durable-part-of-the-stack">The problem: agent chat is the least durable part of the stack</h2>
+<h2 id="the-problem">The problem</h2>
 
-<p>Conventional chat UIs model a conversation as client state. That assumption breaks badly once each turn costs real money and takes minutes:</p>
+<p>Conventional chat UIs model a conversation as client state. That assumption breaks once each turn costs real money and takes minutes.</p>
 
 <ul>
   <li><strong>A dropped socket loses the answer.</strong> The generation completes upstream, but nothing in the browser owns it, so the reply never lands.</li>
   <li><strong>A reload forgets what was happening.</strong> There is no record that a turn was in flight, so a resume means re-asking and re-paying.</li>
-  <li><strong>"Still working?" has no answer.</strong> A spinner is a guess; it cannot distinguish a slow generation from a dead one, and in a group chat it cannot say <em>which</em> agent is mid-sentence.</li>
+  <li><strong>"Still working?" has no answer.</strong> A spinner cannot distinguish a slow generation from a dead one, and in a group chat it cannot say <em>which</em> agent is mid-sentence.</li>
 </ul>
 
 <p>This project inverts the ownership: the harness writes durable tasks first, and the browser is a view onto that log.</p>
@@ -133,27 +132,15 @@
 
 <div class="table-wrap"><table>
 <thead><tr><th>Capability</th><th>How</th></tr></thead>
-<tbody><tr><td><strong>Durable threads</strong></td><td>Every message, tool call and generation is a durable task; <code>resume()</code> replays work that was interrupted.</td></tr><tr><td><strong>Live streaming</strong></td><td>Per-conversation WebSocket emitting <code>snapshot</code> → <code>entry</code> → <code>message-start</code> → <code>delta</code>… → <code>message-end</code>.</td></tr><tr><td><strong>Agents as files</strong></td><td><code>data/agents/&lt;slug&gt;/{agent.json,AGENT.md,SOUL.md}</code>. <code>SOUL.md</code> is who it is; <code>AGENT.md</code> is its working rules.</td></tr><tr><td><strong>Hot reload into live threads</strong></td><td>Saving an agent rebinds it into existing threads (<code>rebindAgent</code>) and reports how many threads took the new files.</td></tr><tr><td><strong>Group chat, three modes</strong></td><td><code>Nyahut</code> (agents claim a message by responsibility), <code>Moderator</code> (one designated member), <code>Silent</code> (<code>@mention</code> only).</td></tr><tr><td><strong>Live presence and activity</strong></td><td>A presence socket says which sessions are generating, including ones you are not looking at; the active thread gets the phase, the calls and the elapsed time derived from <code>pi.live</code>.</td></tr><tr><td><strong>Per-agent models</strong></td><td>Each agent picks its own provider and model, with capability badges (image input, context window, cost, thinking levels).</td></tr><tr><td><strong>One identity system</strong></td><td>Colour + emoji per agent and per group, normalised in a single module.</td></tr><tr><td><strong>Attachments</strong></td><td>Images are normalized server-side to the model's own limits and documents become text; the bytes live in the entry the model was given, so there is no upload store.</td></tr><tr><td><strong>Full Access per thread</strong></td><td>An agent has a Standard / Custom / Full Access tier; a grant lifts one thread to Full Access, is enforced at tool-call time, and dies with that thread.</td></tr><tr><td><strong>Storage you can measure</strong></td><td><code>#/usage</code> splits the data directory by part; cleanup returns the bytes it actually gave back; a purge exports the transcript before deleting its rows.</td></tr><tr><td><strong>Ask, and search without a key</strong></td><td>A <code>question</code> tool writes a durable <code>chat.question</code> entry with option buttons; <code>web-search</code> reads DuckDuckGo's keyless HTML endpoint.</td></tr><tr><td><strong>Links and diagrams</strong></td><td>External links are re-targeted after sanitizing; a fenced <code>mermaid</code> block becomes a pan/zoom component whose library is fetched only when a diagram renders.</td></tr></tbody>
+<tbody><tr><td><strong>Durable threads</strong></td><td>Every message, tool call and generation is a durable task. <code>resume()</code> replays work that was interrupted.</td></tr><tr><td><strong>Live streaming</strong></td><td>A WebSocket per conversation emits <code>snapshot → entry → message-start → delta… → message-end</code>. Reconnecting re-reads the log rather than restarting the answer.</td></tr><tr><td><strong>Agents as files</strong></td><td><code>data/agents/&lt;slug&gt;/{agent.json,AGENT.md,SOUL.md}</code>. <code>SOUL.md</code> is who the agent is; <code>AGENT.md</code> is its working rules. Saving rebinds the files into live threads.</td></tr><tr><td><strong>Group chat</strong></td><td>Three modes: <code>Nyahut</code> (agents claim a message by responsibility), <code>Moderator</code> (one designated member), and <code>Silent</code> (<code>@mention</code> only).</td></tr><tr><td><strong>Agent network</strong></td><td><code>agents_message</code> delivers to one directed inbox thread per sender–recipient pair; fan-out reaches 16 targets. <code>agents_delegate</code> creates one task thread per target. Calls are idempotent by request id, with a 6-hop guard.</td></tr><tr><td><strong>Fleet and activity</strong></td><td>One snapshot of which agents are working, idle or disabled, their thread, token totals and live links, pushed over the presence socket.</td></tr><tr><td><strong>Schedules</strong></td><td>A per-agent 5-field cron owns one thread: run-now, skip-when-busy, restart-safe; a missed window is counted, not replayed.</td></tr><tr><td><strong>Files and output</strong></td><td>Attachments live in the message entry the model was given. Agents can write Markdown, text, JSON, PDF or published files as download cards under <code>data/artifacts</code>.</td></tr><tr><td><strong>Operations</strong></td><td><code>#/system</code> reports versions, sandbox and supervisor, with Update and Restart. <code>#/usage</code> covers storage, cleanup and spend. Agents customise a closed display token set, never the source.</td></tr></tbody>
 </table></div>
           </article>
         </div>
       </section>
-      <section class="art-block" id="why-this-stack">
+      <section class="art-block" id="how-it-works">
         <div class="container">
           <article class="art-content">
-<h2 id="why-this-stack">Why this stack</h2>
-
-<div class="table-wrap"><table>
-<thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
-<tbody><tr><td>Durability</td><td><strong><code>pi-durable</code> on SQLite</strong></td><td>Durability is a property of the substrate, not of the UI. A single SQLite file in WAL mode means an interrupted generation is <em>resumable by construction</em>, with no queue, no worker fleet and no server-side session memory to rebuild.</td></tr><tr><td>Backend</td><td><strong>Fastify, bound to <code>127.0.0.1</code></strong></td><td>The server proxies model calls and reads agent files off disk; a small, explicit HTTP layer with a WebSocket upgrade is the whole surface.</td></tr><tr><td>Frontend</td><td><strong>Svelte 5 with runes</strong></td><td>Chat is a long-lived stream of small mutations. Runes give fine-grained reactivity without a virtual DOM or a state library, and the entry ships at <strong>71.86 kB gzip</strong>, with mermaid and its layout engines in their own chunks.</td></tr><tr><td>Transport</td><td><strong>WebSocket with an explicit frame contract</strong></td><td>Streaming partials need push, not polling. The frame types are declared in <code>wire.ts</code> on the server and mirrored in <code>ws.ts</code> on the client, so the contract has exactly two files to check.</td></tr><tr><td>State</td><td><strong>One runes store</strong></td><td><code>state.svelte.ts</code> is the only place incoming frames mutate state. One writer makes "why does the sidebar disagree with the chat header" a non-question — a bug class this project explicitly tested for.</td></tr><tr><td>Testing</td><td><strong>E2E only, against a faux provider</strong></td><td>With <code>PI_E2E=1</code> every real provider is swapped for the harness's faux provider, and thirteen scenarios each boot a throwaway server: no network, no cost, no flakes.</td></tr><tr><td>Bundle</td><td><strong>A 100 kB gzip budget</strong></td><td>A local app still has to load before it feels local. The budget turns "add a dependency" into a deliberate decision.</td></tr></tbody>
-</table></div>
-          </article>
-        </div>
-      </section>
-      <section class="art-block" id="architecture">
-        <div class="container">
-          <article class="art-content">
-<h2 id="architecture">Architecture</h2>
+<h2 id="how-it-works">How it works</h2>
 
 <img src="/assets/articles/durable-agents-architecture-dark.png" alt="durable-agents architecture" loading="lazy" decoding="async" />
 
@@ -162,22 +149,23 @@
 <summary>Mermaid source (<code>diagrams/durable-agents.mmd</code>)</summary>
 
 <pre class="code-block" data-lang="mermaid"><code>flowchart TD
-  U[&quot;Browser — Svelte 5 SPA&lt;br/&gt;Chat · Agents · Groups · Providers&quot;]
+  U[&quot;Browser — Svelte 5 SPA&lt;br/&gt;Chat · Agents · Groups · System · Usage · Providers&quot;]
 
-  subgraph WEB[&quot;packages/web — the client&quot;]
+  subgraph WEB[&quot;packages/web&quot;]
+    VIEWS[&quot;views + components&lt;br/&gt;Chat · Agents · Groups · System&lt;br/&gt;Composer · DiagramDrawer&quot;]
     ST[&quot;state.svelte.ts — one runes store&lt;br/&gt;the only place frames mutate state&quot;]
-    WS[&quot;ws.ts — a socket per conversation&lt;br/&gt;plus a presence socket&quot;]
-    ID[&quot;lib/identity.ts — one normaliser&lt;br/&gt;colour + emoji identity&quot;]
+    WS[&quot;ws.ts — one socket per conversation&lt;br/&gt;plus a presence socket&quot;]
+    ID[&quot;lib/identity.ts + lib/display.ts&lt;br/&gt;identity + display&quot;]
   end
 
-  subgraph SRV[&quot;packages/server — Fastify, bound to 127.0.0.1&quot;]
-    AUTH[&quot;auth.ts&lt;br/&gt;X-PI-Token + Host allowlist&quot;]
-    ROOMS[&quot;rooms.ts · router.ts · nyahut.ts&lt;br/&gt;group orchestration&quot;]
-    STREAM[&quot;stream.ts&lt;br/&gt;watch() to wire frames,&lt;br/&gt;partials read from pi.live&quot;]
-    ACT[&quot;activity.ts&lt;br/&gt;who is generating right now&quot;]
+  subgraph SRV[&quot;packages/server&quot;]
+    AUTH[&quot;auth.ts — Fastify on 127.0.0.1&lt;br/&gt;X-PI-Token + Host allowlist&quot;]
+    CORE[&quot;threads + streaming&lt;br/&gt;sessions · transcript · stream&lt;br/&gt;live · activity&quot;]
+    ORCH[&quot;groups + agent network&lt;br/&gt;rooms · router · nyahut&lt;br/&gt;mesh · roster · fleet&quot;]
+    OPS[&quot;schedules, files, operations&lt;br/&gt;cron · schedules · attachments&lt;br/&gt;artifacts · system · display · storage&quot;]
   end
 
-  subgraph DUR[&quot;pi-durable harness — pinned 1.3.0&quot;]
+  subgraph DUR[&quot;pi-durable 1.3.0&quot;]
     H[&quot;Harness&lt;br/&gt;conversations · submissions&lt;br/&gt;every step a durable task&quot;]
     DB[(&quot;SQLite&lt;br/&gt;data/app.sqlite&quot;)]
     H --&gt; DB
@@ -185,93 +173,53 @@
 
   LLM[&quot;pi-ai providers&lt;br/&gt;opencode-go · deepseek-v4.1-flash&lt;br/&gt;faux provider when PI_E2E=1&quot;]
 
-  U --&gt; ST
+  U --&gt; VIEWS
+  VIEWS --&gt; ST
   ST --&gt; WS
-  WS &lt;--&gt;|&quot;HTTP + WebSocket · X-PI-Token&quot;| AUTH
-  AUTH --&gt; ROOMS
-  AUTH --&gt; STREAM
-  AUTH --&gt; ACT
-  ROOMS --&gt; H
-  STREAM --&gt; H
   ID -.-&gt; ST
+  WS &lt;--&gt;|&quot;HTTP + WebSocket · X-PI-Token&quot;| AUTH
+  AUTH --&gt; CORE
+  AUTH --&gt; ORCH
+  AUTH --&gt; OPS
+  CORE --&gt; H
+  ORCH --&gt; H
+  OPS -.-&gt; H
   H --&gt; LLM</code></pre>
 
 </details>
 
-<h3 id="component-walkthrough">Component walkthrough</h3>
+<h3 id="components">Components</h3>
 
 <ul>
-  <li><strong><code>packages/server/src/index.ts</code></strong> — every REST route and the WebSocket upgrade, plus the boot-time activity scan. The message route declares its own 24 MiB body limit because one request carries its own attachments.</li>
-  <li><strong><code>packages/server/src/sessions.ts</code></strong> — the session index (<code>data/sessions.json</code>), the thread's own <code>grant</code>, <code>sendMessage</code> and <code>rebindAgent</code>.</li>
-  <li><strong><code>packages/server/src/transcript.ts</code></strong> — turns durable entries into wire messages. A user message is read through its own <code>chat.user</code> record, so attachment refs and a <code>chat.question</code> entry need no special case in the mapper.</li>
-  <li><strong><code>packages/server/src/stream.ts</code></strong> — turns <code>conversation.watch()</code> into wire frames, reading partials out of the durable <code>pi.live</code> document.</li>
-  <li><strong><code>packages/server/src/live.ts</code></strong> — the one reader of <code>pi.live</code> and <code>pi.inbox</code>: it derives the activity phase, the calls of the round, the queued inputs and the typing authors. The phase is observed, never timed.</li>
-  <li><strong><code>packages/server/src/attachments.ts</code></strong> — the only module that knows how a file becomes a message: validate, normalize an image to the model's own limits, convert a document, and record the result in the entry's own <code>data.files[]</code>.</li>
-  <li><strong><code>packages/server/src/documents.ts</code></strong> — bytes to text: UTF-8 detected by decoding, PDF through <code>pdftotext</code> on <strong>stdin</strong>, never a path, and a stable reason when there is no text to send.</li>
-  <li><strong><code>packages/server/src/permissions.ts</code></strong> — the policy behind Standard / Custom / Full Access: it refuses <code>bash</code> and <code>codemode</code> to Standard and checks <code>read</code>/<code>write</code>/<code>edit</code> paths against the agent's roots. The per-thread grant is resolved here; the systemd unit is the boundary that actually contains an allowed tool.</li>
-  <li><strong><code>packages/server/src/storage.ts</code></strong> — the data directory by part, the checkpoint + vacuum, and the purge that writes <code>data/exports/&lt;id&gt;.json</code> before it deletes a row.</li>
-  <li><strong><code>packages/server/src/usage.ts</code></strong> — the aggregates behind the Usage screen, read from the durable log rather than a second counter.</li>
-  <li><strong><code>packages/server/src/questions.ts</code></strong> — the <code>question</code> tool: it writes a durable <code>chat.question</code> entry with <code>data.options</code> and ends the turn.</li>
-  <li><strong><code>packages/server/src/search.ts</code></strong> — the <code>web-search</code> tool over DuckDuckGo's keyless HTML endpoint; a changed page or an HTTP failure is reported as a failure, never as "no results".</li>
-  <li><strong><code>packages/server/src/router.ts</code></strong> — <code>planTargets()</code>, a <strong>pure</strong> function that decides who answers one message. No network, no model, no file access, so group routing is testable without any of the machinery around it.</li>
-  <li><strong><code>packages/server/src/nyahut.ts</code></strong> — the claim and oversee passes as short, stateless calls.</li>
-  <li><strong><code>packages/server/src/activity.ts</code></strong> — an in-memory registry of which sessions are generating, pushed over the presence socket instead of polled.</li>
-  <li><strong><code>packages/web/src/state.svelte.ts</code></strong> — the single store; the only place frames mutate state.</li>
-  <li><strong><code>packages/web/src/lib/markdown.ts</code></strong> — markdown to sanitized HTML: mermaid fences become their own component, and the external-link policy is installed after sanitizing, so raw HTML in a message goes through the same rule.</li>
-  <li><strong><code>packages/web/src/lib/identity.ts</code></strong> — one normaliser for agent and group identity, so the sidebar, chat header and message bubbles cannot disagree.</li>
-  <li><strong>The web components</strong> — <code>Attachments.svelte</code> renders a message's files and the server's reason when one was not sent; <code>QuestionOptions.svelte</code> draws a question's buttons, answerable once; <code>Mermaid.svelte</code> imports mermaid inside its render effect with <code>securityLevel: &quot;strict&quot;</code> and pans/zooms with transform math; <code>ActivityIndicator.svelte</code> and <code>ActivityStrip.svelte</code> draw the phase, the calls and the durable elapsed time; <code>Usage.svelte</code> holds the usage graphs and the Storage panel.</li>
+  <li><strong><code>packages/server/src/index.ts</code></strong> — every REST route and the WebSocket upgrade, plus the boot-time activity scan. The message route allows a 24 MiB body because a message carries its attachments.</li>
+  <li><strong><code>sessions.ts</code>, <code>transcript.ts</code>, <code>stream.ts</code>, <code>live.ts</code></strong> — the thread index, durable entries to wire messages, <code>watch()</code> to frames, and the one reader of <code>pi.live</code> that derives the activity phase, calls and elapsed time.</li>
+  <li><strong><code>rooms.ts</code>, <code>router.ts</code>, <code>nyahut.ts</code></strong> — group orchestration. <code>planTargets()</code> is pure: no network, no model, no file access, so routing is testable in isolation.</li>
+  <li><strong><code>mesh.ts</code>, <code>mesh-tools.ts</code>, <code>roster.ts</code>, <code>fleet.ts</code></strong> — directed inbox/task threads, fan-out, the link index, the hop guard, and the fleet snapshot.</li>
+  <li><strong><code>cron.ts</code>, <code>schedules.ts</code></strong> — the cron parser, the per-agent schedule store, and the 15-second tick that skips a busy thread and records duration and tokens.</li>
+  <li><strong><code>artifacts.ts</code>, <code>attachments.ts</code>, <code>documents.ts</code></strong> — generated files, image normalisation, and bytes-to-text. Attachments live in the entry the model read; artifacts are indexed by their entry.</li>
 </ul>
 
 <h3 id="one-message-end-to-end">One message, end to end</h3>
 
 <ol>
   <li>You press Enter. The store sets <code>busy</code> immediately, so the input feels instant while nothing has been sent.</li>
-  <li><code>POST /api/sessions/:id/messages</code> validates and converts the message (attachments, the agent's image policy) and then submits an <code>input</code> event to the harness. It is <strong>already durable</strong> when the submission id comes back; a refusal throws before anything is written, so the draft is intact.</li>
-  <li>The server marks the session active and opens a presence broadcast, so every <em>other</em> tab learns this thread is generating.</li>
-  <li>The browser opens (or reuses) that conversation's socket; the harness starts the generation.</li>
-  <li>Partials are read out of the durable <code>pi.live</code> document and diffed, and the suffix is emitted as <code>delta</code> frames — roughly 80 ms apart in a real session.</li>
-  <li>On completion the committed entry is emitted as <code>entry</code>, the bubble closes with <code>message-end</code>, and <code>waitForIdle()</code> resolves so the session is marked idle again.</li>
+  <li><code>POST /api/sessions/:id/messages</code> validates and converts the message (shape, budget, image policy, documents), then submits an <code>input</code> event. It is already durable when the submission id comes back; a refusal throws before anything is written, so the draft is intact.</li>
+  <li>The server marks the session active and broadcasts presence, so every other tab learns this thread is generating.</li>
+  <li>The browser opens or reuses the conversation socket. The harness starts the generation, and the server reads partials out of the durable <code>pi.live</code> document and emits the suffix as <code>delta</code> frames — roughly 80 ms apart.</li>
+  <li>On completion the committed entry is emitted as <code>entry</code>, the bubble closes with <code>message-end</code>, and <code>waitForIdle()</code> resolves so the session is idle again.</li>
 </ol>
-
-<h3 id="the-http-surface">The HTTP surface</h3>
-
-<p>The routes are the whole API; everything else is a socket frame or a file on disk.</p>
-
-<div class="table-wrap"><table>
-<thead><tr><th>Area</th><th>Routes</th></tr></thead>
-<tbody><tr><td>Liveness</td><td><code>GET /api/health</code></td></tr><tr><td>Threads</td><td><code>GET/POST /api/sessions</code> · <code>PATCH/DELETE /api/sessions/:id</code> · <code>POST /api/sessions/:id/{restore,move,restart,abort}</code></td></tr><tr><td>Messages</td><td><code>GET/POST /api/sessions/:id/messages</code> · <code>GET /api/sessions/:id/attachments/:entryId/:index</code></td></tr><tr><td>Context and model</td><td><code>GET /api/sessions/:id/context</code> · <code>POST /api/sessions/:id/compact</code> · <code>PUT /api/sessions/:id/model</code></td></tr><tr><td>Permissions and storage</td><td><code>POST /api/sessions/:id/permissions</code> · <code>GET /api/storage</code> · <code>POST /api/storage/cleanup</code> · <code>POST /api/sessions/:id/purge</code></td></tr><tr><td>Agents</td><td><code>GET/POST /api/agents</code> · <code>GET/PUT/DELETE /api/agents/:id</code> · <code>POST /api/agents/:id/enabled</code> · <code>POST /api/agents/suggest-responsibility</code></td></tr><tr><td>Models, activity, usage</td><td><code>GET /api/models</code> · <code>POST /api/models/test</code> · <code>GET /api/activity</code> · <code>GET /api/usage</code></td></tr><tr><td>Providers</td><td><code>GET /api/providers</code> · <code>PUT/DELETE /api/providers/:id/key</code></td></tr><tr><td>Groups</td><td><code>POST /api/rooms</code> · <code>PUT /api/rooms/:id</code></td></tr><tr><td>Sockets</td><td><code>GET /api/ws?conversation=&lt;id&gt;</code> · <code>GET /api/ws/presence</code></td></tr><tr><td>E2E only</td><td><code>GET/POST /api/e2e/{state,script}</code> when <code>PI_E2E=1</code> and the token is right</td></tr></tbody>
-</table></div>
           </article>
         </div>
       </section>
-      <section class="art-block" id="architecture-decisions-worth-defending">
+      <section class="art-block" id="key-choices">
         <div class="container">
           <article class="art-content">
-<h2 id="architecture-decisions-worth-defending">Architecture decisions worth defending</h2>
+<h2 id="key-choices">Key choices</h2>
 
-<p><strong>Durability belongs to the harness, not the UI.</strong> <em>Decision:</em> progress lives in durable tasks in SQLite; the browser renders what the log says. <em>Cost:</em> the UI has to handle snapshots, re-attachment and out-of-order resumption rather than just appending to an array. <em>Benefit:</em> <code>resume()</code> replays interrupted work, so "reload during a long generation" is a supported path instead of a data-loss path.</p>
-
-<p><strong>Streaming reads the live document, because the provider does not emit updates.</strong> The repo states the reason without dressing it up: <code>message_update</code> is never emitted by <code>watchEvents</code> for its default provider, so translated view changes never arrive as partials. The server therefore reads the assistant message in flight directly out of the <code>pi.live</code> document and emits the <em>difference</em>:</p>
-
-<pre class="code-block" data-lang="text"><code>snapshot  { entries: [...] }      # durable transcript so far
-entry     { role: &quot;user&quot; }        # the message you just sent
-message-start                     # a bubble opens
-delta     { text: &quot;Ahoy, &quot; }
-delta     { text: &quot;I am the &quot; }
-entry     { role: &quot;assistant&quot; }   # the committed entry
-message-end</code></pre>
-
-<p><em>Cost:</em> an undocumented internal shape is now load-bearing, which is a real coupling to pay down. <em>Benefit:</em> live streaming works today, and the fallback degrades safely — only <code>pi.assistant</code> entries may close a bubble, so the start/end events that <em>do</em> fire for user entries cannot truncate an answer.</p>
-
-<p><strong>Presence and activity are pushed, never polled.</strong> The server tracks generating sessions in memory and pushes changes, using the harness's own <code>waitForIdle()</code> rather than polling or scanning transcripts. The thread's phase, the calls of the round and the elapsed time ride in the same snapshot, derived from <code>pi.live</code> and the run task; there is deliberately no per-call timer, because a call is already running on the first publish that mentions it. The clear is epoch-guarded so a waiter that resolves late cannot wipe the mark of a generation that started in between, and a 10-minute watchdog stops a hung provider from pinning a spinner forever. <em>Cost:</em> a second socket and a little server state. <em>Benefit:</em> "who is replying" is correct across tabs, the indicator cannot narrate a stage that did not happen, and a stuck provider becomes an idle thread instead of a permanent lie.</p>
-
-<p><strong>Group routing is a pure function; claiming is a separate, cheaper call.</strong> <code>planTargets()</code> decides <code>@mention</code> precedence and mode behaviour with no I/O, and <code>Nyahut</code> mode runs <em>claim</em> as a short stateless call per member before anyone answers. A user message therefore costs roughly <code>2N − R</code> short calls plus <code>R</code> full ones (<code>N</code> members, <code>R</code> responders) — an explicit cost model rather than an emergent one. <em>Cost:</em> the claim round adds latency to a group message. <em>Benefit:</em> the wrong agent does not spend a full generation on a message it has no business answering, and <code>one agent answers once per user message</code> is a rule, not a hope.</p>
-
-<p><strong>Identity has exactly one normaliser.</strong> Colour and emoji are resolved in <code>lib/identity.ts</code> for agents, groups and members. <em>Cost:</em> one more indirection when adding an identity field. <em>Benefit:</em> the same agent cannot show one colour in the sidebar and another in the bubble — and the E2E suite tests precisely that: a patch touching an unrelated field must not disturb identity, across a restart.</p>
-
-<p><strong>The app that runs <code>bash</code> gets a real security boundary, and a visible policy in front of it.</strong> The server binds <code>127.0.0.1</code>, rejects any request without <code>X-PI-Token</code>, allowlists <code>Host</code>, ships no permissive CORS, and stores its 32-byte token with mode <code>600</code>. On top of that, an agent's Standard / Custom / Full Access tier decides which tools exist: Standard refuses <code>bash</code> and <code>codemode</code>, and a scoped agent's <code>read</code>, <code>write</code> and <code>edit</code> stay inside its roots. Full Access can be granted to one thread, and only that thread — the grant lives on the session record, not on the agent, so the next thread starts back at the agent's tier. The tier is a policy and the UI labels it as one; <code>deploy/dura-agents.service</code> is what actually contains an allowed tool. <em>Cost:</em> you must inject the token into the page (the dev script does it for you), and a per-thread grant is a deliberate click on each thread that needs it. <em>Benefit:</em> a foreign web page can neither read the app nor reach an API that runs commands — which matters a great deal for a tool whose <code>bash</code> tool is genuine code execution, and which the editor warns about — and a permission decision cannot quietly outlive the thread that needed it.</p>
-
-<p><strong>E2E instead of unit tests, deliberately.</strong> <em>Decision:</em> no unit tests; thirteen E2E scenarios each boot a throwaway server with its own port, data directory and token, against the faux provider. <em>Cost:</em> coarser failure localisation and slower feedback than a unit suite. <em>Benefit:</em> the thing under test is the real assembly — real sockets, real SQLite, real streaming — and it is deterministic. It has already earned its keep: the suite caught that an instant answer never streamed (the faux provider now streams at 12 tokens/second) and that announcing <code>content-type: application/json</code> on an empty body makes Fastify answer 400 — which made <code>DELETE</code> look broken.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Choice</th><th>Why</th><th>Cost</th></tr></thead>
+<tbody><tr><td><strong>Durability belongs to the harness</strong></td><td><code>resume()</code> replays interrupted work, so "reload during a long generation" is a supported path, not data loss.</td><td>The UI must handle snapshots, re-attachment and out-of-order resumption.</td></tr><tr><td><strong>Streaming reads <code>pi.live</code></strong></td><td>The provider never emits <code>message_update</code>, so the server reads the message in flight and emits the difference.</td><td>An internal shape is load-bearing; the clean fix belongs upstream.</td></tr><tr><td><strong>Pure group routing + idempotent mesh calls</strong></td><td><code>planTargets()</code> is testable without I/O, and every mesh call reuses its request id, so a replay after a crash does not duplicate a thread.</td><td>The claim round adds latency, and fan-out is capped by hops and targets.</td></tr><tr><td><strong>Schedules are restart-safe</strong></td><td>A schedule owns one thread, a due minute gets one request id, and a busy thread is skipped.</td><td>Cron uses the server's local time and has no backfill.</td></tr><tr><td><strong>A real local security boundary</strong></td><td>Loopback bind, <code>X-PI-Token</code>, Host allowlist, no permissive CORS, and a Standard / Custom / Full Access tier enforced at tool-call time.</td><td>You must inject the token, and Full Access is a deliberate per-thread grant.</td></tr></tbody>
+</table></div>
           </article>
         </div>
       </section>
@@ -283,29 +231,27 @@ message-end</code></pre>
 <pre class="code-block" data-lang="bash"><code>git clone https://github.com/mariobgsp/durable-agents &amp;&amp; cd durable-agents
 npm install
 npm run dev            # creates data/token (600), Fastify on 8787, Vite on 5173
-# → http://localhost:5173
+# open http://localhost:5173
 
 npm run build &amp;&amp; npm start   # one process serving UI + API + WS on 8787
 
-# checks
 npm run check          # tsc + svelte-check + the language lint
-npm run e2e            # 13 deterministic scenarios, faux provider
-npm run shots          # 8 routes × 5 viewports → docs/ui-review/&lt;date&gt;/
-npm run shots:replying # the activity states, attachment cards and the Full Access chip
+npm run e2e            # 21 deterministic scenarios, faux provider
+npm run shots          # routes x 5 viewports -&gt; docs/ui-review/&lt;date&gt;/
 npm run seed           # demo threads, no model calls</code></pre>
 
 <p>Credentials resolve in this order: <code>~/.pi/agent/auth.json</code> → <code>OPENCODE_API_KEY</code> → <code>data/credentials.json</code> (written by the <code>#/providers</code> screen).</p>
 
 <h3 id="what-i-observed">What I observed</h3>
 
-<p class="pull-quote">I ran the project's own gates rather than trusting the status table:</p>
+<p class="pull-quote">These are the repository's latest verified numbers, not a fresh run:</p>
 
 <div class="table-wrap"><table>
-<thead><tr><th>Check</th><th>My result</th></tr></thead>
-<tbody><tr><td><code>npm run check</code></td><td><code>svelte-check</code> <strong>0 errors</strong>, 2 warnings in 1 file; <code>tsc</code> clean; <code>check-language: clean</code></td></tr><tr><td><code>npm run e2e</code></td><td><strong>13 passed, 0 failed</strong> (<code>activity</code>, <code>attachments</code>, <code>identity</code>, <code>live-activity</code>, <code>memory</code>, <code>models</code>, <code>permissions</code>, <code>questions</code>, <code>search</code>, <code>sessions</code>, <code>steering</code>, <code>storage</code>, <code>tools</code>)</td></tr><tr><td><code>npm run build</code></td><td><code>index.js</code> <strong>71.86 kB gzip</strong>, <code>index.css</code> <strong>7.70 kB gzip</strong> — inside the 100 kB budget; mermaid and <code>elk</code> (455.84 kB gzip) stay in their own chunks</td></tr></tbody>
+<thead><tr><th>Check</th><th>Result</th></tr></thead>
+<tbody><tr><td><code>npm run check</code></td><td><code>tsc</code> clean; <code>svelte-check</code> 0 errors, 2 warnings in <code>Dialog.svelte</code>; <code>lint:lang</code> clean</td></tr><tr><td><code>npm run e2e</code></td><td>21 passed, 0 failed — including <code>mesh</code>, <code>fleet</code>, <code>schedules</code>, <code>files</code>, <code>system</code>, <code>display</code> and <code>usage</code></td></tr><tr><td><code>npm run build</code></td><td>entry 89.1 kB JS + 10.9 kB CSS gzip; mermaid and <code>elk</code> stay in their own lazy chunks</td></tr></tbody>
 </table></div>
 
-<p>The E2E suite is the part worth dwelling on, because it asserts the design rather than the implementation. <code>identity</code> checks that an agent's colour and emoji survive a later patch that touches an unrelated field — the exact bug class the single normaliser exists to prevent. <code>activity</code> checks that an idle thread is <em>still</em> not active <strong>after a restart</strong>, which is what makes the presence registry trustworthy rather than merely optimistic. <code>storage</code> asserts the purge removed rows from the <code>entries</code> table, not just the session list; <code>permissions</code> asserts a grant is enforced at submit time and is not sticky on the agent; <code>questions</code> asserts the durable <code>chat.question</code> and the answer arriving as the next user message.</p>
+<p>The E2E suite asserts the design, not the implementation: an idle thread stays idle <strong>after a restart</strong>, a grant is enforced at submit time and not sticky on the agent, a purge removes rows from <code>entries</code>, and a schedule skips a busy thread.</p>
           </article>
         </div>
       </section>
@@ -316,15 +262,15 @@ npm run seed           # demo threads, no model calls</code></pre>
 
 <img src="/assets/articles/durable-agents-agent-list.png" alt="Agent list with identity" loading="lazy" decoding="async" />
 
-<p class="fig-caption">The agent list. Each card carries its identity (avatar, colour, <code>@handle</code>), its one-line <code>responsibility</code>, and its model. Note <code>Pirate</code>: "No responsibility yet — fill it in so Nyahut mode can judge." That single field is what the group claim pass reads, and the UI says so instead of letting an unprotected group fail silently.</p>
+<p class="fig-caption">The agent list. Each card carries its identity, its one-line responsibility, and its model.</p>
 
 <img src="/assets/articles/durable-agents-agent-editor.png" alt="Agent editor" loading="lazy" decoding="async" />
 
-<p class="fig-caption">Editing an agent is editing two markdown files: <code>SOUL.md</code> ("who it is, its temperament, what it owns") and <code>AGENT.md</code> ("working rules"). The right column is the identity and model panel — the palette and emoji grid that feed the single normaliser, and a model picker that reports the selected model's real capabilities (image input, a 1,000k context window, cost per Mtok, reasoning).</p>
+<p class="fig-caption">Editing an agent means editing two markdown files, plus its identity and model.</p>
 
 <img src="/assets/articles/durable-agents-group-thread.png" alt="Group thread — Nyahut orchestration" loading="lazy" decoding="async" />
 
-<p class="fig-caption">A group thread in <code>Nyahut</code> mode. The system notes are the visible part of the protocol: <code>Klaim: @robot (…)</code> shows the claim pass resolving a question to the agent whose stated responsibility covers it, and <code>No claim; @pirate answers (highest confidence)</code> shows the fallback when nobody claims. The mode switch (<code>Nyahut</code> / <code>Moderator</code> / <code>Silent</code>) is per-group, the sidebar shows member avatars and which threads are active, and the presence socket reports <code>connected</code>.</p>
+<p class="fig-caption">A group thread in <code>Nyahut</code> mode. The system notes show the claim pass resolving a question to the agent whose responsibility covers it.</p>
           </article>
         </div>
       </section>
@@ -333,18 +279,11 @@ npm run seed           # demo threads, no model calls</code></pre>
           <article class="art-content">
 <h2 id="what-id-fix-next">What I'd fix next</h2>
 
-<p>The repository's own gap list is unusually specific, and it is accurate — worth repeating rather than rediscovering, in the order I would take them:</p>
-
 <ul>
   <li><strong>A purge has no UI.</strong> <code>POST /api/sessions/:id/purge</code> exports the transcript and deletes the rows, but the Storage panel only states what it would do; the thread menu's delete stays a soft delete.</li>
-  <li><strong>The diagram is a large lazy download.</strong> Mermaid and its layout engines are their own chunks (<code>elk</code> alone is 455.84 kB gzip), fetched on the first diagram a thread renders — the entry bundle is untouched, but the first diagram is not cheap.</li>
-  <li><strong>Web search follows DuckDuckGo's HTML.</strong> Keyless and dependency-free, but a shape dependency: a changed page is reported as a failure rather than "no results", and the <code>search</code> E2E asserts against a stubbed page.</li>
-  <li><strong>Groups refuse attachments.</strong> Each member conversation is its own model-visible entry, so supporting it would keep one copy of every byte per member.</li>
-  <li><strong>There is no per-call elapsed time.</strong> With parallel tool execution a call is already running on its first publish, so its start is not observable; the round's own elapsed time is real and is shown instead.</li>
-  <li><strong>The streaming workaround is a coupling to pay down.</strong> Reading partials from the <code>pi.live</code> document works, but it depends on an internal shape; the clean fix is on the provider/harness side, where <code>message_update</code> should be emitted.</li>
-  <li><strong>The Tauri desktop shell has never been compiled</strong> (<code>tauri-plugin-single-instance</code> is not installed), so running the desktop app twice would point two servers at one <code>app.sqlite</code>.</li>
-  <li><strong>No system notifications</strong> on turn completion, and no real cost counter — the group cost model is an estimate shown in a tooltip.</li>
-  <li><strong>Single-user by design.</strong> No remote deploy, no billing, no multi-user.</li>
+  <li><strong>Notifications need the tab open.</strong> The page can notify while hidden or on another thread; a browser fully closed needs push infrastructure that is not implemented.</li>
+  <li><strong>Generated files are download-only.</strong> There is no inline PDF preview and no zip-all. The built-in PDF writer uses base fonts, so non-Latin glyphs become "?".</li>
+  <li><strong>Cron has no backfill and schedules are owner-managed.</strong> A window missed while the server was off is counted as missed, not replayed, and no agent-facing tool can create or cancel a schedule yet.</li>
 </ul>
           </article>
         </div>
@@ -358,14 +297,14 @@ npm run seed           # demo threads, no model calls</code></pre>
   <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/durable-agents">github.com/mariobgsp/durable-agents</a></li>
   <li><strong>Harness:</strong> <a href="https://www.npmjs.com/package/@earendil-works/pi-durable"><code>@earendil-works/pi-durable</code></a> (pinned 1.3.0)</li>
   <li><strong>Plan of record:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/roadmap.md"><code>docs/roadmap.md</code></a></li>
-  <li><strong>Phone-access runbook:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/tailscale.md"><code>docs/tailscale.md</code></a></li>
+  <li><strong>Agent network design:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/agent-mesh.md"><code>docs/design/agent-mesh.md</code></a></li>
+  <li><strong>System and display:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/system-and-display.md"><code>docs/design/system-and-display.md</code></a></li>
   <li><strong>The boundary:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/deploy/dura-agents.service"><code>deploy/dura-agents.service</code></a></li>
-  <li><strong>UI review gallery:</strong> <a href="https://github.com/mariobgsp/durable-agents/tree/main/docs/ui-review"><code>docs/ui-review/</code></a></li>
 </ul>
 
 <hr />
 
-<p class="fig-caption">Verified against commit <code>ba185dd</code> (README uses an English example transcript). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/durable-agents.mmd"><code>diagrams/durable-agents.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/durable-agents.mjs"><code>tools/capture/durable-agents.mjs</code></a>.</p>
+<p class="fig-caption">Verified against commit <code>06f5bad</code> (2026-10-25). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/durable-agents.mmd"><code>diagrams/durable-agents.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/durable-agents.mjs"><code>tools/capture/durable-agents.mjs</code></a>.</p>
           </article>
         </div>
       </section>
@@ -376,7 +315,7 @@ npm run seed           # demo threads, no model calls</code></pre>
 <a class="art-next-link art-next-link--right" href="/articles/trading-suite/"><span>Next</span><b>trading-suite</b></a>
       </nav>
 
-      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.","url":"https://mariobgsp.github.io/articles/durable-agents/","mainEntityOfPage":"https://mariobgsp.github.io/articles/durable-agents/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via @earendil-works/pi-durable 1.3.0","image":"https://mariobgsp.github.io/assets/articles/durable-agents-architecture-dark.png"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Agent Chats That Survive a Crash","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download.","url":"https://mariobgsp.github.io/articles/durable-agents/","mainEntityOfPage":"https://mariobgsp.github.io/articles/durable-agents/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via @earendil-works/pi-durable 1.3.0","image":"https://mariobgsp.github.io/assets/articles/durable-agents-architecture-dark.png"}</script>
     </main>
 
     <footer class="footer" id="contact">

@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk</title>
-    <meta name="description" content="Most screeners answer &quot;here is a list&quot;. This one answers &quot;here is the list, the measured evidence behind it, and — often — no&quot;. Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound." />
+    <title>A Stock Screener That Refuses to Buy</title>
+    <meta name="description" content="Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal." />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#faf9f6" />
@@ -14,16 +14,16 @@
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://mariobgsp.github.io/articles/trading-suite/" />
-    <meta property="og:title" content="The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk" />
-    <meta property="og:description" content="Most screeners answer &quot;here is a list&quot;. This one answers &quot;here is the list, the measured evidence behind it, and — often — no&quot;. Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound." />
+    <meta property="og:title" content="A Stock Screener That Refuses to Buy" />
+    <meta property="og:description" content="Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal." />
     <meta property="og:image" content="https://mariobgsp.github.io/assets/articles/og-trading-suite.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk" />
+    <meta property="og:image:alt" content="A Stock Screener That Refuses to Buy" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk" />
-    <meta name="twitter:description" content="Most screeners answer &quot;here is a list&quot;. This one answers &quot;here is the list, the measured evidence behind it, and — often — no&quot;. Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound." />
+    <meta name="twitter:title" content="A Stock Screener That Refuses to Buy" />
+    <meta name="twitter:description" content="Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal." />
     <meta name="twitter:image" content="https://mariobgsp.github.io/assets/articles/og-trading-suite.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,12 +58,12 @@
         <div class="container">
           <a class="crumb reveal" href="/articles/">&larr; All articles</a>
           <p class="kicker reveal"><b>[ 03 / 05 ]</b> trading-suite</p>
-          <h1 class="art-title reveal">The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk</h1>
-          <p class="art-standfirst reveal">Most screeners answer "here is a list". This one answers "here is the list, the measured evidence behind it, and — often — no". Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound.</p>
+          <h1 class="art-title reveal">A Stock Screener That Refuses to Buy</h1>
+          <p class="art-standfirst reveal">Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal.</p>
           <p class="art-byline reveal">
             <span>Muhammad Ario Bagus Prakusa</span>
-            <span>17 October 2026</span>
-            <span>~10 min read</span>
+            <span>25 October 2026</span>
+            <span>~5 min read</span>
           </p>
           <dl class="art-facts reveal">
             <div class="art-fact">
@@ -76,11 +76,11 @@
             </div>
             <div class="art-fact">
               <dt>Stack</dt>
-              <dd>Python 3 + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX</dd>
+              <dd>Python 3.11+ + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX</dd>
             </div>
             <div class="art-fact">
               <dt>Verified</dt>
-              <dd>Built and run locally (2026-10-17). The verdict quoted below is the app's own output on my run.</dd>
+              <dd>Re-read against commit <code>e1a314a</code> (2026-10-25). The <code>DATA_UNSAFE</code> output below is from the 2026-10-17 run.</dd>
             </div>
           </dl>
         </div>
@@ -91,38 +91,37 @@
           <article class="art-content">
             <h2>At a glance</h2>
 <ul>
-  <li><strong>What it is</strong> — a self-hosted desk for the Indonesian market (IDX). It reads a walk-forward study's own artifacts, applies that study's rule chain to live bars, and answers one question per session: <em>which Indonesian stocks should be bought at the next open, and why</em> — or why not.</li>
-  <li><strong>Who it's for</strong> — one person or a small team who wants their own copy of the analysis instead of a subscription, and who would rather see an honest "no" than a fabricated "yes".</li>
-  <li><strong>The interesting part</strong> — the product is the <strong>refusal</strong>. Ticket-withheld states (<code>NO_TRADE</code>, <code>DATA_UNSAFE</code>) are first-class outcomes with more engineering behind them than the <code>ENTER</code> path, and the evidence is traceable line-by-line back to the study that produced it.</li>
+  <li><strong>What it is</strong> — a self-hosted desk for the Indonesian market (IDX). Six screens and a CLI read a walk-forward study's artifacts, apply its rule chain to live bars, and answer one question per session: <em>what should I buy at the next open, and why</em> — or why not.</li>
+  <li><strong>Who it's for</strong> — one person or a small team who wants their own copy of the analysis, and would rather see an honest "no" than a fabricated "yes".</li>
+  <li><strong>The interesting part</strong> — the product is the <strong>refusal</strong>. <code>NO_TRADE</code> and <code>DATA_UNSAFE</code> are first-class outcomes with more engineering behind them than the <code>ENTER</code> path, and every quoted number is traceable to the study that produced it.</li>
 </ul>
             <nav class="art-jump" aria-label="Article sections">
-<a href="#the-problem-a-screener-that-always-finds-something"><span>02</span>The problem: a screener that always finds something</a>
+<a href="#the-problem"><span>02</span>The problem</a>
 <a href="#what-it-does"><span>03</span>What it does</a>
-<a href="#why-this-stack"><span>04</span>Why this stack</a>
-<a href="#architecture"><span>05</span>Architecture</a>
-<a href="#architecture-decisions-worth-defending"><span>06</span>Architecture decisions worth defending</a>
-<a href="#running-it"><span>07</span>Running it</a>
-<a href="#screenshots"><span>08</span>Screenshots</a>
-<a href="#what-id-fix-next"><span>09</span>What I&#x27;d fix next</a>
-<a href="#links"><span>10</span>Links</a>
+<a href="#how-it-works"><span>04</span>How it works</a>
+<a href="#key-choices"><span>05</span>Key choices</a>
+<a href="#running-it"><span>06</span>Running it</a>
+<a href="#screenshots"><span>07</span>Screenshots</a>
+<a href="#what-id-fix-next"><span>08</span>What I&#x27;d fix next</a>
+<a href="#links"><span>09</span>Links</a>
             </nav>
           </article>
         </div>
       </section>
-      <section class="art-block" id="the-problem-a-screener-that-always-finds-something">
+      <section class="art-block" id="the-problem">
         <div class="container">
           <article class="art-content">
-<h2 id="the-problem-a-screener-that-always-finds-something">The problem: a screener that always finds something</h2>
+<h2 id="the-problem">The problem</h2>
 
-<p class="pull-quote">Three failure modes make most retail screeners worse than useless:</p>
+<p class="pull-quote">Three failure modes make most screeners worse than useless.</p>
 
 <ol>
   <li><strong>A list is not a decision.</strong> Ranked tickers with no entry, stop, size or horizon leave the reader to invent the part that determines the outcome.</li>
-  <li><strong>Backtested numbers are quoted as maxima.</strong> "78% win rate" usually means "the best cell we found in a search of thousands" — not what the next trade should be expected to do.</li>
+  <li><strong>Backtested numbers are quoted as maxima.</strong> "78% win rate" usually means the best cell found in a search of thousands, not what the next trade should be expected to do.</li>
   <li><strong>Broken data still produces a signal.</strong> A stale bar, a phantom session or a half-finished candle silently becomes a buy recommendation.</li>
 </ol>
 
-<p>This suite is built around the opposite defaults: a verdict instead of a list, the <em>corrected</em> result next to the searched maximum, and a data-integrity gate that outranks every signal.</p>
+<p>This suite uses the opposite defaults: a verdict instead of a list, the corrected result next to the searched maximum, and an integrity gate that fails closed.</p>
           </article>
         </div>
       </section>
@@ -132,33 +131,18 @@
 <h2 id="what-it-does">What it does</h2>
 
 <div class="table-wrap"><table>
-<thead><tr><th>Screen</th><th>The question it answers</th></tr></thead>
-<tbody><tr><td><strong>Tonight</strong> (<code>/</code>)</td><td>Should I buy anything, and if so what exactly? The verdict, the ticket for each name, the watchlist, and the measured case for standing down.</td></tr><tr><td><strong>Screener</strong> (<code>/screener</code>)</td><td>Every name, ranked by how near it is to being buyable — with no buy signals, on purpose.</td></tr><tr><td><strong>Method</strong> (<code>/method</code>)</td><td>The rule chain, the result, the horizons that were measured and refused, the costs, and every citation.</td></tr><tr><td><strong>Name</strong> (<code>/name/$ticker</code>)</td><td>One name: each condition with its value and how long it has held, the run-up to the signal, the levels, the ticket, the chart.</td></tr></tbody>
+<thead><tr><th>Screen or command</th><th>The question it answers</th></tr></thead>
+<tbody><tr><td><strong>Tonight</strong> (<code>/</code>)</td><td>Should I buy anything, and what exactly? The verdict, each ticket, the watchlist, and the case for standing down.</td></tr><tr><td><strong>Screener</strong> (<code>/screener</code>)</td><td>Every name, ranked by how near it is to being buyable — with no buy signals, on purpose.</td></tr><tr><td><strong>Market</strong> (<code>/market</code>)</td><td>The daily dashboard: breadth, the stress gauge, and weekly sector, conglomerate and industry rotation.</td></tr><tr><td><strong>Flow</strong> (<code>/flow</code>)</td><td>Technical cards and a transparent flow-pressure proxy. A research panel, not a plan input.</td></tr><tr><td><strong>Method</strong> (<code>/method</code>)</td><td>The rule chain, the corrected result, the horizons that were measured and refused, the costs, and every citation.</td></tr><tr><td><strong>Name</strong> (<code>/name/$ticker</code>)</td><td>One name: each condition and how long it has held, the run-up, levels, ticket and chart.</td></tr><tr><td><strong>CLI</strong></td><td><code>./trading-suite plan</code>, <code>plan momentum</code>, <code>plan name TICKER</code>, <code>plan method</code>, <code>plan size</code> — the same engine without a browser.</td></tr></tbody>
 </table></div>
 
-<div class="table-wrap"><table>
-<thead><tr><th>Design property</th><th>How it is enforced in code</th></tr></thead>
-<tbody><tr><td><strong>One verdict per session</strong></td><td>A verdict machine with strict precedence: <code>ENTER</code> → <code>WAIT</code> → <code>NO_TRADE</code> → <code>DATA_UNSAFE</code>.</td></tr><tr><td><strong><code>DATA_UNSAFE</code> beats every signal</strong></td><td>Six integrity checks (exchange calendar, bars current, universe size, coverage, phantom bars, evidence readable) fail closed rather than appearing as a warning beside a ticket.</td></tr><tr><td><strong>Three evidence tiers, never blended</strong></td><td><code>searched_census</code> (a maximum over a search), <code>walk_forward_corrected</code> (the headline), <code>replay</code> (a one-window projection). The UI always says which it is quoting.</td></tr><tr><td><strong>Citations are executable</strong></td><td><code>app/plan/citations.py</code> records file, line, sentence and the regeneration command; a test fails the build when a cited line drifts.</td></tr><tr><td><strong>Rule chain conformance</strong></td><td>The app's rule chain is diffed against the study's own <code>strategies.signals()</code> by <code>tests/test_plan_conformance.py</code>.</td></tr><tr><td><strong>Refusals carry arithmetic</strong></td><td>Day trading was designed, run over 30 configurations and declined in writing: ~0.36% capturable against a 0.40–0.90% round trip.</td></tr></tbody>
-</table></div>
+<p>One verdict is produced per session, in strict precedence: <code>ENTER</code> → <code>WAIT</code> → <code>NO_TRADE</code> → <code>DATA_UNSAFE</code>. Six integrity checks — exchange calendar, bars current, universe size, coverage, phantom bars, evidence readable — must all pass before a ticket appears.</p>
           </article>
         </div>
       </section>
-      <section class="art-block" id="why-this-stack">
+      <section class="art-block" id="how-it-works">
         <div class="container">
           <article class="art-content">
-<h2 id="why-this-stack">Why this stack</h2>
-
-<div class="table-wrap"><table>
-<thead><tr><th>Layer</th><th>Choice</th><th>Why this — and not the obvious alternative</th></tr></thead>
-<tbody><tr><td>Backend</td><td><strong>Python + FastAPI</strong></td><td>The work is numerical: pandas over daily bars, a rule chain, a regime model. Rewriting it in a compiled language would cost the ability to share the study's own code and types.</td></tr><tr><td>Storage</td><td><strong>SQLite in WAL mode</strong></td><td>The cache is one writer behind one process. A Postgres instance for a single-user desk is operational weight with no payoff; WAL gives concurrent reads during a refresh.</td></tr><tr><td>Caching</td><td><strong>Per-feed TTL + stale-while-revalidate</strong></td><td>A screen refresh must not hammer public feeds. Serving stale data immediately and refreshing in the background is the only policy that keeps the UI responsive without lying about freshness.</td></tr><tr><td>Freshness guard</td><td><strong>A bar dated today is refused until 16:02 WIB</strong></td><td>An unfinished candle is a partial price, and a partial price silently becomes a signal. The cost is a few minutes of latency; the alternative is a wrong reading.</td></tr><tr><td>Frontend</td><td><strong>Vite + React 19 + TanStack Router</strong></td><td>A client-side SPA over a JSON API, with one route per question. The repo also keeps a documented U-turn: <code>docs/architecture/*.puml</code> still describes an earlier Next.js desk and the README says so rather than pretending otherwise.</td></tr><tr><td>Charts</td><td><strong>lightweight-charts</strong></td><td>Charts are a rendering concern, not a reason to ship a charting framework.</td></tr><tr><td>Study</td><td><strong>An external, hard dependency</strong></td><td>The measured evidence must live where the research lives. The app refuses to answer without it instead of shipping a copy that can silently drift from the study.</td></tr></tbody>
-</table></div>
-          </article>
-        </div>
-      </section>
-      <section class="art-block" id="architecture">
-        <div class="container">
-          <article class="art-content">
-<h2 id="architecture">Architecture</h2>
+<h2 id="how-it-works">How it works</h2>
 
 <img src="/assets/articles/trading-suite-architecture-dark.png" alt="trading-suite architecture" loading="lazy" decoding="async" />
 
@@ -167,25 +151,35 @@
 <summary>Mermaid source (<code>diagrams/trading-suite.mmd</code>)</summary>
 
 <pre class="code-block" data-lang="mermaid"><code>flowchart TD
-  FE[&quot;Vite + React 19 SPA :5173 — four screens&lt;br/&gt;Tonight · Screener · Method · Name&lt;br/&gt;SWR cache: memory + sessionStorage&quot;]
+  FE[&quot;Vite + React 19 SPA :5173&lt;br/&gt;Tonight · Screener · Market · Flow · Method · Name&lt;br/&gt;SWR cache: memory + sessionStorage&quot;]
 
-  PLAN[&quot;FastAPI :8000 — app/plan/ module&lt;br/&gt;screen · method · model · verdict · refresh&quot;]
+  API[&quot;FastAPI :8000&quot;]
+
+  PLAN[&quot;app/plan&lt;br/&gt;screen · method · model · verdict&lt;br/&gt;refresh · regimes · citations · CLI · momentum&quot;]
+  FLOW[&quot;app/flow&lt;br/&gt;technicals · flow proxy · validation&lt;br/&gt;research only — never a plan input&quot;]
+  OVER[&quot;app/overview&lt;br/&gt;snapshot · summary · stress gauge · rotation&lt;br/&gt;cache-first dashboard&quot;]
 
   VERD{&quot;Verdict machine&lt;br/&gt;strict precedence&quot;}
-  DB[(&quot;SQLite WAL — cache.db&lt;br/&gt;TTL policy + stale-while-revalidate&lt;br/&gt;live tail merged in memory only&quot;)]
+  DB[(&quot;SQLite WAL — cache.db&lt;br/&gt;market cache · flow:v2 · overview:v1&quot;)]
   STUDY[(&quot;Study artifacts — hard dependency&lt;br/&gt;results/*.csv · bars/*.csv&lt;br/&gt;+ sha256 manifest&quot;)]
-  CIT[&quot;citations.py — file · line · sentence&lt;br/&gt;conformance tests fail on drift&quot;]
+  CIT[&quot;citations.py + conformance tests&lt;br/&gt;fail on drift&quot;]
 
   OUT[&quot;ENTER&quot;]
   W[&quot;WAIT&quot;]
   N[&quot;NO_TRADE&quot;]
   U[&quot;DATA_UNSAFE&quot;]
 
-  FE --&gt; PLAN
+  FE --&gt; API
+  API --&gt; PLAN
+  API --&gt; FLOW
+  API --&gt; OVER
   PLAN --&gt; VERD
   PLAN --&gt; DB
   PLAN --&gt; STUDY
   PLAN --&gt; CIT
+  FLOW --&gt; DB
+  OVER --&gt; DB
+  OVER --&gt; STUDY
   VERD --&gt; OUT
   VERD --&gt; W
   VERD --&gt; N
@@ -193,44 +187,38 @@
 
 </details>
 
-<h3 id="component-walkthrough">Component walkthrough</h3>
+<h3 id="components">Components</h3>
 
 <ul>
-  <li><strong><code>backend/app/plan/</code></strong> — the module that matters: <code>screen</code>, <code>method</code>, <code>model</code>, <code>verdict</code>, <code>refresh</code>, <code>idx</code>, <code>citations</code>, <code>bars</code>, <code>regimes</code>. The analysis lives here, one level above the routers.</li>
-  <li><strong><code>backend/app/routers/plan.py</code></strong> — the HTTP seam. Routers stay thin so that the Tonight screen, the Method screen and the Name screen all read the same engine rather than three drifting copies of it.</li>
-  <li><strong><code>backend/app/plan/bars.py</code></strong> — the bar source is a seam: <code>StudyBars</code> reads the study's CSVs through its manifest, <code>LiveBars</code> reads yfinance through the app's cached <code>fetch_history</code>. Tests swap the adapter with <code>set_source()</code>.</li>
-  <li><strong><code>backend/app/plan/verdict.py</code></strong> — the verdict machine and the integrity checks.</li>
-  <li><strong><code>frontend-web/src/routes/{Tonight,Screener,Method,Name}.tsx</code></strong> — the four screens; <code>src/lib/cache.ts</code> mirrors the backend's TTL policy in the browser so a refresh is cheap at both ends.</li>
+  <li><strong><code>backend/app/plan/</code></strong> — the nightly method: <code>screen</code>, <code>method</code>, <code>model</code>, <code>verdict</code>, <code>refresh</code>, <code>regimes</code>, <code>citations</code>, <code>bars</code>, plus the new <code>cli</code> and <code>momentum</code> modules.</li>
+  <li><strong><code>backend/app/flow/</code></strong> — technical cards and a causal flow-pressure proxy, deliberately outside the plan: the verdict cannot depend on it.</li>
+  <li><strong><code>backend/app/overview/</code></strong> — the Market dashboard. A background job builds one snapshot, and <code>GET /api/overview</code> only reads it; a warm request is a SQLite read, not a universe scan.</li>
+  <li><strong><code>backend/app/computed_cache.py</code></strong> — the shared versioned SQLite cache for computed payloads (<code>flow:v2:*</code>, <code>computed:overview:v1:*</code>).</li>
+  <li><strong><code>backend/app/routers/</code></strong> and <strong><code>frontend-web/src/routes/</code></strong> — thin HTTP and UI seams. All plan screens read the same engine.</li>
 </ul>
 
 <h3 id="one-session-end-to-end">One session, end to end</h3>
 
 <ol>
-  <li><strong>Load bars</strong> — resolve the source (study CSVs, else live), then read the benchmark first, because the index <em>is</em> the exchange calendar that the ticker files are validated against.</li>
-  <li><strong>Drop phantom bars</strong> — bars on sessions the exchange never held are removed and counted, not silently accepted.</li>
-  <li><strong>Apply the market gate</strong> — breadth, computed as the share of the universe above its own 200-session average, plus the index's own stage.</li>
-  <li><strong>Run the rule chain</strong> — a 40-session breakout, relative strength in the top 10%, and 20-session volatility in its own lowest 40%.</li>
-  <li><strong>Check integrity</strong> — six checks; any failure short-circuits to <code>DATA_UNSAFE</code> and withholds every ticket.</li>
-  <li><strong>Produce one verdict</strong> — in strict precedence, with the measured case for standing down attached to it.</li>
-  <li><strong>Attach evidence</strong> — the corrected headline, the searched maximum labelled as a maximum, the haircuts, and the citation for each quoted figure.</li>
+  <li><strong>Load bars.</strong> Resolve the source — study CSVs, else live — and read the benchmark first, because the index is the exchange calendar the ticker files are validated against.</li>
+  <li><strong>Drop phantom bars.</strong> Sessions the exchange never held are removed and counted, not silently accepted.</li>
+  <li><strong>Apply the market gate.</strong> Breadth is the share of the universe above its own 200-session average; the index's own stage comes next.</li>
+  <li><strong>Run the rule chain.</strong> A 40-session breakout, relative strength in the top 10%, and 20-session volatility in its own lowest 40%.</li>
+  <li><strong>Check integrity.</strong> Any failed check short-circuits to <code>DATA_UNSAFE</code> and withholds every ticket.</li>
+  <li><strong>Produce one verdict and attach the evidence.</strong> The corrected headline, the searched maximum labelled as a maximum, the haircuts, and the citation for each quoted figure.</li>
 </ol>
           </article>
         </div>
       </section>
-      <section class="art-block" id="architecture-decisions-worth-defending">
+      <section class="art-block" id="key-choices">
         <div class="container">
           <article class="art-content">
-<h2 id="architecture-decisions-worth-defending">Architecture decisions worth defending</h2>
+<h2 id="key-choices">Key choices</h2>
 
-<p><strong>"No trade" is a first-class product state, not an error.</strong> <em>Decision:</em> the verdict machine has <code>NO_TRADE</code> as a normal outcome, and the screener deliberately shows no buy signals at all — only how near each name is to becoming buyable. <em>Cost:</em> a user who wants a hot list per day gets an empty screen instead. <em>Benefit:</em> the app cannot manufacture a recommendation to look useful, and the flat band is documented as a <em>finding</em> (a measured ~zero drift over five sessions against a 0.50% round trip) rather than a gap.</p>
-
-<p><strong><code>DATA_UNSAFE</code> outranks every signal.</strong> <em>Decision:</em> integrity checks fail closed and suppress all output. <em>Cost:</em> one bad ticker file can blank the whole session. <em>Benefit:</em> a screen that says "buy" on a broken bar source is worse than one that says nothing — and there is no UI affordance that lets a warning sit next to a ticket where a reader could ignore it.</p>
-
-<p><strong>Evidence tiers are never blended.</strong> The UI shows the searched census row, the walk-forward corrected row and the one-window replay as three distinct things, and states which one it is quoting. <em>Cost:</em> the headline is less impressive than the maximum. <em>Benefit:</em> the number on screen is the number that survived the study's own correctness pass — and the haircuts travel with it (dropping the best fifth of tickers leaves +0.04%; unseen folds read +0.09%).</p>
-
-<p><strong>Citations are code, and drift fails the build.</strong> Every figure that exists only as prose in the study is recorded with its file, line, sentence and regeneration command, and <code>tests/test_plan_citations.py</code> fails when a cited line changes. <em>Cost:</em> prose changes in the study break the app's build, which is annoying exactly once per change. <em>Benefit:</em> a screenshot can never quote a sentence the study no longer contains.</p>
-
-<p><strong>Live data is merged, never written back.</strong> The refresh path pulls new daily bars and merges them <em>in memory</em>. <em>Cost:</em> the refresh is repeated on a cold start. <em>Benefit:</em> the study stays the immutable source of truth, so the app cannot quietly rewrite the evidence it is judged against.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Choice</th><th>Why</th><th>Cost</th></tr></thead>
+<tbody><tr><td><strong>Refusal is a product state</strong></td><td>The screener can show no buy signals, and the flat band is a documented finding. The app cannot manufacture a recommendation to look useful.</td><td>A user who wants a hot list daily gets an empty screen.</td></tr><tr><td><strong><code>DATA_UNSAFE</code> outranks every signal</strong></td><td>Integrity checks fail closed and suppress all output, with no warning that can sit beside a ticket.</td><td>One bad ticker file can blank the whole session.</td></tr><tr><td><strong>Evidence tiers are never blended</strong></td><td>The searched census, the walk-forward corrected row and the one-window replay are shown as three distinct things, each labelled.</td><td>The headline is less impressive than the maximum.</td></tr><tr><td><strong>The study stays the source of truth</strong></td><td>Live bars are merged in memory, never written back; Market caches a snapshot, but the study remains immutable.</td><td>A cold start repeats the merge, and the study checkout is a hard dependency.</td></tr></tbody>
+</table></div>
           </article>
         </div>
       </section>
@@ -247,44 +235,35 @@ cd backend &amp;&amp; python -m venv .venv &amp;&amp; .venv/bin/pip install -r r
 cd frontend-web &amp;&amp; npm install &amp;&amp; cd ..
 
 ./trading-suite run        # backend :8000 + frontend :5173
+./trading-suite plan       # tonight&#x27;s verdict in the terminal
+./trading-suite plan momentum
 ./trading-suite verify     # backend tests + frontend typecheck</code></pre>
 
-<p>The plan module needs the study checkout at <code>TRADING_DOCS_DIR</code> (default <code>~/Projects/trading-backtest-docs</code>). Without it, <code>default_source()</code> falls back to live bars.</p>
+<p>The plan and Market read the study at <code>TRADING_DOCS_DIR</code> (default <code>~/Projects/trading-backtest-docs</code>); Flow uses the app's own feeds.</p>
 
 <h3 id="what-i-observed">What I observed</h3>
 
-<p>The study checkout is private, so I supplied a stand-in built by <code>tools/capture/make-study-stub.py</code>: <strong>real daily bars</strong> for 22 names fetched through the app's own <code>fetch_history</code>, a real manifest, and <strong>no <code>results/*.csv</code> at all</strong>. I deliberately did not fabricate evidence files — the absence is the experiment. The app answered:</p>
+<p>The study checkout is private, so I supplied a stand-in built by <code>tools/capture/make-study-stub.py</code>: <strong>real daily bars</strong> for 22 names, a real manifest, and <strong>no <code>results/*.csv</code></strong>. The absence is the experiment. The app answered:</p>
 
 <pre class="code-block" data-lang="json"><code>{
   &quot;state&quot;: &quot;DATA_UNSAFE&quot;,
   &quot;action&quot;: &quot;Do not trade. Fix the data or the evidence first.&quot;,
-  &quot;headline&quot;: &quot;The data behind this screen is not sound&quot;,
-  &quot;detail&quot;: &quot;A verdict is only worth the bars under it. This session fails 2 of 6
-             integrity checks, so the app withholds every ticket rather than
-             qualifying it.&quot;,
   &quot;primary_blocker&quot;: {
     &quot;key&quot;: &quot;universe&quot;,
     &quot;text&quot;: &quot;21 names traded above their own 200-day average (floor 100).&quot;
   }
 }</code></pre>
 
-<p class="pull-quote">and, from the same response, real computed numbers to justify it:</p>
+<p class="pull-quote">Six checks were evaluated: four passed and two failed.</p>
 
-<pre class="code-block" data-lang="json"><code>&quot;regime&quot;:   { &quot;breadth&quot;: 0.0952, &quot;breadth_threshold&quot;: 0.6, &quot;band&quot;: &quot;capitulation&quot;,
-              &quot;index_close&quot;: 5185.105, &quot;universe_size&quot;: 21 }
-&quot;coverage&quot;: { &quot;codes&quot;: 22, &quot;exchange_sessions&quot;: 475, &quot;coverage_floor&quot;: 0.6,
-              &quot;bars_basis&quot;: &quot;study:/tmp/trading-study-stub&quot; }</code></pre>
+<pre class="code-block" data-lang="text"><code>✓ exchange session calendar          last session: 2026-10-16
+✓ bars reach the last session        bars end 2026-10-16
+✗ universe is big enough             21 names (floor 100)
+✓ coverage                           22 of 21 names have a bar (105%, floor 60%)
+✓ no off-calendar bars               0
+✗ measured row readable              results unreadable</code></pre>
 
-<p class="pull-quote">Six checks were evaluated, four passed and two failed:</p>
-
-<pre class="code-block" data-lang="text"><code>✓ The exchange&#x27;s own session calendar   last session the exchange held: 2026-10-16
-✓ Bars reach the last exchange session  bars end 2026-10-16
-✗ The universe is big enough           21 names above their 200-day average (floor 100)
-✓ Enough of the universe traded         22 of 21 names have a bar (105%, floor 60%)
-✓ No bars on sessions the exchange never held   0 off-calendar rows
-✗ The measured row for this chain is readable   results were unreadable</code></pre>
-
-<p>That is the whole thesis of the project in one screen: a 9.5% breadth reading against a 60% requirement, a capitulation band, real prices — and <strong>no ticket</strong>, because the evidence under it is incomplete. The app refused on the strength of numbers it computed itself.</p>
+<p>That is the thesis in one screen: a 9.5% breadth reading against a 60% requirement, a capitulation band, real prices — and no ticket, because the evidence under it is incomplete. The repository's latest full run reports <strong>248 backend tests passed, 6 skipped</strong>.</p>
           </article>
         </div>
       </section>
@@ -295,15 +274,15 @@ cd frontend-web &amp;&amp; npm install &amp;&amp; cd ..
 
 <img src="/assets/articles/trading-suite-tonight.png" alt="Tonight — DATA_UNSAFE" loading="lazy" decoding="async" />
 
-<p class="fig-caption">Tonight. The verdict, the action, and the six integrity checks that produced it. The panel on the right does the thing this project exists for: it states the arithmetic for standing down — the flat band drifts about +0.14% per five sessions while a round trip costs 0.50%, so a trade would have to capture 40× the drift to pay for itself.</p>
+<p class="fig-caption">Tonight: the verdict, the action, and the six integrity checks that produced it.</p>
 
 <img src="/assets/articles/trading-suite-screener.png" alt="Screener — ranked, no signals" loading="lazy" decoding="async" />
 
-<p class="fig-caption">The Screener, on purpose: "None of these are buy signals — each one failed at least one condition. The ranking exists so you can watch a name approach the line, not because the study says to buy it." Each row carries conditions met (3/6), momentum rank, and how far it is from qualifying.</p>
+<p class="fig-caption">The Screener on purpose: each row shows how near a name is to qualifying, not a signal.</p>
 
 <img src="/assets/articles/trading-suite-name.png" alt="One name — every condition" loading="lazy" decoding="async" />
 
-<p class="fig-caption">The per-name view. Every condition, its current value, its threshold, and a bar showing the distance between them — 24.45% under its 40-session high, breadth at 9.5% against 60% needed, momentum ranked 59th against a top-10% requirement.</p>
+<p class="fig-caption">One name: every condition, its value, its threshold, and the distance between them.</p>
           </article>
         </div>
       </section>
@@ -312,17 +291,12 @@ cd frontend-web &amp;&amp; npm install &amp;&amp; cd ..
           <article class="art-content">
 <h2 id="what-id-fix-next">What I'd fix next</h2>
 
-<p>Two real defects, both found by running the stack rather than reading it. Both are the same class of bug: <strong>the fail-closed design exists in <code>verdict.py</code> but is bypassed when the bar source throws before the verdict stage runs.</strong></p>
-
-<ol>
-  <li><strong>A missing study checkout returns HTTP 500 instead of <code>DATA_UNSAFE</code>.</strong> <code>default_source()</code> correctly falls back to <code>LiveBars</code>, but <code>_load()</code> calls <code>source.load(None)</code> and the live adapter's signature requires a list, so <code>pool.map(one, codes)</code> raises <code>TypeError: &#x27;NoneType&#x27; object is not iterable</code> (<code>app/plan/__init__.py:45</code> → <code>app/plan/bars.py:319</code>). The intended answer — <code>DATA_UNSAFE</code>, every ticket withheld — is exactly what the app <em>would</em> say if it got that far.</li>
-</ol>
-
-<ol>
-  <li><strong><code>GET /api/plan/method</code> returns 500 when the results are unreadable</strong>, and the UI does not recover. <code>robustness()</code> → <code>_quarterly()</code> calls <code>_f(pick, &quot;avg_ret_pct&quot;)</code> with <code>pick = None</code>, so <code>row.get</code> raises <code>AttributeError</code> (<code>app/plan/method.py:701</code>). The screen catches the error and simply never sets its card, so the user sees <strong>"Loading the method…" forever</strong> — a failed load is indistinguishable from a slow one. Two small fixes: guard <code>_f</code> against a <code>None</code> row, and give the Method screen an explicit error state.</li>
-</ol>
-
-<p>The contrast is instructive: the Tonight screen handles the same missing evidence perfectly — it lists "The measured row for this chain is readable" as a failed check and withholds every ticket — while the Method screen's code path assumes the evidence is present. Worth noting too that the repo's own README is unusually candid about its state, which is what makes a finding like this easy to place.</p>
+<ul>
+  <li><strong>A missing study checkout returns HTTP 500 instead of <code>DATA_UNSAFE</code>.</strong> <code>default_source()</code> falls back to <code>LiveBars</code>, but the loader calls <code>source.load(None)</code> and <code>LiveBars.load()</code> expects a list, so the request raises <code>TypeError</code> before the verdict can fail closed.</li>
+  <li><strong>The Method screen has no error state.</strong> A failed request leaves "Loading the method…" on screen forever, so a slow load and a dead one look the same.</li>
+  <li><strong>The deployment leftovers are stale.</strong> <code>docker-compose.yml</code> and the root <code>Dockerfile</code> still build the removed Next.js frontend; the PlantUML docs describe an earlier five-route desk.</li>
+  <li><strong>Flow is a proxy, not the vendor's Liquidity Pressure Model.</strong> The formula and its data are proprietary. The UI says "proxy" and reports the proxy's forward-return record, not a parity claim.</li>
+</ul>
           </article>
         </div>
       </section>
@@ -333,13 +307,14 @@ cd frontend-web &amp;&amp; npm install &amp;&amp; cd ..
 
 <ul>
   <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/trading-suite">github.com/mariobgsp/trading-suite</a></li>
-  <li><strong>The plan module's own doc:</strong> <a href="https://github.com/mariobgsp/trading-suite/blob/main/backend/app/plan/README.md"><code>backend/app/plan/README.md</code></a></li>
-  <li><strong>What it refuses to claim:</strong> <a href="https://github.com/mariobgsp/trading-suite#what-it-refuses-to-claim"><code>README.md</code> § "What it refuses to claim"</a></li>
+  <li><strong>Plan module:</strong> <a href="https://github.com/mariobgsp/trading-suite/blob/main/backend/app/plan/README.md"><code>backend/app/plan/README.md</code></a></li>
+  <li><strong>Flow module:</strong> <a href="https://github.com/mariobgsp/trading-suite/blob/main/backend/app/flow/README.md"><code>backend/app/flow/README.md</code></a></li>
+  <li><strong>Market module:</strong> <a href="https://github.com/mariobgsp/trading-suite/blob/main/backend/app/overview/README.md"><code>backend/app/overview/README.md</code></a></li>
 </ul>
 
 <hr />
 
-<p class="fig-caption">Verified against commit <code>2b77207</code> (2026-10-14). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/trading-suite.mmd"><code>diagrams/trading-suite.mmd</code></a>. Capture scripts: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/trading-suite.mjs"><code>tools/capture/trading-suite.mjs</code></a>, <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/make-study-stub.py"><code>tools/capture/make-study-stub.py</code></a>.</p>
+<p class="fig-caption">Verified against commit <code>e1a314a</code> (2026-10-25). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/trading-suite.mmd"><code>diagrams/trading-suite.mmd</code></a>. Capture scripts: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/trading-suite.mjs"><code>tools/capture/trading-suite.mjs</code></a>, <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/make-study-stub.py"><code>tools/capture/make-study-stub.py</code></a>.</p>
           </article>
         </div>
       </section>
@@ -350,7 +325,7 @@ cd frontend-web &amp;&amp; npm install &amp;&amp; cd ..
 <a class="art-next-link art-next-link--right" href="/articles/payment-system/"><span>Next</span><b>payment-system</b></a>
       </nav>
 
-      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk","description":"Most screeners answer \"here is a list\". This one answers \"here is the list, the measured evidence behind it, and — often — no\". Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound.","url":"https://mariobgsp.github.io/articles/trading-suite/","mainEntityOfPage":"https://mariobgsp.github.io/articles/trading-suite/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Python 3 + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX","image":"https://mariobgsp.github.io/assets/articles/trading-suite-architecture-dark.png"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"A Stock Screener That Refuses to Buy","description":"Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal.","url":"https://mariobgsp.github.io/articles/trading-suite/","mainEntityOfPage":"https://mariobgsp.github.io/articles/trading-suite/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Python 3.11+ + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX","image":"https://mariobgsp.github.io/assets/articles/trading-suite-architecture-dark.png"}</script>
     </main>
 
     <footer class="footer" id="contact">

@@ -70,8 +70,8 @@
             </div>
             <div class="stat-row reveal">
               <div class="stat"><b>5</b><span>Articles</span></div>
-              <div class="stat"><b>22</b><span>Captured images</span></div>
-              <div class="stat"><b>51 min</b><span>Total reading time</span></div>
+              <div class="stat"><b>17</b><span>Captured images</span></div>
+              <div class="stat"><b>25 min</b><span>Total reading time</span></div>
               <div class="stat"><b>5+ yrs</b><span>Production backend</span></div>
             </div>
           </div>
@@ -95,10 +95,10 @@
                 <h3 class="card-name">routre</h3>
                 <span class="card-index">01</span>
               </div>
-              <p class="card-role">Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway</p>
-              <p class="card-desc">routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them.</p>
+              <p class="card-role">A Local LLM Gateway That Cuts Agent Token Bills</p>
+              <p class="card-desc">routre is one static Go binary between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them.</p>
               <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Go 1.26, standard library only — no Node, Python, Postgres or Redis</span></div>
-              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~8 min &middot; 2 images</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~4 min &middot; 2 images</span></div>
               <div class="card-tools">
                 <a class="btn btn-primary" href="/articles/routre/">Read the article<span class="ext">&#8594;</span></a>
                 <a class="btn btn-ghost" href="https://github.com/mariobgsp/routre" target="_blank" rel="noopener" aria-label="routre repository on GitHub">Repository<span class="ext">&#8599;</span></a>
@@ -110,10 +110,10 @@
                 <h3 class="card-name">durable-agents</h3>
                 <span class="card-index">02</span>
               </div>
-              <p class="card-role">Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log</p>
-              <p class="card-desc">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own.</p>
+              <p class="card-role">Agent Chats That Survive a Crash</p>
+              <p class="card-desc">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download.</p>
               <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via @earendil-works/pi-durable 1.3.0</span></div>
-              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~15 min &middot; 4 images</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~6 min &middot; 4 images</span></div>
               <div class="card-tools">
                 <a class="btn btn-primary" href="/articles/durable-agents/">Read the article<span class="ext">&#8594;</span></a>
                 <a class="btn btn-ghost" href="https://github.com/mariobgsp/durable-agents" target="_blank" rel="noopener" aria-label="durable-agents repository on GitHub">Repository<span class="ext">&#8599;</span></a>
@@ -125,10 +125,10 @@
                 <h3 class="card-name">trading-suite</h3>
                 <span class="card-index">03</span>
               </div>
-              <p class="card-role">The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk</p>
-              <p class="card-desc">Most screeners answer &quot;here is a list&quot;. This one answers &quot;here is the list, the measured evidence behind it, and — often — no&quot;. Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound.</p>
-              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Python 3 + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX</span></div>
-              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~10 min &middot; 4 images</span></div>
+              <p class="card-role">A Stock Screener That Refuses to Buy</p>
+              <p class="card-desc">Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Python 3.11+ + FastAPI · SQLite (WAL) · Vite + React 19 + TanStack Router · yfinance / IDX</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~5 min &middot; 4 images</span></div>
               <div class="card-tools">
                 <a class="btn btn-primary" href="/articles/trading-suite/">Read the article<span class="ext">&#8594;</span></a>
                 <a class="btn btn-ghost" href="https://github.com/mariobgsp/trading-suite" target="_blank" rel="noopener" aria-label="trading-suite repository on GitHub">Repository<span class="ext">&#8599;</span></a>
@@ -140,10 +140,10 @@
                 <h3 class="card-name">payment-system</h3>
                 <span class="card-index">04</span>
               </div>
-              <p class="card-role">Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka</p>
-              <p class="card-desc">This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command.</p>
-              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Go (net/http stdlib) · PostgreSQL 15 · Redis 7 · Next.js 16 portal · Docker Compose</span></div>
-              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~10 min &middot; 7 images</span></div>
+              <p class="card-role">One Go Binary Instead of Four Java Services</p>
+              <p class="card-desc">This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Go (net/http stdlib) · PostgreSQL 15 · Redis 7 · Next.js portal · Docker Compose</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~5 min &middot; 3 images</span></div>
               <div class="card-tools">
                 <a class="btn btn-primary" href="/articles/payment-system/">Read the article<span class="ext">&#8594;</span></a>
                 <a class="btn btn-ghost" href="https://github.com/mariobgsp/payment-system" target="_blank" rel="noopener" aria-label="payment-system repository on GitHub">Repository<span class="ext">&#8599;</span></a>
@@ -155,10 +155,10 @@
                 <h3 class="card-name">the-gateway</h3>
                 <span class="card-index">05</span>
               </div>
-              <p class="card-role">Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF</p>
-              <p class="card-desc">The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript.</p>
-              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Next.js 15 (BFF) · Go 1.x + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes</span></div>
-              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~8 min &middot; 5 images</span></div>
+              <p class="card-role">An API Gateway That Keeps JWTs Out of the Browser</p>
+              <p class="card-desc">The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript.</p>
+              <div class="meta-row"><span class="meta-label">Stack</span><span class="meta-value">Next.js 15 (BFF) · Go 1.26 + chi + pgx · PostgreSQL 15 · Docker Compose / Kubernetes</span></div>
+              <div class="meta-row"><span class="meta-label">Read</span><span class="meta-value">~5 min &middot; 4 images</span></div>
               <div class="card-tools">
                 <a class="btn btn-primary" href="/articles/the-gateway/">Read the article<span class="ext">&#8594;</span></a>
                 <a class="btn btn-ghost" href="https://github.com/mariobgsp/the-gateway" target="_blank" rel="noopener" aria-label="the-gateway repository on GitHub">Repository<span class="ext">&#8599;</span></a>
@@ -168,7 +168,7 @@
         </div>
       </section>
 
-      <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Project articles","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"TechArticle","name":"Cutting Agent Token Bills by 94%: the Architecture of a Local LLM Gateway","url":"https://mariobgsp.github.io/articles/routre/","description":"routre is one static Go binary that sits between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them."}},{"@type":"ListItem","position":2,"item":{"@type":"TechArticle","name":"Chats That Survive a Crash: Durable Agent Conversations on a SQLite Task Log","url":"https://mariobgsp.github.io/articles/durable-agents/","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite, so the work in flight is still there when you come back. Agents are two markdown files, and groups of them talk to each other on their own."}},{"@type":"ListItem","position":3,"item":{"@type":"TechArticle","name":"The Screener That Refuses to Buy: Engineering Honesty Into an IDX Market Desk","url":"https://mariobgsp.github.io/articles/trading-suite/","description":"Most screeners answer \"here is a list\". This one answers \"here is the list, the measured evidence behind it, and — often — no\". Four screens, a FastAPI backend, and a verdict that withholds every ticket when the data underneath it is not sound."}},{"@type":"ListItem","position":4,"item":{"@type":"TechArticle","name":"Four Java Services, One Go Binary: a Payment Lifecycle Without Kafka","url":"https://mariobgsp.github.io/articles/payment-system/","description":"This is a payment system that used to be four Java microservices talking through Kafka, Mongo and Zookeeper. It is now one Go binary, a Postgres schemas, and a database table doing the job the message broker used to do. All five containers start in one command."}},{"@type":"ListItem","position":5,"item":{"@type":"TechArticle","name":"Keeping JWTs Out of the Browser: an API Gateway With a Server-Side BFF","url":"https://mariobgsp.github.io/articles/the-gateway/","description":"The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting engineering is not the CRUD — it is that the session token never becomes readable by a single line of browser JavaScript."}}]}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Project articles","itemListElement":[{"@type":"ListItem","position":1,"item":{"@type":"TechArticle","name":"A Local LLM Gateway That Cuts Agent Token Bills","url":"https://mariobgsp.github.io/articles/routre/","description":"routre is one static Go binary between your coding agents and every LLM provider. It compresses the tool output that dominates agent traffic, replays identical requests from cache, and fails over to the next provider when one is busy — while holding the API keys so the client never sees them."}},{"@type":"ListItem","position":2,"item":{"@type":"TechArticle","name":"Agent Chats That Survive a Crash","url":"https://mariobgsp.github.io/articles/durable-agents/","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download."}},{"@type":"ListItem","position":3,"item":{"@type":"TechArticle","name":"A Stock Screener That Refuses to Buy","url":"https://mariobgsp.github.io/articles/trading-suite/","description":"Most screeners answer with a list. This one answers with a verdict, the measured evidence behind it, and often no. Six screens, a FastAPI backend and a data check that outranks every signal."}},{"@type":"ListItem","position":4,"item":{"@type":"TechArticle","name":"One Go Binary Instead of Four Java Services","url":"https://mariobgsp.github.io/articles/payment-system/","description":"This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command."}},{"@type":"ListItem","position":5,"item":{"@type":"TechArticle","name":"An API Gateway That Keeps JWTs Out of the Browser","url":"https://mariobgsp.github.io/articles/the-gateway/","description":"The Gateway is a small API-management console: define the upstream APIs you call, allowlist what may reach them, and test them from the UI. The interesting part is not the CRUD. It is that the session token never becomes readable by a single line of browser JavaScript."}}]}</script>
 
       <hr class="hairline" />
     </main>
