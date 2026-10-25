@@ -20,13 +20,13 @@
   /* ink */
   --ink: #171716;
   --ink-2: #3f3f3c;
-  --ink-3: #64635e;
-  /* captions and provenance notes (6.2:1 on the paper) */
-  --ink-note: #5f5e59;
+  --ink-3: #5f5e59;
+  /* captions and provenance notes (7.2:1 on the paper) */
+  --ink-note: #55544f;
 
   /* one accent for links, focus and active state */
-  --accent: #2b5fce;
-  --accent-hover: #1f4fae;
+  --accent: #1d4ed8;
+  --accent-hover: #173ea8;
   --accent-soft: #edf2fd;
   --success: #226b4c;
   --tint: rgba(23, 23, 21, 0.035);
@@ -158,31 +158,50 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .skip-link:focus { left: 16px; top: 16px; }
 
 /* --------------------------------------------------------- ambient wash ---
-   One CSS-only layer on body::before. Two very soft radial gradients drift on
-   transform and scale behind every page; there is no canvas, no pointer state
-   and no JS loop. The layer is inert and sits under the .page content. */
+   Two large, very soft colour fields drift independently behind the sheet.
+   They are CSS-only, pointer-inert and composited on transform/opacity; there
+   is no canvas and no JS loop. The motion is deliberately slow, but it is
+   visible as a changing light rather than a static gradient. */
 
-body::before {
+body::before,
+body::after {
   content: "";
   position: fixed;
-  inset: -18vmax;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(farthest-side at 72% 18%, rgba(178, 198, 238, 0.42), transparent 72%),
-    radial-gradient(farthest-side at 18% 82%, rgba(233, 210, 186, 0.34), transparent 70%);
-  background-size: 64vmax 64vmax, 58vmax 58vmax;
-  background-position: 78% 12%, 12% 84%;
-  background-repeat: no-repeat;
-  animation: ambient-drift 46s var(--ease) infinite alternate;
+  border-radius: 50%;
   will-change: transform;
 }
 
-body.art-page::before { opacity: 0.55; }
+body::before {
+  width: 72vmax;
+  height: 72vmax;
+  top: -26vmax;
+  right: -18vmax;
+  background: radial-gradient(circle, rgba(174, 196, 238, 0.58) 0%, rgba(174, 196, 238, 0.30) 38%, transparent 68%);
+  animation: ambient-cool 12s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
 
-@keyframes ambient-drift {
-  from { transform: translate3d(-1.5%, -1%, 0) scale(1.02); }
-  to   { transform: translate3d(1.5%, 2%, 0) scale(1.08); }
+body::after {
+  width: 66vmax;
+  height: 66vmax;
+  bottom: -28vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, rgba(234, 211, 187, 0.52) 0%, rgba(234, 211, 187, 0.26) 40%, transparent 68%);
+  animation: ambient-warm 18s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+body.art-page::before,
+body.art-page::after { opacity: 0.5; }
+
+@keyframes ambient-cool {
+  from { transform: translate3d(-4%, -3%, 0) scale(1); }
+  to   { transform: translate3d(9%, 8%, 0) scale(1.16); }
+}
+
+@keyframes ambient-warm {
+  from { transform: translate3d(5%, 4%, 0) scale(1.10); }
+  to   { transform: translate3d(-8%, -7%, 0) scale(0.94); }
 }
 
 /* ---------------------------------------------------------- progress bar --- */
@@ -1051,11 +1070,14 @@ html[data-freeze] *::after {
 }
 
 ::view-transition-new(root) {
-  animation: page-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: page-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes page-out { to { opacity: 0; } }
-@keyframes page-in { from { opacity: 0; } }
+@keyframes page-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
 
 /* ----------------------------------------------------------- axis draw ---
    A hairline axis above each section first container, drawn like the rules
@@ -1247,6 +1269,7 @@ html[data-freeze] *::after {
   }
 
   body::before,
+  body::after,
   .scroll-cue {
     animation: none !important;
     transition: none !important;
@@ -1340,6 +1363,7 @@ html[data-freeze] *::after {
   .edu-block { padding: 14px !important; }
 
   body::before,
+  body::after,
   .progress-track,
   .sec-rail,
   .nav-pill,
