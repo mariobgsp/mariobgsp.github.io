@@ -62,7 +62,7 @@
           <p class="art-standfirst reveal">This payment system used to be four Java microservices on Kafka, Mongo and Zookeeper. It is now one Go binary, two Postgres schemas, and an outbox table doing the job the message broker used to do. All five containers start with one command.</p>
           <p class="art-byline reveal">
             <span>Muhammad Ario Bagus Prakusa</span>
-            <span>25 October 2026</span>
+            <span>28 October 2026</span>
             <span>~5 min read</span>
           </p>
           <dl class="art-facts reveal">
@@ -80,7 +80,7 @@
             </div>
             <div class="art-fact">
               <dt>Verified</dt>
-              <dd>Re-read against commit <code>0f2acef</code> (2026-10-25; dependency bumps only). Screenshots and observed output are from the 2026-10-17 run.</dd>
+              <dd>Re-read against commit <code>084d207</code> (2026-10-28; a <code>tailwindcss</code> v3 pin that restores the frontend build). Screenshots and observed output are from the 2026-10-17 run.</dd>
             </div>
           </dl>
         </div>
@@ -228,6 +228,13 @@ cd monolith &amp;&amp; go vet ./... &amp;&amp; go test ./... -count=1
 cd ms-paymentagr &amp;&amp; go vet ./... &amp;&amp; go build ./...
 cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 
+<p>The frontend build is the one command that was <strong>not</strong> green for a while. At <code>0f2acef</code> a dependabot major bump had moved <code>tailwindcss</code> to 4.3.3 while <code>globals.css</code> still uses the <code>@tailwind base/components/utilities</code> directives, <code>tailwind.config.ts</code> uses the v3 <code>Config</code> type, and <code>postcss.config.mjs</code> registers <code>tailwindcss</code> as a PostCSS plugin, which v4 no longer supports, so the build stops:</p>
+
+<pre class="code-block" data-lang="text"><code>Error: It looks like you&#x27;re trying to use `tailwindcss` directly as a PostCSS plugin.
+The PostCSS plugin has moved to a separate package, …</code></pre>
+
+<p><code>084d207</code> pins it back to <code>^3.4.19</code>. I ran both sides in a clean worktree rather than trusting the commit message: exit <strong>1</strong> at <code>0f2acef</code> with tailwind 4.3.3 installed, exit <strong>0</strong> at <code>084d207</code> in 41 s.</p>
+
 <h3 id="what-i-observed">What I observed</h3>
 
 <p>The five-container stack came up clean and the lifecycle ran end to end. The status chart walked <code>CREATED → READY → SUCCESS → REFUND</code>, and the invoice contains exactly the settled state:</p>
@@ -271,7 +278,9 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 
 <p>The signature is correct; the payment sits at <code>READY</code> until the poller gives up. Map the payload in one place, or assert the shape in the partner's tests.</p>
 
-<p><strong>3 — Smaller items.</strong> Postgres is pinned to an unmaintained <code>15-alpine3.17</code>; seeded users ship real BCrypt hashes; and <code>payment_date</code> is set at <code>READY</code>, not settlement.</p>
+<p><strong>3 — The Tailwind 4 migration is deferred, not done.</strong> Pinning <code>^3.4.19</code> restores the build, but the codebase is still v3-only: a real move needs <code>@tailwindcss/postcss</code>, <code>@import &quot;tailwindcss&quot;</code> instead of the three directives, and a CSS-first theme, plus a visual pass over every screen. Until then a major bump can break the default branch again, which is what happened here.</p>
+
+<p><strong>4 — Smaller items.</strong> Postgres is pinned to an unmaintained <code>15-alpine3.17</code>; seeded users ship real BCrypt hashes; and <code>payment_date</code> is set at <code>READY</code>, not settlement.</p>
           </article>
         </div>
       </section>
@@ -289,7 +298,7 @@ cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
 
 <hr />
 
-<p class="fig-caption">Verified against commit <code>0f2acef</code> (2026-10-25). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/payment-system.mmd"><code>diagrams/payment-system.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/payment-system.mjs"><code>tools/capture/payment-system.mjs</code></a>.</p>
+<p class="fig-caption">Verified against commit <code>084d207</code> (2026-10-28). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/payment-system.mmd"><code>diagrams/payment-system.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/payment-system.mjs"><code>tools/capture/payment-system.mjs</code></a>.</p>
           </article>
         </div>
       </section>

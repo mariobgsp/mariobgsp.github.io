@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Agent Chats That Survive a Crash</title>
-    <meta name="description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download." />
+    <title>Agents That Survive a Crash</title>
+    <meta name="description" content="A local agent fleet you drive from Telegram: one daemon owns the durable state, so a dropped long poll, a killed process or a lost network costs you nothing. Agents can message each other, run on schedules, edit their own system — and there is no browser left to reload." />
     <meta name="author" content="Muhammad Ario Bagus Prakusa" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#faf9f6" />
@@ -14,16 +14,16 @@
     <meta property="og:site_name" content="mario.dev" />
     <meta property="og:locale" content="en" />
     <meta property="og:url" content="https://mariobgsp.github.io/articles/durable-agents/" />
-    <meta property="og:title" content="Agent Chats That Survive a Crash" />
-    <meta property="og:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download." />
+    <meta property="og:title" content="Agents That Survive a Crash" />
+    <meta property="og:description" content="A local agent fleet you drive from Telegram: one daemon owns the durable state, so a dropped long poll, a killed process or a lost network costs you nothing. Agents can message each other, run on schedules, edit their own system — and there is no browser left to reload." />
     <meta property="og:image" content="https://mariobgsp.github.io/assets/articles/og-durable-agents.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Agent Chats That Survive a Crash" />
+    <meta property="og:image:alt" content="Agents That Survive a Crash" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Agent Chats That Survive a Crash" />
-    <meta name="twitter:description" content="A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download." />
+    <meta name="twitter:title" content="Agents That Survive a Crash" />
+    <meta name="twitter:description" content="A local agent fleet you drive from Telegram: one daemon owns the durable state, so a dropped long poll, a killed process or a lost network costs you nothing. Agents can message each other, run on schedules, edit their own system — and there is no browser left to reload." />
     <meta name="twitter:image" content="https://mariobgsp.github.io/assets/articles/og-durable-agents.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,12 +58,12 @@
         <div class="container">
           <a class="crumb reveal" href="/articles/">&larr; All articles</a>
           <p class="kicker reveal"><b>[ 02 / 05 ]</b> durable-agents</p>
-          <h1 class="art-title reveal">Agent Chats That Survive a Crash</h1>
-          <p class="art-standfirst reveal">A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download.</p>
+          <h1 class="art-title reveal">Agents That Survive a Crash</h1>
+          <p class="art-standfirst reveal">A local agent fleet you drive from Telegram: one daemon owns the durable state, so a dropped long poll, a killed process or a lost network costs you nothing. Agents can message each other, run on schedules, edit their own system — and there is no browser left to reload.</p>
           <p class="art-byline reveal">
             <span>Muhammad Ario Bagus Prakusa</span>
-            <span>25 October 2026</span>
-            <span>~6 min read</span>
+            <span>30 October 2026</span>
+            <span>~12 min read</span>
           </p>
           <dl class="art-facts reveal">
             <div class="art-fact">
@@ -72,15 +72,15 @@
             </div>
             <div class="art-fact">
               <dt>Role</dt>
-              <dd>TypeScript / full-stack engineering, durable execution, streaming protocol design</dd>
+              <dd>TypeScript / systems engineering: durable execution, transport design, process supervision</dd>
             </div>
             <div class="art-fact">
               <dt>Stack</dt>
-              <dd>Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via <code>@earendil-works/pi-durable</code> 1.3.0</dd>
+              <dd>Node + TypeScript (<code>packages/cli</code> · <code>packages/core</code> · <code>packages/telegram</code>) · one daemon over a <code>0600</code> Unix socket · Telegram Bot API · SQLite via <code>@earendil-works/pi-durable</code> 1.3.0</dd>
             </div>
             <div class="art-fact">
               <dt>Verified</dt>
-              <dd>Re-read against <code>06f5bad</code> (2026-10-25). Checks are the repository's 2026-10-24 run; screenshots are from 2026-10-19.</dd>
+              <dd>Re-read against <code>61ddadb</code> (2026-10-30). Checks are my run at <code>9138f67</code>; the only commit since is the README fix below: <code>npm run check</code> clean, <code>npm run e2e</code> 23/23, <code>npm run bench</code> 5/5 at 222 MB peak PSS.</dd>
             </div>
           </dl>
         </div>
@@ -91,9 +91,9 @@
           <article class="art-content">
             <h2>At a glance</h2>
 <ul>
-  <li><strong>What it is</strong> — a single-user web app for durable agent work: threads that survive restarts, agents defined by two markdown files, group chats, a directed agent network, schedules, generated files, and a system panel.</li>
-  <li><strong>Who it's for</strong> — anyone who treats an agent session as work rather than a prompt: long threads, expensive generations, and a strong preference not to lose either because a socket dropped.</li>
-  <li><strong>The interesting part</strong> — durability is not a save button. It is a <strong>durable task log</strong>. The harness owns progress, and the UI's job is to render what the log says, including re-attaching to a generation that was already running when you left.</li>
+  <li><strong>What it is</strong> — a single-user agent fleet with no web app: one daemon owns the durable conversations, a CLI does setup and administration, <code>dura monitor</code> renders the fleet, and <strong>one Telegram bot per agent</strong> is the chat surface.</li>
+  <li><strong>Who it's for</strong> — someone who treats an agent session as work rather than a prompt: long threads, expensive generations, a phone as the client, and a strong preference not to lose either because a long poll died mid-answer.</li>
+  <li><strong>The interesting part</strong> — durability is not a save button and not a UI feature. It is a durable task log inside one process, and the transport is treated as disposable: Telegram can fail, rate-limit, or be replaced, and the run carries on.</li>
 </ul>
             <nav class="art-jump" aria-label="Article sections">
 <a href="#the-problem"><span>02</span>The problem</a>
@@ -101,7 +101,7 @@
 <a href="#how-it-works"><span>04</span>How it works</a>
 <a href="#key-choices"><span>05</span>Key choices</a>
 <a href="#running-it"><span>06</span>Running it</a>
-<a href="#screenshots"><span>07</span>Screenshots</a>
+<a href="#in-use"><span>07</span>In use</a>
 <a href="#what-id-fix-next"><span>08</span>What I&#x27;d fix next</a>
 <a href="#links"><span>09</span>Links</a>
             </nav>
@@ -113,15 +113,16 @@
           <article class="art-content">
 <h2 id="the-problem">The problem</h2>
 
-<p>Conventional chat UIs model a conversation as client state. That assumption breaks once each turn costs real money and takes minutes.</p>
+<p>A chat UI that keeps the conversation in the client breaks as soon as a turn costs money and takes minutes. Moving the same assumption to a phone transport does not fix it, it hides it:</p>
 
 <ul>
-  <li><strong>A dropped socket loses the answer.</strong> The generation completes upstream, but nothing in the browser owns it, so the reply never lands.</li>
-  <li><strong>A reload forgets what was happening.</strong> There is no record that a turn was in flight, so a resume means re-asking and re-paying.</li>
-  <li><strong>"Still working?" has no answer.</strong> A spinner cannot distinguish a slow generation from a dead one, and in a group chat it cannot say <em>which</em> agent is mid-sentence.</li>
+  <li><strong>A dropped connection loses the answer.</strong> The generation completes upstream, but nothing durable owns it, so the reply never lands.</li>
+  <li><strong>A restart forgets what was in flight.</strong> There is no record that a turn was running, so resuming means re-asking and re-paying.</li>
+  <li><strong>"Still working?" has no answer.</strong> A typing indicator cannot distinguish a slow generation from a dead one, and in a group it cannot say <em>which</em> agent is mid-sentence.</li>
+  <li><strong>A second message is a second question.</strong> Send another line to a busy chat and most systems queue a new turn behind the first, so the correction arrives after the money is spent.</li>
 </ul>
 
-<p>This project inverts the ownership: the harness writes durable tasks first, and the browser is a view onto that log.</p>
+<p>This project inverts the ownership: the daemon writes durable tasks first, and the transport is a view onto that log.</p>
           </article>
         </div>
       </section>
@@ -132,7 +133,7 @@
 
 <div class="table-wrap"><table>
 <thead><tr><th>Capability</th><th>How</th></tr></thead>
-<tbody><tr><td><strong>Durable threads</strong></td><td>Every message, tool call and generation is a durable task. <code>resume()</code> replays work that was interrupted.</td></tr><tr><td><strong>Live streaming</strong></td><td>A WebSocket per conversation emits <code>snapshot → entry → message-start → delta… → message-end</code>. Reconnecting re-reads the log rather than restarting the answer.</td></tr><tr><td><strong>Agents as files</strong></td><td><code>data/agents/&lt;slug&gt;/{agent.json,AGENT.md,SOUL.md}</code>. <code>SOUL.md</code> is who the agent is; <code>AGENT.md</code> is its working rules. Saving rebinds the files into live threads.</td></tr><tr><td><strong>Group chat</strong></td><td>Three modes: <code>Nyahut</code> (agents claim a message by responsibility), <code>Moderator</code> (one designated member), and <code>Silent</code> (<code>@mention</code> only).</td></tr><tr><td><strong>Agent network</strong></td><td><code>agents_message</code> delivers to one directed inbox thread per sender–recipient pair; fan-out reaches 16 targets. <code>agents_delegate</code> creates one task thread per target. Calls are idempotent by request id, with a 6-hop guard.</td></tr><tr><td><strong>Fleet and activity</strong></td><td>One snapshot of which agents are working, idle or disabled, their thread, token totals and live links, pushed over the presence socket.</td></tr><tr><td><strong>Schedules</strong></td><td>A per-agent 5-field cron owns one thread: run-now, skip-when-busy, restart-safe; a missed window is counted, not replayed.</td></tr><tr><td><strong>Files and output</strong></td><td>Attachments live in the message entry the model was given. Agents can write Markdown, text, JSON, PDF or published files as download cards under <code>data/artifacts</code>.</td></tr><tr><td><strong>Operations</strong></td><td><code>#/system</code> reports versions, sandbox and supervisor, with Update and Restart. <code>#/usage</code> covers storage, cleanup and spend. Agents customise a closed display token set, never the source.</td></tr></tbody>
+<tbody><tr><td><strong>Durable threads</strong></td><td>Every message, tool call and generation is a durable task in <code>app.sqlite</code>. <code>resume()</code> replays interrupted work, and an answer is read out of the log rather than off a socket.</td></tr><tr><td><strong>Steering, not queueing</strong></td><td>A message sent while a run is live is steered into it (<code>whenBusy: &quot;steer&quot;</code>) and answered with <code>Steer · added to the current run</code>. <code>/stop</code> aborts the run and withdraws the queued messages.</td></tr><tr><td><strong>One bot, one agent</strong></td><td>A bot belongs to exactly one agent, so identity is never ambiguous. An unpaired bot answers only the owner with a pairing prompt; pairing takes a token (<code>/connect &lt;agent&gt; &lt;token&gt;</code>, the token message is deleted, or <code>bot_connect</code> from the orchestrator), never browser automation.</td></tr><tr><td><strong>Agents as files</strong></td><td><code>agents/&lt;id&gt;/{agent.json,AGENT.md,SOUL.md,MEMORY.md,.history/}</code>. Every mutation goes through one admin pipeline — validate, write, rebind, reconcile mesh and schedules — and a filesystem watcher rebinds a hand edit.</td></tr><tr><td><strong>Orchestrator</strong></td><td>A config pointer, not a special agent: role-scoped tools (<code>agent_admin_list</code>, <code>agent_read</code>, <code>agent_create</code>, <code>agent_update</code>, <code>agent_set_enabled</code>, <code>agent_delete</code>, <code>bot_list/assign/release/connect</code>, <code>mcp_*</code>) plus <code>agent_write_doc</code> with a sha256 guard, patch mode, a 64 KiB cap and five versions of history. Any agent may call <code>orchestrator_claim</code>; if an orchestrator already exists the owner gets Approve/Deny buttons.</td></tr><tr><td><strong>Groups</strong></td><td>Three modes — <code>Nyahut</code> (agents claim a message by responsibility), <code>Moderator</code>, <code>Silent</code> — with one speaker bot per room and a <code>chatId+messageId</code> seen-map that suppresses duplicates when several bots are present.</td></tr><tr><td><strong>Agent network</strong></td><td><code>agents_message</code> delivers to one directed inbox thread per sender–recipient pair; <code>agents_delegate</code> creates one task thread per target. Calls are idempotent by request id.</td></tr><tr><td><strong>Schedules</strong></td><td>A per-agent 5-field cron owns one thread: run-now, skip-when-busy, restart-safe; a missed window is counted, not replayed.</td></tr><tr><td><strong>Global MCP</strong></td><td>stdio servers installed once, exposed to every agent as <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>, with every conversation rebound on install or removal so existing threads gain the tools immediately.</td></tr><tr><td><strong>Bounded data</strong></td><td>Retention is automatic: threads older than 3 days are soft-deleted, tombstones are exported and purged 3 days later, then vacuumed. Before a batch disappears, one summary per agent is appended to its <code>MEMORY.md</code>.</td></tr><tr><td><strong>Operations</strong></td><td>A five-step resumable <code>dura init</code>, <code>dura verify</code> (provider, bot identity, owner delivery, socket/no-TCP, SQLite, one live agent round-trip) which writes <code>setup.verifiedAt</code> only on a pass, plus <code>status</code>, <code>monitor</code>, <code>logs -f</code> and <code>doctor</code>.</td></tr></tbody>
 </table></div>
           </article>
         </div>
@@ -149,41 +150,34 @@
 <summary>Mermaid source (<code>diagrams/durable-agents.mmd</code>)</summary>
 
 <pre class="code-block" data-lang="mermaid"><code>flowchart TD
-  U[&quot;Browser — Svelte 5 SPA&lt;br/&gt;Chat · Agents · Groups · System · Usage · Providers&quot;]
+  P[&quot;Owner — Telegram on a phone&quot;]
+  C[&quot;dura CLI + fleet TUI&lt;br/&gt;setup · administration · monitor&quot;]
+  TG[&quot;Telegram Bot API&quot;]
 
-  subgraph WEB[&quot;packages/web&quot;]
-    VIEWS[&quot;views + components&lt;br/&gt;Chat · Agents · Groups · System&lt;br/&gt;Composer · DiagramDrawer&quot;]
-    ST[&quot;state.svelte.ts — one runes store&lt;br/&gt;the only place frames mutate state&quot;]
-    WS[&quot;ws.ts — one socket per conversation&lt;br/&gt;plus a presence socket&quot;]
-    ID[&quot;lib/identity.ts + lib/display.ts&lt;br/&gt;identity + display&quot;]
+  subgraph D[&quot;one daemon process · no listening port&quot;]
+    POLL[&quot;one long poll per bot&lt;br/&gt;offset · 429 · backoff · health&quot;]
+    ROUTE[&quot;routing&lt;br/&gt;DM → paired agent · topic · group&quot;]
+    IPC[&quot;IPC server&lt;br/&gt;NDJSON over run/daemon.sock · 0600&quot;]
+    H[&quot;pi-durable harness&lt;br/&gt;conversations · submissions&lt;br/&gt;every step a durable task&quot;]
+    OPS[&quot;scheduler · mesh · retention&lt;br/&gt;cron owns a thread&quot;]
+    ADM[&quot;orchestrator tools&lt;br/&gt;agent-admin · doc-store · bot map&quot;]
+    RENDER[&quot;answer sink&lt;br/&gt;rich message · HTML fallback · files&quot;]
+    DB[(&quot;app.sqlite&quot;)]
   end
 
-  subgraph SRV[&quot;packages/server&quot;]
-    AUTH[&quot;auth.ts — Fastify on 127.0.0.1&lt;br/&gt;X-PI-Token + Host allowlist&quot;]
-    CORE[&quot;threads + streaming&lt;br/&gt;sessions · transcript · stream&lt;br/&gt;live · activity&quot;]
-    ORCH[&quot;groups + agent network&lt;br/&gt;rooms · router · nyahut&lt;br/&gt;mesh · roster · fleet&quot;]
-    OPS[&quot;schedules, files, operations&lt;br/&gt;cron · schedules · attachments&lt;br/&gt;artifacts · system · display · storage&quot;]
-  end
+  LLM[&quot;pi-ai providers&lt;br/&gt;42 built-ins, catalog read by the CLI&quot;]
 
-  subgraph DUR[&quot;pi-durable 1.3.0&quot;]
-    H[&quot;Harness&lt;br/&gt;conversations · submissions&lt;br/&gt;every step a durable task&quot;]
-    DB[(&quot;SQLite&lt;br/&gt;data/app.sqlite&quot;)]
-    H --&gt; DB
-  end
-
-  LLM[&quot;pi-ai providers&lt;br/&gt;opencode-go · deepseek-v4.1-flash&lt;br/&gt;faux provider when PI_E2E=1&quot;]
-
-  U --&gt; VIEWS
-  VIEWS --&gt; ST
-  ST --&gt; WS
-  ID -.-&gt; ST
-  WS &lt;--&gt;|&quot;HTTP + WebSocket · X-PI-Token&quot;| AUTH
-  AUTH --&gt; CORE
-  AUTH --&gt; ORCH
-  AUTH --&gt; OPS
-  CORE --&gt; H
-  ORCH --&gt; H
-  OPS -.-&gt; H
+  P &lt;--&gt; TG
+  TG --&gt; POLL
+  POLL --&gt; ROUTE
+  ROUTE --&gt; H
+  C --&gt; IPC
+  IPC --&gt; H
+  OPS --&gt; H
+  ADM --&gt; H
+  H --&gt; DB
+  H --&gt; RENDER
+  RENDER --&gt; TG
   H --&gt; LLM</code></pre>
 
 </details>
@@ -191,23 +185,31 @@
 <h3 id="components">Components</h3>
 
 <ul>
-  <li><strong><code>packages/server/src/index.ts</code></strong> — every REST route and the WebSocket upgrade, plus the boot-time activity scan. The message route allows a 24 MiB body because a message carries its attachments.</li>
-  <li><strong><code>sessions.ts</code>, <code>transcript.ts</code>, <code>stream.ts</code>, <code>live.ts</code></strong> — the thread index, durable entries to wire messages, <code>watch()</code> to frames, and the one reader of <code>pi.live</code> that derives the activity phase, calls and elapsed time.</li>
-  <li><strong><code>rooms.ts</code>, <code>router.ts</code>, <code>nyahut.ts</code></strong> — group orchestration. <code>planTargets()</code> is pure: no network, no model, no file access, so routing is testable in isolation.</li>
-  <li><strong><code>mesh.ts</code>, <code>mesh-tools.ts</code>, <code>roster.ts</code>, <code>fleet.ts</code></strong> — directed inbox/task threads, fan-out, the link index, the hop guard, and the fleet snapshot.</li>
-  <li><strong><code>cron.ts</code>, <code>schedules.ts</code></strong> — the cron parser, the per-agent schedule store, and the 15-second tick that skips a busy thread and records duration and tokens.</li>
-  <li><strong><code>artifacts.ts</code>, <code>attachments.ts</code>, <code>documents.ts</code></strong> — generated files, image normalisation, and bytes-to-text. Attachments live in the entry the model read; artifacts are indexed by their entry.</li>
+  <li><strong><code>packages/core/src/daemon.ts</code>, <code>ipc.ts</code></strong> — the one process: harness, SQLite, scheduler, mesh, run limiter, IPC server and a poller per bot. A lockfile with a liveness check enforces a single instance, and a second <code>dura start</code> exits <strong>4</strong>. Readiness is a <code>0600</code> file plus one <code>DURA_READY</code> line on stdout, so a detached start needs no pipe.</li>
+  <li><strong><code>packages/cli/src/client.ts</code>, <code>commands/monitor.ts</code></strong> — the CLI is a client and nothing else: it reads files, or speaks NDJSON (<code>{&quot;id&quot;,&quot;method&quot;,&quot;params&quot;}</code> → <code>{&quot;id&quot;,&quot;ok&quot;,&quot;result&quot;}</code>, with <code>{&quot;event&quot;:&quot;fleet&quot;}</code> pushes) over the socket. Exit codes are part of the contract: 0 ok, 1 runtime, 2 usage, 3 daemon unavailable, 4 refused.</li>
+  <li><strong><code>packages/core/src/stream.ts</code>, <code>live.ts</code></strong> — durable entries to wire messages, and the one reader of <code>pi.live</code> that derives the phase, the tool calls and the run's real elapsed time.</li>
+  <li><strong><code>packages/telegram/src/runtime.ts</code>, <code>client.ts</code>, <code>render.ts</code></strong> — one <code>getUpdates</code> loop per bot with its own offset and health in <code>telegram/state.json</code>; a 20-second long poll, <code>429</code> honouring <code>retry_after</code>, failures backing off 1 s → 15 s, <code>401</code>/<code>409</code> stopping that bot only, and a shutdown that aborts the in-flight poll instead of waiting it out. <code>render.ts</code> holds the coalescing edit sink and the rich/HTML answer path.</li>
+  <li><strong><code>packages/core/src/agent-admin.ts</code>, <code>orchestrator.ts</code>, <code>doc-store.ts</code></strong> — the single write path for agent records, the role guard, and the document store with its sha256 guard and history.</li>
+  <li><strong><code>packages/core/src/retention.ts</code>, <code>sessions.ts</code>, <code>storage.ts</code></strong> — prune reads the index once and writes it once, purge exports one transcript at a time, then vacuum reclaims the file.</li>
+  <li><strong><code>packages/core/src/cron.ts</code>, <code>schedules.ts</code>, <code>mesh.ts</code>, <code>mesh-tools.ts</code>, <code>rooms.ts</code>, <code>nyahut.ts</code></strong> — schedules, the directed agent network, and group orchestration.</li>
 </ul>
 
 <h3 id="one-message-end-to-end">One message, end to end</h3>
 
 <ol>
-  <li>You press Enter. The store sets <code>busy</code> immediately, so the input feels instant while nothing has been sent.</li>
-  <li><code>POST /api/sessions/:id/messages</code> validates and converts the message (shape, budget, image policy, documents), then submits an <code>input</code> event. It is already durable when the submission id comes back; a refusal throws before anything is written, so the draft is intact.</li>
-  <li>The server marks the session active and broadcasts presence, so every other tab learns this thread is generating.</li>
-  <li>The browser opens or reuses the conversation socket. The harness starts the generation, and the server reads partials out of the durable <code>pi.live</code> document and emits the suffix as <code>delta</code> frames — roughly 80 ms apart.</li>
-  <li>On completion the committed entry is emitted as <code>entry</code>, the bubble closes with <code>message-end</code>, and <code>waitForIdle()</code> resolves so the session is idle again.</li>
+  <li>You type into a bot's chat. That bot's poller holds its own offset; the update is claimed once, and commands bypass the thread binding.</li>
+  <li>Routing: a DM goes to the bot's paired agent and its active thread, a reply routes to the thread that produced the message, a topic gets one durable thread.</li>
+  <li>The daemon submits an <code>input</code> to that conversation and answers the chat with a short <code>Think · planning the next step</code> placeholder. <strong>The submission is already durable when its id comes back</strong>; a refusal throws before anything is written.</li>
+  <li>While the run is live, one status message — not one per call — is edited at most every 1.2 s. It shows the phase (or the thinking text as it streams) and the <strong>last three calls in the call's own words</strong> (<code>⚙️ bash: git status</code>, <code>⚙️ read: core/src/live.ts</code>), because twenty notifications for twenty reads is noise. A message you send now is steered into the run instead of forming a new turn.</li>
+  <li>On completion the committed entry is read out of the log and sent with <code>sendRichMessage</code> (GFM headings, tables, task lists, long code), falling back to HTML <code>sendMessage</code> when the API rejects it. Generated files follow as documents.</li>
+  <li>If the daemon dies at any point, the work is still in SQLite: the next poller sees the same conversation, so the answer is delivered from the log rather than re-asked.</li>
 </ol>
+
+<h3 id="why-there-is-no-listening-port">Why there is no listening port</h3>
+
+<p>The daemon binds nothing. The CLI and the TUI connect over <code>run/daemon.sock</code>, mode <code>0600</code>, and the only network traffic is outbound Bot API calls and the provider. That removes the entire class of problems a local HTTP surface brings with it — token injection, <code>Host</code> allowlists, CORS, a port that some other process can reach — and it is why the previous version's Tailscale runbook, <code>X-PI-Token</code> and token-in-page bootstrap are gone rather than relocated.</p>
+
+<p>The price is honest: the chat surface is Telegram, so the phone story is "message a bot" rather than "open a URL", and anything the CLI cannot do has to become a command or a menu. <code>dura monitor</code> is deliberately the last of those: a read-only fleet TUI whose only write is an explicit add-agent form.</p>
           </article>
         </div>
       </section>
@@ -218,7 +220,7 @@
 
 <div class="table-wrap"><table>
 <thead><tr><th>Choice</th><th>Why</th><th>Cost</th></tr></thead>
-<tbody><tr><td><strong>Durability belongs to the harness</strong></td><td><code>resume()</code> replays interrupted work, so "reload during a long generation" is a supported path, not data loss.</td><td>The UI must handle snapshots, re-attachment and out-of-order resumption.</td></tr><tr><td><strong>Streaming reads <code>pi.live</code></strong></td><td>The provider never emits <code>message_update</code>, so the server reads the message in flight and emits the difference.</td><td>An internal shape is load-bearing; the clean fix belongs upstream.</td></tr><tr><td><strong>Pure group routing + idempotent mesh calls</strong></td><td><code>planTargets()</code> is testable without I/O, and every mesh call reuses its request id, so a replay after a crash does not duplicate a thread.</td><td>The claim round adds latency, and fan-out is capped by hops and targets.</td></tr><tr><td><strong>Schedules are restart-safe</strong></td><td>A schedule owns one thread, a due minute gets one request id, and a busy thread is skipped.</td><td>Cron uses the server's local time and has no backfill.</td></tr><tr><td><strong>A real local security boundary</strong></td><td>Loopback bind, <code>X-PI-Token</code>, Host allowlist, no permissive CORS, and a Standard / Custom / Full Access tier enforced at tool-call time.</td><td>You must inject the token, and Full Access is a deliberate per-thread grant.</td></tr></tbody>
+<tbody><tr><td><strong>Durability belongs to the daemon</strong></td><td>The harness writes the task first, so "the phone went to sleep during a four-minute generation" is a supported path rather than data loss.</td><td>Every surface has to render state it did not create, including re-attaching to a run it never started.</td></tr><tr><td><strong>The transport is disposable</strong></td><td>Telegram can rate-limit, drop a long poll or be replaced; none of that is allowed to touch a run.</td><td>The answer path has two formats and a coalescing edit sink, and the API's limits become load-bearing.</td></tr><tr><td><strong>One bot per agent</strong></td><td>Identity is unambiguous: a message to that bot is that agent, never a shared roster.</td><td>Onboarding needs a bot token per agent, and a bot cannot add group members, so the CLI mints an invite link.</td></tr><tr><td><strong>Steer instead of queue</strong></td><td>A correction reaches the run in flight, so you are not billed for the answer you were about to cancel.</td><td>The transport must edit a live message, and <code>/stop</code> has to withdraw a queue rather than just abort.</td></tr><tr><td><strong>Streaming reads <code>pi.live</code></strong></td><td>The provider never emits <code>message_update</code>, so the daemon diffs the durable message in flight.</td><td>An internal shape is load-bearing; the clean fix belongs upstream.</td></tr><tr><td><strong>Retention is a feature, not a cleanup</strong></td><td>An 8 GB host with SQLite and images needs a bound, and one summary per agent keeps the gist.</td><td>The default is 3 days; anything older is gone unless <code>config.json</code> says otherwise.</td></tr><tr><td><strong>A measured memory gate</strong></td><td>Five agents with full tools must fit under 2 GB, enforced by a benchmark and by systemd <code>MemoryHigh</code>/<code>MemoryMax</code>.</td><td>A run limiter (5 active, 20 queued) means you wait, and the gate has to be re-run, not assumed.</td></tr></tbody>
 </table></div>
           </article>
         </div>
@@ -230,47 +232,119 @@
 
 <pre class="code-block" data-lang="bash"><code>git clone https://github.com/mariobgsp/durable-agents &amp;&amp; cd durable-agents
 npm install
-npm run dev            # creates data/token (600), Fastify on 8787, Vite on 5173
-# open http://localhost:5173
+npm link                 # optional: `dura` on PATH
+dura init                # five steps, resumable
+dura status              # daemon, bots, agents, runs, memory, verification time
+dura verify              # the connection test, any time
+dura monitor             # fleet TUI: q quit, r refresh, a add agent
+dura logs -f             # JSON lines: lifecycle, connection, conversations, errors</code></pre>
 
-npm run build &amp;&amp; npm start   # one process serving UI + API + WS on 8787
+<p class="pull-quote"><code>dura init</code> is strictly sequential and resumes at the first unfinished step:</p>
 
-npm run check          # tsc + svelte-check + the language lint
-npm run e2e            # 21 deterministic scenarios, faux provider
-npm run shots          # routes x 5 viewports -&gt; docs/ui-review/&lt;date&gt;/
-npm run seed           # demo threads, no model calls</code></pre>
+<div class="table-wrap"><table>
+<thead><tr><th>Step</th><th>What it does</th></tr></thead>
+<tbody><tr><td>1 Agents</td><td>Asks for the orchestrator when missing, offers a replacement when present, stages extra agents. Nothing is written yet.</td></tr><tr><td>2 Provider</td><td>Detects existing credentials, defaults to opencode-go / deepseek-v4.1-flash, or adds any built-in provider by API key (validated before saving).</td></tr><tr><td>3 Telegram</td><td>Adds bots (<code>getMe</code> validated), binds the owner with a short <code>/start</code> code, assigns a home bot per agent, then writes the staged agents atomically.</td></tr><tr><td>4 Service</td><td>Offers the systemd user unit and reports zram/sysctl tuning.</td></tr><tr><td>5 Connection test</td><td>Starts the daemon and proves provider completion, bot identity, owner delivery, socket/no-TCP, SQLite and one live agent round-trip. Only a pass writes <code>setup.verifiedAt</code>.</td></tr></tbody>
+</table></div>
 
-<p>Credentials resolve in this order: <code>~/.pi/agent/auth.json</code> → <code>OPENCODE_API_KEY</code> → <code>data/credentials.json</code> (written by the <code>#/providers</code> screen).</p>
+<p>Keys never come from argv or through Telegram: a provider key is a hidden prompt, stdin (<code>--key-stdin</code>) or the environment, saved <code>0600</code>; bot tokens live in <code>secrets/telegram.json</code>, <code>0600</code>. Vault values are AES-256-GCM.</p>
+
+<pre class="code-block" data-lang="text"><code>~/.dura-file/                  (DURA_HOME overrides)
+  config.json                  0600
+  credentials.json             provider keys, 0600
+  secrets/telegram.json        bot tokens, 0600
+  app.sqlite                   durable conversations, tasks, entries
+  agents/&lt;id&gt;/                 agent.json, AGENT.md, SOUL.md, MEMORY.md, .history/
+  artifacts/&lt;conversation&gt;/    generated files
+  vault/                       secrets and key
+  telegram/                    users.json, state.json (offsets, bindings)
+  logs/daemon.log[.1..3]       JSON lines, rotated
+  run/daemon.sock              0600 control socket</code></pre>
+
+<p>Agents default to permission tier <strong>full</strong>, cwd <code>$HOME</code>, every tool. That tier is a policy, not a sandbox: the operating-system account is the boundary, and the systemd unit's <code>MemoryMax</code> is the only hard limit on the process.</p>
 
 <h3 id="what-i-observed">What I observed</h3>
 
-<p class="pull-quote">These are the repository's latest verified numbers, not a fresh run:</p>
+<p>These are my own numbers, run on a clean worktree of <code>9138f67</code> on this machine:</p>
 
 <div class="table-wrap"><table>
 <thead><tr><th>Check</th><th>Result</th></tr></thead>
-<tbody><tr><td><code>npm run check</code></td><td><code>tsc</code> clean; <code>svelte-check</code> 0 errors, 2 warnings in <code>Dialog.svelte</code>; <code>lint:lang</code> clean</td></tr><tr><td><code>npm run e2e</code></td><td>21 passed, 0 failed — including <code>mesh</code>, <code>fleet</code>, <code>schedules</code>, <code>files</code>, <code>system</code>, <code>display</code> and <code>usage</code></td></tr><tr><td><code>npm run build</code></td><td>entry 89.1 kB JS + 10.9 kB CSS gzip; mermaid and <code>elk</code> stay in their own lazy chunks</td></tr></tbody>
+<tbody><tr><td><code>npm run check</code></td><td><code>tsc</code> clean; <code>check-language: clean — no Indonesian markers in system files</code></td></tr><tr><td><code>npm run e2e</code></td><td><strong>23 passed, 0 failed</strong>, 68 s wall — <code>telegram-chat</code>, <code>telegram-steer</code>, <code>telegram-stop</code>, <code>bot-pairing</code>, <code>bot-token-connect</code>, <code>orchestrator-claim(-approval)</code>, <code>mcp-global</code>, <code>retention</code>, <code>thread-prune</code>, <code>verify</code>, <code>tui-json</code> and the rest</td></tr><tr><td><code>npm run bench</code></td><td><strong>5/5 completed</strong>, 4.6 s wall, peak PSS <strong>222 MB</strong> (gate 2048 MB), p95 199 MB, p50 84 MB</td></tr><tr><td><code>dura provider models opencode-go</code></td><td>29 models, one per row</td></tr><tr><td><code>dura provider list --all</code></td><td>42 providers</td></tr></tbody>
 </table></div>
 
-<p>The E2E suite asserts the design, not the implementation: an idle thread stays idle <strong>after a restart</strong>, a grant is enforced at submit time and not sticky on the agent, a purge removes rows from <code>entries</code>, and a schedule skips a busy thread.</p>
+<p>The E2E suite is not a mock of the transport: <code>scripts/e2e/harness.mjs</code> boots a real daemon in a temporary home with the faux provider and a fake Bot API, injects updates and inspects the messages, edits, callbacks, files and SQLite rows that come back. The bench (<code>scripts/bench/five-agents.mjs</code>) runs the same tool-heavy script in five conversations at once and samples PSS for the daemon and every descendant every 100 ms.</p>
           </article>
         </div>
       </section>
-      <section class="art-block" id="screenshots">
+      <section class="art-block" id="in-use">
         <div class="container">
           <article class="art-content">
-<h2 id="screenshots">Screenshots</h2>
+<h2 id="in-use">In use</h2>
 
-<img src="/assets/articles/durable-agents-agent-list.png" alt="Agent list with identity" loading="lazy" decoding="async" />
+<p>The surface is a chat and a terminal, so what used to be screenshots is a command surface. <code>tools/capture/durable-agents.mjs</code> runs the CLI out of the pinned checkout with a throwaway <code>DURA_HOME</code> — no daemon, no socket, no model call — and writes exactly this (<code>dura-agents 0.1.0</code>, 42 providers, 29 models on <code>opencode-go</code>):</p>
 
-<p class="fig-caption">The agent list. Each card carries its identity, its one-line responsibility, and its model.</p>
+<pre class="code-block" data-lang="text"><code>dura-agents CLI
 
-<img src="/assets/articles/durable-agents-agent-editor.png" alt="Agent editor" loading="lazy" decoding="async" />
+Usage: dura &lt;command&gt; [options]
 
-<p class="fig-caption">Editing an agent means editing two markdown files, plus its identity and model.</p>
+Setup
+  init                 Guided setup: agents, provider, telegram, service, connection test
+  verify               Run the connection test against a running daemon
+  start                Start the daemon (foreground on a terminal, background otherwise)
+  stop                 Stop the daemon
+  restart              Stop then start the daemon
+  status               Daemon, bots, providers, runs and memory
+  logs                 Read or follow the daemon log
 
-<img src="/assets/articles/durable-agents-group-thread.png" alt="Group thread — Nyahut orchestration" loading="lazy" decoding="async" />
+Configuration
+  config               get, set, edit or validate config.json
+  bot                  Telegram bot registry: add, list, remove, test, default
+  provider             Providers: list, add, models, test, remove, default
+  agent                Agents: list, show, create, set, enable, disable, delete, docs
+  orchestrator         Show, set, create or replace the orchestrator
+  user                 Allowlist: list, add, remove, pending, approve, invite
+  service              Install, remove or inspect the systemd user unit
+  tune                 Report or apply zram/sysctl tuning
+  migrate              Copy an older data directory into DURA_HOME
 
-<p class="fig-caption">A group thread in <code>Nyahut</code> mode. The system notes show the claim pass resolving a question to the agent whose responsibility covers it.</p>
+Use
+  mcp                  Global MCP servers: list, add, remove, reload, tools
+  thread               List, prune, restore or purge threads (--purge --vacuum to reclaim space)
+  monitor              Fleet TUI (read-only, plus an explicit add-agent form)
+  usage                Usage report
+  memory               Agent memory notes
+  schedule             Cron schedules
+  storage              Size report, cleanup, purge
+  vault                Secret vault names and values
+  doctor               Diagnostics
+  update               Update packages and reload tools
+  bench                Five-agent memory benchmark
+
+Global: --json, --help, --version, --home &lt;path&gt;</code></pre>
+
+<p class="pull-quote">The model catalog behind <code>/model</code>, first rows of the 29:</p>
+
+<pre class="code-block" data-lang="text"><code>model                       context  input       cost/1M in
+claude-haiku-5-5            1000000  text,image  0.1
+minimax-m3                  1000000  text,image  0.3
+qwen3.7-plus                1000000  text,image  0.4
+qwen3.8-flash               1000000  text,image  0.15
+qwen3.8-max                 1000000  text,image  2
+gemini-4-argon-contributor  1048576  text,image  4
+cat-jam-free                262144   text        0
+deepseek-v4-pro             1000000  text        0.66
+…</code></pre>
+
+<p>A run in the chat has this shape — the placeholder, the edited status card, then the answer. The strings are the transport's own, from <code>packages/telegram/src/runtime.ts</code>:</p>
+
+<pre class="code-block" data-lang="text"><code>you   why did the nightly backup skip Tuesday?
+bot   Think · planning the next step
+bot   🧠 the schedule says Tuesday ran at 02:00…
+      ⚙️ bash: rg -n &quot;02:00&quot; ~/backups/schedule.conf
+      ⚙️ read: /var/log/backup.log
+      ⚙️ bash: journalctl -u backup --since 02:00
+you   also check Wednesday
+bot   Steer · added to the current run
+bot   &lt;the answer, rich-formatted: headings, a table, a code block&gt;</code></pre>
           </article>
         </div>
       </section>
@@ -280,11 +354,15 @@ npm run seed           # demo threads, no model calls</code></pre>
 <h2 id="what-id-fix-next">What I'd fix next</h2>
 
 <ul>
-  <li><strong>A purge has no UI.</strong> <code>POST /api/sessions/:id/purge</code> exports the transcript and deletes the rows, but the Storage panel only states what it would do; the thread menu's delete stays a soft delete.</li>
-  <li><strong>Notifications need the tab open.</strong> The page can notify while hidden or on another thread; a browser fully closed needs push infrastructure that is not implemented.</li>
-  <li><strong>Generated files are download-only.</strong> There is no inline PDF preview and no zip-all. The built-in PDF writer uses base fonts, so non-Latin glyphs become "?".</li>
-  <li><strong>Cron has no backfill and schedules are owner-managed.</strong> A window missed while the server was off is counted as missed, not replayed, and no agent-facing tool can create or cancel a schedule yet.</li>
+  <li><strong>The group path has no end-to-end scenario.</strong> <code>nyahut</code>/moderator/silent routing is exercised by the room code, not by the transport: there is no E2E proving that a Telegram group, a bound room and one speaker bot actually produce the right answer.</li>
+  <li><strong>MCP is stdio only.</strong> No HTTP or streamable transport yet, and an MCP server runs with the daemon's own OS permissions, so installing one is trusted-code territory.</li>
+  <li><strong>The benchmark measures the wrong half of the risk.</strong> It uses the faux provider, so it measures daemon memory under tool load — not a real provider's network buffers. The repository also quotes 246 MB and 247 MB for the same run in two other documents; PSS moves with the rest of the machine, so the gate is the number worth reading, not the third digit.</li>
+  <li><strong><code>dura tune</code> does not install anything.</strong> When no zram device exists it prints the zram-generator configuration instead of applying it.</li>
+  <li><strong>Direct chats are strictly one bot per agent.</strong> A group is the only multi-agent surface, and a bot cannot add members: <code>dura user invite --chat &lt;id&gt;</code> plus <code>dura user add &lt;id&gt;</code> is the manual path.</li>
+  <li><strong>Voice, video, per-agent hooks and a skills curator are not implemented.</strong> Not started, and the roadmap says so rather than implying otherwise.</li>
 </ul>
+
+<p><strong>Two documentation defects, found by reading the code and fixed upstream.</strong> The README showed progress lines as <code>Bash · running a command · step 1</code>; <code>progressLine()</code> in <code>packages/telegram/src/runtime.ts</code> emits <code>bash: git status</code>-style lines, keeps the last three, and has no step counter anywhere in the path. And the benchmark table was followed by a raw <code>\textit{This run used the offline faux provider; …}</code> line, which GitHub renders as a code block rather than an italic caveat. Both are corrected in <a href="https://github.com/mariobgsp/durable-agents/pull/3"><code>#3</code></a> — the commit this article pins.</p>
           </article>
         </div>
       </section>
@@ -297,14 +375,16 @@ npm run seed           # demo threads, no model calls</code></pre>
   <li><strong>Source:</strong> <a href="https://github.com/mariobgsp/durable-agents">github.com/mariobgsp/durable-agents</a></li>
   <li><strong>Harness:</strong> <a href="https://www.npmjs.com/package/@earendil-works/pi-durable"><code>@earendil-works/pi-durable</code></a> (pinned 1.3.0)</li>
   <li><strong>Plan of record:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/roadmap.md"><code>docs/roadmap.md</code></a></li>
-  <li><strong>Agent network design:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/agent-mesh.md"><code>docs/design/agent-mesh.md</code></a></li>
-  <li><strong>System and display:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/system-and-display.md"><code>docs/design/system-and-display.md</code></a></li>
-  <li><strong>The boundary:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/deploy/dura-agents.service"><code>deploy/dura-agents.service</code></a></li>
+  <li><strong>CLI and daemon:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/cli.md"><code>docs/design/cli.md</code></a></li>
+  <li><strong>Telegram transport:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/telegram.md"><code>docs/design/telegram.md</code></a></li>
+  <li><strong>Orchestrator and administration:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/orchestrator.md"><code>docs/design/orchestrator.md</code></a></li>
+  <li><strong>Memory budget:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/docs/design/memory-budget.md"><code>docs/design/memory-budget.md</code></a></li>
+  <li><strong>The boundary:</strong> <a href="https://github.com/mariobgsp/durable-agents/blob/main/deploy/dura.service"><code>deploy/dura.service</code></a></li>
 </ul>
 
 <hr />
 
-<p class="fig-caption">Verified against commit <code>06f5bad</code> (2026-10-25). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/durable-agents.mmd"><code>diagrams/durable-agents.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/durable-agents.mjs"><code>tools/capture/durable-agents.mjs</code></a>.</p>
+<p class="fig-caption">Verified against commit <code>61ddadb</code> (2026-10-30). Diagram source: <a href="https://github.com/mariobgsp/articles/blob/main/diagrams/durable-agents.mmd"><code>diagrams/durable-agents.mmd</code></a>. Capture script: <a href="https://github.com/mariobgsp/articles/blob/main/tools/capture/durable-agents.mjs"><code>tools/capture/durable-agents.mjs</code></a> — the CLI surface, because there is no browser left to photograph.</p>
           </article>
         </div>
       </section>
@@ -315,7 +395,7 @@ npm run seed           # demo threads, no model calls</code></pre>
 <a class="art-next-link art-next-link--right" href="/articles/trading-suite/"><span>Next</span><b>trading-suite</b></a>
       </nav>
 
-      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Agent Chats That Survive a Crash","description":"A local agent chat where closing the browser, killing the server, or losing the network costs you nothing: every message, tool call and generation is a durable task in SQLite. Agents can also message each other, run on schedules, and produce files you can download.","url":"https://mariobgsp.github.io/articles/durable-agents/","mainEntityOfPage":"https://mariobgsp.github.io/articles/durable-agents/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Svelte 5 (runes) + Vite 8 · Fastify + WebSocket · SQLite via @earendil-works/pi-durable 1.3.0","image":"https://mariobgsp.github.io/assets/articles/durable-agents-architecture-dark.png"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Agents That Survive a Crash","description":"A local agent fleet you drive from Telegram: one daemon owns the durable state, so a dropped long poll, a killed process or a lost network costs you nothing. Agents can message each other, run on schedules, edit their own system — and there is no browser left to reload.","url":"https://mariobgsp.github.io/articles/durable-agents/","mainEntityOfPage":"https://mariobgsp.github.io/articles/durable-agents/","author":{"@type":"Person","name":"Muhammad Ario Bagus Prakusa","url":"https://mariobgsp.github.io/"},"keywords":"Node + TypeScript (packages/cli · packages/core · packages/telegram) · one daemon over a 0600 Unix socket · Telegram Bot API · SQLite via @earendil-works/pi-durable 1.3.0","image":"https://mariobgsp.github.io/assets/articles/durable-agents-architecture-dark.png"}</script>
     </main>
 
     <footer class="footer" id="contact">
