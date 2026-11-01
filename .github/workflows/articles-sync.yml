@@ -49,7 +49,7 @@ on:
   workflow_dispatch:
     inputs:
       force_publish:
-        description: Redeploy even when the regeneration produced no change
+        description: Fast-forward main from develop and redeploy even when the regeneration produced no change
         type: boolean
         default: false
 
@@ -113,9 +113,27 @@ jobs:
             '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --quiet; then
-            echo "no generated change; nothing to publish"
+            echo "no generated change"
+            if git merge-base --is-ancestor origin/main HEAD; then
+              echo "main aligned with develop; nothing to publish"
+              echo "pushed_main=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # A green no-op must never mask a fresh site: a no-op states of main
+            # behind develop means pending commits never flushed. With
+            # force_publish (manual run) fast-forward main exactly like the
+            # owner's sync command; otherwise fail loudly and name the fix.
+            if [[ "${{ inputs.force_publish || 'false' }}" == "true" ]]; then
+              echo "force_publish: fast-forwarding main to develop"
+              git push origin HEAD:main
+              echo "pushed_main=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::main is behind develop and no generated change flushed it."
+            echo "::error::Fix: run this workflow with force_publish, or:"
+            echo "::error::git switch main && git merge --ff-only develop && git push origin main"
             echo "pushed_main=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            exit 1
           fi
           git commit -m \
             'content(articles): sync generated pages from mariobgsp/articles'
